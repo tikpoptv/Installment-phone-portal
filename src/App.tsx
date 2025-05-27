@@ -1,15 +1,16 @@
 import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from './components/admin/Navbar';
-import Dashboard from './pages/admin/Dashboard';
+import Dashboard from './pages/admin/dashboard/Dashboard';
+import styles from './App.module.css';
 
 function App() {
   return (
     <Router>
-      <div className="app">
+      <div className={styles.app}>
         <Navbar />
-        <div className="main-content">
+        <main className={styles.mainContent}>
           <Dashboard />
-        </div>
+        </main>
       </div>
     </Router>
   );

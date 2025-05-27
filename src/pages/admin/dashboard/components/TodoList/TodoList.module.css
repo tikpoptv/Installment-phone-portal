@@ -1,0 +1,96 @@
+.todoContainer {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.todoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.todoTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.todoList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.todoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.todoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.todoItemTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+.todoDescription {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.todoCount {
+  display: flex;
+  align-items: center;
+}
+
+.countBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  background: white;
+}
+
+/* Status Colors */
+.warning .countBadge {
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+}
+
+.error .countBadge {
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.info .countBadge {
+  color: #0ea5e9;
+  border: 1px solid #0ea5e9;
+}
+
+@media (max-width: 640px) {
+  .todoContainer {
+    padding: 1rem;
+  }
+
+  .todoHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+} 

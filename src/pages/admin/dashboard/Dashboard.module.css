@@ -1,0 +1,180 @@
+/* Dashboard Layout */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: #f8fafc;
+}
+
+/* Header Section */
+.header {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0.5rem 0 0;
+}
+
+.dateInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.dateIcon {
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
+.dateText {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Main Content Grid */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sideContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Common Card Styles */
+.card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.card:last-child {
+  margin-bottom: 0;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.viewAllButton {
+  font-size: 0.875rem;
+  color: #0ea5e9;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.viewAllButton:hover {
+  color: #0284c7;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .contentGrid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashboard {
+    padding: 1.25rem;
+  }
+
+  .topSection {
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .header {
+    padding: 1.25rem;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .dateInfo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+  }
+
+  .topSection {
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.topSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+} 

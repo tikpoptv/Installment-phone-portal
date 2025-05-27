@@ -1,0 +1,56 @@
+.quickActionsContainer {
+  background: white;
+  border-radius: 0.875rem;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.quickActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quickActionButton:hover {
+  background: #f8fafc;
+  border-color: #0ea5e9;
+  transform: translateY(-1px);
+}
+
+.quickActionIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.quickActionLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+@media (max-width: 640px) {
+  .quickActionsContainer {
+    padding: 0.875rem;
+  }
+
+  .quickActions {
+    grid-template-columns: 1fr;
+  }
+} 

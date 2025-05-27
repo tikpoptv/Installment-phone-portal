@@ -6,9 +6,10 @@
   height: 100vh;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   color: #1f2937;
-  z-index: 50;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   border-right: 1px solid #bae6fd;
+  z-index: 50;
+  transition: transform 0.3s ease;
 }
 
 .container {
@@ -192,4 +193,189 @@
   gap: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #bae6fd;
+}
+
+/* Mobile Menu Button */
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 60;
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileMenuButton:hover {
+  background: #0284c7;
+}
+
+.mobileMenuIcon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .navbar {
+    transform: translateX(-100%);
+  }
+
+  .navbar.open {
+    transform: translateX(0);
+  }
+
+  .mobileMenuButton {
+    display: flex;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .logoContainer {
+    padding: 0.75rem 0 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .logoIcon {
+    font-size: 1.25rem;
+    padding: 0.625rem;
+  }
+
+  .logoText {
+    font-size: 1.125rem;
+  }
+
+  .menuItem {
+    padding: 0.75rem;
+  }
+
+  .menuIcon {
+    font-size: 1.125rem;
+  }
+
+  .menuLabel {
+    font-size: 0.8125rem;
+  }
+
+  .userBox {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .userAvatar {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .userName {
+    font-size: 0.875rem;
+  }
+
+  .userRole {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobileMenuButton {
+    display: none;
+  }
+
+  .navbar {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    width: 100%;
+  }
+
+  .container {
+    padding: 0.875rem;
+  }
+
+  .logoContainer {
+    padding: 0.625rem 0 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .menuItem {
+    padding: 0.625rem;
+  }
+
+  .logoutButton {
+    padding: 0.625rem;
+  }
+}
+
+/* Loading States */
+.userAvatarLoading {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.userNameLoading {
+  width: 100px;
+  height: 1rem;
+  background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+.userRoleLoading {
+  width: 80px;
+  height: 0.75rem;
+  background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error State */
+.userError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #fee2e2;
+  border-radius: 0.5rem;
+  color: #ef4444;
+}
+
+.errorIcon {
+  font-size: 1.25rem;
+}
+
+.errorText {
+  font-size: 0.875rem;
+  font-weight: 500;
 } 
