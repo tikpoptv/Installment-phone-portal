@@ -1,47 +1,49 @@
-# ระบบผ่อนมือถือออนไลน์
+# Online Mobile Installment System
 
-ระบบจัดการการผ่อนมือถือออนไลน์ ที่ช่วยให้ลูกค้าสามารถเลือกซื้อมือถือแบบผ่อนชำระได้อย่างสะดวก
+> **Note:** This project is currently under development. There is no backend or API integration yet—all API logic is bypassed. The current version is for UI prototyping and demonstration purposes only.
 
-## เทคโนโลยีที่ใช้
+A management system for online mobile phone installment purchases, allowing customers to conveniently select and buy mobile phones with installment payment options.
+
+## Tech Stack
 
 - React 19
 - TypeScript
 - Vite
 - ESLint
 
-## การติดตั้ง
+## Installation
 
 ```bash
-# ติดตั้ง dependencies
+# Install dependencies
 npm install
 
-# รัน development server
+# Run the development server
 npm run dev
 
-# build โปรเจค
+# Build the project
 npm run build
 
-# preview เวอร์ชันที่ build แล้ว
+# Preview the production build
 npm run preview
 ```
 
-## โครงสร้างโปรเจค
+## Project Structure
 
 ```
 src/
-  ├── assets/        # ไฟล์รูปภาพและ assets อื่นๆ
+  ├── assets/        # Images and other assets
   ├── components/    # React components
   ├── styles/        # CSS modules
-  ├── App.tsx        # Component หลัก
+  ├── App.tsx        # Main App component
   └── main.tsx       # Entry point
 ```
 
-## การพัฒนา
+## Development
 
-1. Clone โปรเจค
-2. ติดตั้ง dependencies ด้วย `npm install`
-3. รัน development server ด้วย `npm run dev`
-4. เริ่มพัฒนาได้เลย!
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Start the development server with `npm run dev`
+4. Start building your features!
 
 ## License
 
