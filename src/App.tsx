@@ -74,10 +74,31 @@ function AppContent() {
   const isAdminDomain = currentDomain === ADMIN_DOMAIN;
   const isUserDomain = currentDomain === USER_DOMAIN;
 
+  // Debug Log 1: ตรวจสอบค่า domain และ env
+  console.log('Debug Domain Check:', {
+    currentDomain,
+    ADMIN_DOMAIN,
+    USER_DOMAIN,
+    DEV_DOMAIN,
+    isDevDomain,
+    isAdminDomain,
+    isUserDomain,
+    DEV_MODE,
+    DEV_ROLE,
+    windowLocation: window.location.href
+  });
+
   // ตรวจสอบ domain ที่อนุญาต
   const isAllowedDomain = isDevDomain || isAdminDomain || isUserDomain;
 
   if (!isAllowedDomain) {
+    console.log('Debug: Domain ไม่ได้รับอนุญาต', {
+      currentDomain,
+      isAllowedDomain,
+      isDevDomain,
+      isAdminDomain,
+      isUserDomain
+    });
     return (
       <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'red' }}>
         <h1>ไม่อนุญาตให้เข้าถึง</h1>
@@ -112,14 +133,38 @@ function AppContent() {
     showUserUI = isUserDomain;
   }
 
+  // Debug Log 2: ตรวจสอบค่า UI และ login
+  console.log('Debug UI Check:', {
+    DEV_MODE,
+    isDevDomain,
+    isAdminDomain,
+    isUserDomain,
+    showAdminUI,
+    showUserUI,
+    isLoggedIn,
+    DEV_ROLE
+  });
+
   // ถ้าไม่ได้ login ให้ไปหน้า login ตาม role
   if (!isLoggedIn) {
+    console.log('Debug: ยังไม่ได้ login, redirect ไปหน้า login', {
+      showAdminUI,
+      showUserUI
+    });
     if (showAdminUI) {
       return <Navigate to="/admin/login" replace />;
     } else if (showUserUI) {
       return <Navigate to="/user/login" replace />;
     }
   }
+
+  // Debug Log 3: ตรวจสอบการ render routes
+  console.log('Debug: กำลัง render routes', {
+    showAdminUI,
+    showUserUI,
+    isLoggedIn,
+    currentPath: window.location.pathname
+  });
 
   return (
     <Routes>
