@@ -5,6 +5,7 @@ import AdminLogin from './pages/admin/auth/Login';
 import UserLogin from './pages/user/auth/Login';
 import styles from './App.module.css';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Loading Component
 function LoadingScreen() {
@@ -61,6 +62,8 @@ function AppContent() {
     return !hasLoaded;
   });
 
+  const navigate = useNavigate();
+
   // อ่านค่าจาก env
   const ADMIN_DOMAIN = import.meta.env.VITE_ADMIN_DOMAIN;
   const USER_DOMAIN = import.meta.env.VITE_USER_DOMAIN;
@@ -92,7 +95,7 @@ function AppContent() {
   }
 
   // เช็ค login
-  const isLoggedIn = localStorage.getItem('token');
+  const isLoggedIn = localStorage.getItem('auth_token');
 
   useEffect(() => {
     if (isLoading) {
@@ -105,9 +108,9 @@ function AppContent() {
         // ถ้าไม่ได้ login ให้ redirect ไปหน้า login
         if (!isLoggedIn) {
           if (showAdminUI) {
-            window.location.href = '/admin/login';
+            navigate('/admin/login');
           } else if (showUserUI) {
-            window.location.href = '/user/login';
+            navigate('/user/login');
           }
         }
       }, 1000); // 1 วินาที
@@ -186,20 +189,31 @@ function AppContent() {
   return (
     <Routes>
       {/* Root Route */}
-      <Route path="/" element={<Navigate to={showAdminUI ? "/admin/login" : "/user/login"} replace />} />
+      <Route path="/" element={
+        isLoggedIn ? (
+          <Navigate to={showAdminUI ? "/admin" : "/user"} replace />
+        ) : (
+          <Navigate to={showAdminUI ? "/admin/login" : "/user/login"} replace />
+        )
+      } />
       
       {/* Admin Routes */}
       {showAdminUI && (
         <>
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={
+            isLoggedIn ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <AdminLogin />
+            )
+          } />
           <Route path="/admin/*" element={
             isLoggedIn ? (
               <div className={styles.app}>
                 <Navbar />
                 <main className={styles.mainContent}>
                   <Routes>
-                    <Route index element={<Dashboard />} />
-                    {/* เพิ่ม routes อื่นๆ ของ admin ตรงนี้ */}
+                    <Route path="/" element={<Dashboard />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>
@@ -214,7 +228,13 @@ function AppContent() {
       {/* User Routes */}
       {showUserUI && (
         <>
-          <Route path="/user/login" element={<UserLogin />} />
+          <Route path="/user/login" element={
+            isLoggedIn ? (
+              <Navigate to="/user" replace />
+            ) : (
+              <UserLogin />
+            )
+          } />
           <Route path="/user/*" element={
             isLoggedIn ? (
               <div className={styles.app}>

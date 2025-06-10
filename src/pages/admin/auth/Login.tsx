@@ -5,50 +5,52 @@ import styles from './Login.module.css';
 import appStyles from '../../../App.module.css';
 import { authService } from '../../../services/auth/auth.service';
 
-interface ApiError {
-  error: string;
-}
-
 const AdminLogin: FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  });
+  const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [showValidation, setShowValidation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setForm({ ...form, [name]: value });
     // ซ่อน validation message เมื่อผู้ใช้เริ่มพิมพ์
     setShowValidation(false);
     // ล้าง error message เมื่อผู้ใช้เริ่มพิมพ์
     setError('');
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setShowValidation(true);
 
     // ตรวจสอบว่ากรอกข้อมูลครบหรือไม่
-    if (!formData.username || !formData.password) {
+    if (!form.username || !form.password) {
       return;
     }
 
     setIsLoading(true);
     try {
-      await authService.login(formData.username, formData.password);
-      navigate('/admin');
-    } catch (err) {
-      // แสดง error message จาก backend โดยตรง
-      const apiError = err as ApiError;
-      setError(apiError.error);
+      console.log('Login Submit:', form); // debug log
+      const response = await authService.login(form.username, form.password);
+      console.log('Login Response:', response); // debug log
+      console.log('Token:', localStorage.getItem('token')); // debug log
+      navigate('/admin', { replace: true });
+    } catch (err: unknown) {
+      // robust error handling
+      let msg = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+      if (err && typeof err === 'object') {
+        const errObj = err as Record<string, unknown>;
+        if ('error' in errObj && typeof errObj.error === 'string') {
+          msg = errObj.error;
+        } else if ('message' in errObj && typeof errObj.message === 'string') {
+          msg = errObj.message;
+        }
+      }
+      setError(msg);
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +77,7 @@ const AdminLogin: FC = () => {
               type="text"
               id="username"
               name="username"
-              value={formData.username}
+              value={form.username}
               onChange={handleChange}
               className={styles.input}
               placeholder="กรุณากรอกชื่อผู้ใช้ของคุณ"
@@ -84,13 +86,14 @@ const AdminLogin: FC = () => {
               pattern="[a-zA-Z0-9]+"
               title="กรุณากรอกตัวอักษรหรือตัวเลขอย่างน้อย 3 ตัว"
               disabled={isLoading}
+              autoComplete="username"
             />
-            {showValidation && !formData.username && (
+            {showValidation && !form.username && (
               <div className={styles.validationMessage}>
                 กรุณากรอกชื่อผู้ใช้
               </div>
             )}
-            {showValidation && formData.username && formData.username.length < 3 && (
+            {showValidation && form.username && form.username.length < 3 && (
               <div className={styles.validationMessage}>
                 กรุณากรอกชื่อผู้ใช้อย่างน้อย 3 ตัวอักษร
               </div>
@@ -103,7 +106,7 @@ const AdminLogin: FC = () => {
               type="password"
               id="password"
               name="password"
-              value={formData.password}
+              value={form.password}
               onChange={handleChange}
               className={styles.input}
               placeholder="กรุณากรอกรหัสผ่านของคุณ"
@@ -111,13 +114,14 @@ const AdminLogin: FC = () => {
               minLength={4}
               title="รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร"
               disabled={isLoading}
+              autoComplete="current-password"
             />
-            {showValidation && !formData.password && (
+            {showValidation && !form.password && (
               <div className={styles.validationMessage}>
                 กรุณากรอกรหัสผ่าน
               </div>
             )}
-            {showValidation && formData.password && formData.password.length < 4 && (
+            {showValidation && form.password && form.password.length < 4 && (
               <div className={styles.validationMessage}>
                 รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร
               </div>
