@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/admin/Navbar';
 import Dashboard from './pages/admin/dashboard/Dashboard';
+import Login from './pages/auth/Login';
 import styles from './App.module.css';
 
 function Error404() {
@@ -16,16 +17,22 @@ function Error404() {
 function App() {
   return (
     <Router>
-      <div className={styles.app}>
-        <Navbar />
-        <main className={styles.mainContent}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            <Route path="/admin" element={<Dashboard />} />
-            <Route path="*" element={<Error404 />} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin/*" element={
+          <div className={styles.app}>
+            <Navbar />
+            <main className={styles.mainContent}>
+              <Routes>
+                <Route index element={<Dashboard />} />
+                {/* เพิ่ม routes อื่นๆ ของ admin ตรงนี้ */}
+              </Routes>
+            </main>
+          </div>
+        } />
+        <Route path="*" element={<Error404 />} />
+      </Routes>
     </Router>
   );
 }
