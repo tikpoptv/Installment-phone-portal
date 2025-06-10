@@ -149,11 +149,27 @@ function AppContent() {
   if (!isLoggedIn) {
     console.log('Debug: ยังไม่ได้ login, redirect ไปหน้า login', {
       showAdminUI,
-      showUserUI
+      showUserUI,
+      currentPath: window.location.pathname
     });
+
+    // ถ้าอยู่ที่หน้า login อยู่แล้ว ไม่ต้อง redirect
+    if (window.location.pathname === '/user/login' || window.location.pathname === '/admin/login') {
+      console.log('Debug: อยู่ที่หน้า login อยู่แล้ว ไม่ต้อง redirect');
+      return (
+        <Routes>
+          {showAdminUI && <Route path="/admin/login" element={<AdminLogin />} />}
+          {showUserUI && <Route path="/user/login" element={<UserLogin />} />}
+        </Routes>
+      );
+    }
+
+    // ถ้าไม่ได้อยู่ที่หน้า login ให้ redirect
     if (showAdminUI) {
+      console.log('Debug: redirect ไปหน้า admin login');
       return <Navigate to="/admin/login" replace />;
     } else if (showUserUI) {
+      console.log('Debug: redirect ไปหน้า user login');
       return <Navigate to="/user/login" replace />;
     }
   }
