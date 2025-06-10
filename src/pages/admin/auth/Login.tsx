@@ -2,14 +2,14 @@ import { useState } from 'react';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
-import appStyles from '../../App.module.css';
-import { authService } from '../../services/auth/auth.service';
+import appStyles from '../../../App.module.css';
+import { authService } from '../../../services/auth/auth.service';
 
 interface ApiError {
   error: string;
 }
 
-const Login: FC = () => {
+const AdminLogin: FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -58,7 +58,7 @@ const Login: FC = () => {
     <div className={appStyles.authLayout}>
       <div className={styles.loginBox}>
         <div className={styles.header}>
-          <h1 className={styles.title}>เข้าสู่ระบบ</h1>
+          <h1 className={styles.title}>เข้าสู่ระบบผู้ดูแล</h1>
           <p className={styles.subtitle}>ยินดีต้อนรับกลับ</p>
         </div>
 
@@ -141,4 +141,4 @@ const Login: FC = () => {
   );
 };
 
-export default Login; 
+export default AdminLogin; 
