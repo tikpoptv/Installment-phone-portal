@@ -4,6 +4,45 @@ import Dashboard from './pages/admin/dashboard/Dashboard';
 import AdminLogin from './pages/admin/auth/Login';
 import UserLogin from './pages/user/auth/Login';
 import styles from './App.module.css';
+import { useState, useEffect } from 'react';
+
+// Loading Component
+function LoadingScreen() {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      height: '100vh',
+      backgroundColor: '#f8fafc'
+    }}>
+      <div style={{
+        width: '50px',
+        height: '50px',
+        border: '5px solid #e2e8f0',
+        borderTop: '5px solid #0ea5e9',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <p style={{ 
+        marginTop: '1rem',
+        color: '#64748b',
+        fontSize: '1.125rem'
+      }}>
+        กำลังตรวจสอบสิทธิ์การเข้าถึง...
+      </p>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
+  );
+}
 
 function Error404() {
   return (
@@ -16,12 +55,35 @@ function Error404() {
 }
 
 function AppContent() {
+  const [isLoading, setIsLoading] = useState(() => {
+    // เช็คว่าเคยโหลดแล้วหรือยัง
+    const hasLoaded = localStorage.getItem('app_initialized');
+    return !hasLoaded;
+  });
+
   // อ่านค่าจาก env
   const ADMIN_DOMAIN = import.meta.env.VITE_ADMIN_DOMAIN;
   const USER_DOMAIN = import.meta.env.VITE_USER_DOMAIN;
   const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
   const DEV_DOMAIN = import.meta.env.VITE_DEV_DOMAIN;
   const DEV_ROLE = import.meta.env.VITE_DEV_ROLE || 'user';
+
+  useEffect(() => {
+    if (isLoading) {
+      // จำลองการโหลดข้อมูล
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+        // บันทึกว่าครั้งนี้โหลดแล้ว
+        localStorage.setItem('app_initialized', 'true');
+      }, 1000); // 1 วินาที
+
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   // ตรวจสอบ env ที่จำเป็น
   const isEnvValid = 
