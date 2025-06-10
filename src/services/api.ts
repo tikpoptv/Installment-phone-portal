@@ -1,8 +1,15 @@
 import axios from 'axios';
-import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_TIMEOUT = 30000; // 30 seconds
+
+// Types
+export interface ApiResponse<T> {
+  data: T;
+  status: number;
+  message?: string;
+}
 
 // สร้าง axios instance
 const api: AxiosInstance = axios.create({
@@ -28,39 +35,52 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response) {
-      // Server responded with error
-      switch (error.response.status) {
-        case 401:
-          // Unauthorized - token expired or invalid
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-          break;
-        case 403:
-          // Forbidden - user doesn't have permission
-          console.error('You do not have permission to access this resource');
-          break;
-        case 404:
-          // Not Found
-          console.error('The requested resource was not found');
-          break;
-        case 500:
-          // Server Error
-          console.error('Internal server error occurred');
-          break;
-        default:
-          console.error('An error occurred:', error.response.data);
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('No response received from server');
-    } else {
-      // Error in request configuration
-      console.error('Error in request configuration:', error.message);
+    // จัดการเฉพาะการลบ token เมื่อหมดอายุ
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
-    return Promise.reject(error);
+    return Promise.reject(error.response?.data);
   }
 );
 
-export default api; 
+// สร้าง wrapper functions สำหรับ HTTP methods
+export const apiClient = {
+  get: async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+    const response = await api.get<T>(url, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
+  },
+
+  post: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+    const response = await api.post<T>(url, data, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
+  },
+
+  put: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+    const response = await api.put<T>(url, data, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
+  },
+
+  delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
+    const response = await api.delete<T>(url, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
+  }
+};
+
+export default apiClient; 
