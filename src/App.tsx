@@ -68,6 +68,32 @@ function AppContent() {
   const DEV_DOMAIN = import.meta.env.VITE_DEV_DOMAIN;
   const DEV_ROLE = import.meta.env.VITE_DEV_ROLE || 'user';
 
+  // เช็ค domain ปัจจุบัน
+  const currentDomain = window.location.host;
+  const isDevDomain = currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1');
+  const isAdminDomain = currentDomain === ADMIN_DOMAIN;
+  const isUserDomain = currentDomain === USER_DOMAIN;
+
+  // ตรวจสอบ domain ที่อนุญาต
+  const isAllowedDomain = isDevDomain || isAdminDomain || isUserDomain;
+
+  // ตรวจสอบว่าจะแสดง UI แบบไหน
+  let showAdminUI = false;
+  let showUserUI = false;
+
+  if (DEV_MODE) {
+    // โหมดพัฒนา: ใช้ DEV_ROLE ในการตัดสินใจ
+    showAdminUI = isDevDomain && DEV_ROLE === 'admin';
+    showUserUI = isDevDomain && DEV_ROLE === 'user';
+  } else {
+    // โหมดปกติ: ใช้ domain ในการตัดสินใจ
+    showAdminUI = isAdminDomain;
+    showUserUI = isUserDomain;
+  }
+
+  // เช็ค login
+  const isLoggedIn = localStorage.getItem('token');
+
   useEffect(() => {
     if (isLoading) {
       // จำลองการโหลดข้อมูล
@@ -75,11 +101,20 @@ function AppContent() {
         setIsLoading(false);
         // บันทึกว่าครั้งนี้โหลดแล้ว
         localStorage.setItem('app_initialized', 'true');
+
+        // ถ้าไม่ได้ login ให้ redirect ไปหน้า login
+        if (!isLoggedIn) {
+          if (showAdminUI) {
+            window.location.href = '/admin/login';
+          } else if (showUserUI) {
+            window.location.href = '/user/login';
+          }
+        }
       }, 1000); // 1 วินาที
 
       return () => clearTimeout(timer);
     }
-  }, [isLoading]);
+  }, [isLoading, isLoggedIn, showAdminUI, showUserUI]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -130,37 +165,7 @@ function AppContent() {
     );
   }
 
-  // เช็ค domain ปัจจุบัน
-  const currentDomain = window.location.host;
-  const isDevDomain = currentDomain.includes('localhost') || currentDomain.includes('127.0.0.1');
-  const isAdminDomain = currentDomain === ADMIN_DOMAIN;
-  const isUserDomain = currentDomain === USER_DOMAIN;
-
-  // Debug Log 1: ตรวจสอบค่า domain และ env
-  console.log('Debug Domain Check:', {
-    currentDomain,
-    ADMIN_DOMAIN,
-    USER_DOMAIN,
-    DEV_DOMAIN,
-    isDevDomain,
-    isAdminDomain,
-    isUserDomain,
-    DEV_MODE,
-    DEV_ROLE,
-    windowLocation: window.location.href
-  });
-
-  // ตรวจสอบ domain ที่อนุญาต
-  const isAllowedDomain = isDevDomain || isAdminDomain || isUserDomain;
-
   if (!isAllowedDomain) {
-    console.log('Debug: Domain ไม่ได้รับอนุญาต', {
-      currentDomain,
-      isAllowedDomain,
-      isDevDomain,
-      isAdminDomain,
-      isUserDomain
-    });
     return (
       <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'red' }}>
         <h1>ไม่อนุญาตให้เข้าถึง</h1>
@@ -177,72 +182,6 @@ function AppContent() {
       </div>
     );
   }
-
-  // เช็ค login
-  const isLoggedIn = localStorage.getItem('token');
-
-  // ตรวจสอบว่าจะแสดง UI แบบไหน
-  let showAdminUI = false;
-  let showUserUI = false;
-
-  if (DEV_MODE) {
-    // โหมดพัฒนา: ใช้ DEV_ROLE ในการตัดสินใจ
-    showAdminUI = isDevDomain && DEV_ROLE === 'admin';
-    showUserUI = isDevDomain && DEV_ROLE === 'user';
-  } else {
-    // โหมดปกติ: ใช้ domain ในการตัดสินใจ
-    showAdminUI = isAdminDomain;
-    showUserUI = isUserDomain;
-  }
-
-  // Debug Log 2: ตรวจสอบค่า UI และ login
-  console.log('Debug UI Check:', {
-    DEV_MODE,
-    isDevDomain,
-    isAdminDomain,
-    isUserDomain,
-    showAdminUI,
-    showUserUI,
-    isLoggedIn,
-    DEV_ROLE
-  });
-
-  // ถ้าไม่ได้ login ให้ไปหน้า login ตาม role
-  if (!isLoggedIn) {
-    console.log('Debug: ยังไม่ได้ login, redirect ไปหน้า login', {
-      showAdminUI,
-      showUserUI,
-      currentPath: window.location.pathname
-    });
-
-    // ถ้าอยู่ที่หน้า login อยู่แล้ว ไม่ต้อง redirect
-    if (window.location.pathname === '/user/login' || window.location.pathname === '/admin/login') {
-      console.log('Debug: อยู่ที่หน้า login อยู่แล้ว ไม่ต้อง redirect');
-      return (
-        <Routes>
-          {showAdminUI && <Route path="/admin/login" element={<AdminLogin />} />}
-          {showUserUI && <Route path="/user/login" element={<UserLogin />} />}
-        </Routes>
-      );
-    }
-
-    // ถ้าไม่ได้อยู่ที่หน้า login ให้ redirect
-    if (showAdminUI) {
-      console.log('Debug: redirect ไปหน้า admin login');
-      return <Navigate to="/admin/login" replace />;
-    } else if (showUserUI) {
-      console.log('Debug: redirect ไปหน้า user login');
-      return <Navigate to="/user/login" replace />;
-    }
-  }
-
-  // Debug Log 3: ตรวจสอบการ render routes
-  console.log('Debug: กำลัง render routes', {
-    showAdminUI,
-    showUserUI,
-    isLoggedIn,
-    currentPath: window.location.pathname
-  });
 
   return (
     <Routes>
