@@ -3,6 +3,7 @@ import Navbar from './components/admin/Navbar';
 import Dashboard from './pages/admin/dashboard/Dashboard';
 import AdminLogin from './pages/admin/auth/Login';
 import UserLogin from './pages/user/auth/Login';
+import UserRegister from './pages/user/auth/Register';
 import styles from './App.module.css';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -117,7 +118,7 @@ function AppContent() {
 
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isLoggedIn, showAdminUI, showUserUI]);
+  }, [isLoading, isLoggedIn, showAdminUI, showUserUI, navigate]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -235,6 +236,7 @@ function AppContent() {
               <UserLogin />
             )
           } />
+          <Route path="/user/register" element={<UserRegister />} />
           <Route path="/user/*" element={
             isLoggedIn ? (
               <div className={styles.app}>

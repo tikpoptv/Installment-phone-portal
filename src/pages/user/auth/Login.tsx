@@ -77,6 +77,9 @@ function UserLogin() {
           <button type="submit" className={styles.submitButton}>
             เข้าสู่ระบบ
           </button>
+          <div className={styles.registerLink}>
+            ยังไม่มีบัญชี? <a href="/user/register">สมัครสมาชิก</a>
+          </div>
         </form>
       </div>
     </div>
