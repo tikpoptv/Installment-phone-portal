@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
+import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, getPostalCodeBySubDistrict } from 'thai-address-universal';
 
 function UserRegister() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [provinces, setProvinces] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [subDistricts, setSubDistricts] = useState<string[]>([]);
+  const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     // ข้อมูลส่วนตัว
     first_name: '',
@@ -68,6 +73,79 @@ function UserRegister() {
   });
 
   const [error, setError] = useState<string>('');
+
+  // โหลดข้อมูลจังหวัดเมื่อ component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const provincesData = await getProvinceAll();
+        setProvinces(provincesData);
+      } catch (error) {
+        console.error('Error loading provinces:', error);
+      }
+    };
+    loadProvinces();
+  }, []);
+
+  // โหลดข้อมูลอำเภอเมื่อเลือกจังหวัด
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (formData.address_province) {
+        try {
+          const districtsData = await getDistrictByProvince(formData.address_province);
+          setDistricts(districtsData);
+        } catch (error) {
+          console.error('Error loading districts:', error);
+        }
+      } else {
+        setDistricts([]);
+      }
+    };
+    loadDistricts();
+  }, [formData.address_province]);
+
+  // โหลดข้อมูลตำบลเมื่อเลือกอำเภอ
+  useEffect(() => {
+    const loadSubDistricts = async () => {
+      if (formData.address_district) {
+        try {
+          const subDistrictsData = await getSubDistrictByDistrict(formData.address_district);
+          setSubDistricts(subDistrictsData);
+        } catch (error) {
+          console.error('Error loading sub-districts:', error);
+        }
+      } else {
+        setSubDistricts([]);
+      }
+    };
+    loadSubDistricts();
+  }, [formData.address_district]);
+
+  // โหลดรหัสไปรษณีย์เมื่อเลือกตำบล/แขวง
+  useEffect(() => {
+    const loadPostalCode = async () => {
+      if (formData.address_subdistrict) {
+        try {
+          const postalCodesData = await getPostalCodeBySubDistrict(formData.address_subdistrict);
+          setPostalCodes(postalCodesData);
+          
+          // ถ้ามีรหัสไปรษณีย์ ให้เลือกอันแรกเป็นค่าเริ่มต้น
+          if (postalCodesData.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              address_postal_code: postalCodesData[0]
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading postal code:', error);
+          setPostalCodes([]);
+        }
+      } else {
+        setPostalCodes([]);
+      }
+    };
+    loadPostalCode();
+  }, [formData.address_subdistrict]);
 
   const formatCitizenId = (value: string) => {
     // ลบทุกอย่างที่ไม่ใช่ตัวเลข
@@ -322,6 +400,7 @@ function UserRegister() {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  placeholder="บ้านเลขที่, หมู่, ถนน"
                   required
                 />
               </div>
@@ -336,7 +415,11 @@ function UserRegister() {
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
-                  {/* TODO: เพิ่มรายการจังหวัด */}
+                  {provinces.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -348,9 +431,14 @@ function UserRegister() {
                   value={formData.address_district}
                   onChange={handleChange}
                   required
+                  disabled={!formData.address_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
-                  {/* TODO: เพิ่มรายการอำเภอ/เขต */}
+                  {districts.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -362,24 +450,53 @@ function UserRegister() {
                   value={formData.address_subdistrict}
                   onChange={handleChange}
                   required
+                  disabled={!formData.address_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
-                  {/* TODO: เพิ่มรายการตำบล/แขวง */}
+                  {subDistricts.map((subDistrict) => (
+                    <option key={subDistrict} value={subDistrict}>
+                      {subDistrict}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_postal_code" data-required>รหัสไปรษณีย์</label>
-                <input
-                  type="text"
-                  id="address_postal_code"
-                  name="address_postal_code"
-                  value={formData.address_postal_code}
-                  onChange={handleChange}
-                  pattern="[0-9]{5}"
-                  maxLength={5}
-                  required
-                />
+                {postalCodes.length > 1 ? (
+                  <select
+                    id="address_postal_code"
+                    name="address_postal_code"
+                    value={formData.address_postal_code}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">เลือกรหัสไปรษณีย์</option>
+                    {postalCodes.map((postalCode) => (
+                      <option key={postalCode} value={postalCode}>
+                        {postalCode}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    id="address_postal_code"
+                    name="address_postal_code"
+                    value={formData.address_postal_code}
+                    onChange={handleChange}
+                    placeholder="รหัสไปรษณีย์ 5 หลัก"
+                    pattern="[0-9]{5}"
+                    maxLength={5}
+                    required
+                    readOnly={postalCodes.length === 1}
+                  />
+                )}
+                {postalCodes.length > 1 && (
+                  <small className={styles.helperText}>
+                    พื้นที่นี้มีหลายรหัสไปรษณีย์ กรุณาเลือกรหัสที่ถูกต้อง
+                  </small>
+                )}
               </div>
 
               <div className={styles.inputGroup}>
