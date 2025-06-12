@@ -69,8 +69,31 @@ function UserRegister() {
 
   const [error, setError] = useState<string>('');
 
+  const formatCitizenId = (value: string) => {
+    // ลบทุกอย่างที่ไม่ใช่ตัวเลข
+    const numbers = value.replace(/\D/g, '');
+    
+    // แบ่งเป็นกลุ่มและคั่นด้วย -
+    if (numbers.length <= 1) return numbers;
+    if (numbers.length <= 5) return `${numbers.slice(0, 1)}-${numbers.slice(1)}`;
+    if (numbers.length <= 10) return `${numbers.slice(0, 1)}-${numbers.slice(1, 5)}-${numbers.slice(5)}`;
+    if (numbers.length <= 12) return `${numbers.slice(0, 1)}-${numbers.slice(1, 5)}-${numbers.slice(5, 10)}-${numbers.slice(10)}`;
+    return `${numbers.slice(0, 1)}-${numbers.slice(1, 5)}-${numbers.slice(5, 10)}-${numbers.slice(10, 12)}-${numbers.slice(12, 13)}`;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // จัดการ format พิเศษสำหรับเลขบัตรประชาชน
+    if (name === 'citizen_id') {
+      const formattedValue = formatCitizenId(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -237,8 +260,8 @@ function UserRegister() {
                   name="citizen_id"
                   value={formData.citizen_id}
                   onChange={handleChange}
-                  pattern="[0-9]{13}"
-                  maxLength={13}
+                  maxLength={17} // 1-5-5-2-1 + 4 เครื่องหมาย -
+                  placeholder="X-XXXX-XXXXX-XX-X"
                   required
                 />
               </div>
