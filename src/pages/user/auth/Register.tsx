@@ -67,7 +67,7 @@ function UserRegister() {
     confirm_password: ''
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -103,11 +103,6 @@ function UserRegister() {
       ...prev,
       citizen_id_image_url: 'URL_FROM_API' // แทนที่ด้วย URL จริง
     }));
-  };
-
-  const validateForm = () => {
-    // Bypass all validations for now
-    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

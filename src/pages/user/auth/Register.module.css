@@ -913,6 +913,7 @@
 
 /* Number Input for Monthly Income */
 .inputGroup input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
 
