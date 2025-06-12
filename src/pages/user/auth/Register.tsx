@@ -13,6 +13,7 @@ function UserRegister() {
     gender: '',
     birth_date: '',
     citizen_id: '',
+    citizen_id_image_url: '',
     id_card_issued_date: '',
     id_card_expired_date: '',
     
@@ -22,6 +23,7 @@ function UserRegister() {
     address_district: '',
     address_subdistrict: '',
     address_postal_code: '',
+    address_pin_location: '',
     
     // ติดต่อ
     phone_number: '',
@@ -42,6 +44,23 @@ function UserRegister() {
     work_district: '',
     work_subdistrict: '',
     work_postal_code: '',
+    work_pin_location: '',
+    
+    // บุคคลอ้างอิง
+    reference_contacts: [
+      {
+        full_name: '',
+        nickname: '',
+        phone_number: '',
+        relationship: ''
+      },
+      {
+        full_name: '',
+        nickname: '',
+        phone_number: '',
+        relationship: ''
+      }
+    ],
     
     // รหัสผ่าน
     password: '',
@@ -58,18 +77,71 @@ function UserRegister() {
     }));
   };
 
+  const handleReferenceChange = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      reference_contacts: prev.reference_contacts.map((contact, i) => 
+        i === index ? { ...contact, [field]: value } : contact
+      )
+    }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // TODO: อัพโหลดไฟล์และรับ URL
+    // const formData = new FormData();
+    // formData.append('file', file);
+    // const response = await fetch('/api/upload', {
+    //   method: 'POST',
+    //   body: formData
+    // });
+    // const { url } = await response.json();
+    
+    setFormData(prev => ({
+      ...prev,
+      citizen_id_image_url: 'URL_FROM_API' // แทนที่ด้วย URL จริง
+    }));
+  };
+
+  const validateForm = () => {
+    // Bypass all validations for now
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    // TODO: เรียก API register
-    console.log('Form Data:', formData);
-    
-    // Redirect ไปยังหน้า login หลังจากสมัครสมาชิกสำเร็จ
-    navigate('/user/login');
+    try {
+      // TODO: เรียก API register
+      const response = await fetch('/api/user/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          monthly_income: Number(formData.monthly_income)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('การสมัครสมาชิกไม่สำเร็จ');
+      }
+
+      const data = await response.json();
+      console.log('Registration successful:', data);
+      navigate('/user/login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+    }
   };
 
   const nextStep = () => {
+    // Bypass all step validations
+    setError('');
     setCurrentStep(prev => prev + 1);
   };
 
@@ -87,7 +159,8 @@ function UserRegister() {
           <div className={styles.step} data-active={currentStep >= 1} data-label="ข้อมูลส่วนตัว"></div>
           <div className={styles.step} data-active={currentStep >= 2} data-label="ที่อยู่"></div>
           <div className={styles.step} data-active={currentStep >= 3} data-label="อาชีพ"></div>
-          <div className={styles.step} data-active={currentStep >= 4} data-label="รหัสผ่าน"></div>
+          <div className={styles.step} data-active={currentStep >= 4} data-label="บุคคลอ้างอิง"></div>
+          <div className={styles.step} data-active={currentStep >= 5} data-label="รหัสผ่าน"></div>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
@@ -171,6 +244,17 @@ function UserRegister() {
                   onChange={handleChange}
                   pattern="[0-9]{13}"
                   maxLength={13}
+                  required
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="citizen_id_image" data-required>รูปบัตรประชาชน</label>
+                <input
+                  type="file"
+                  id="citizen_id_image"
+                  accept="image/*"
+                  onChange={handleFileUpload}
                   required
                 />
               </div>
@@ -280,6 +364,19 @@ function UserRegister() {
                 />
               </div>
 
+              <div className={styles.inputGroup}>
+                <label htmlFor="address_pin_location" data-required>พิกัดที่อยู่</label>
+                <input
+                  type="url"
+                  id="address_pin_location"
+                  name="address_pin_location"
+                  value={formData.address_pin_location}
+                  onChange={handleChange}
+                  placeholder="https://maps.google.com/..."
+                  required
+                />
+              </div>
+
               <div className={styles.buttonGroup}>
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
@@ -309,31 +406,29 @@ function UserRegister() {
               </div>
 
               <div className={styles.inputGroup}>
-                <label htmlFor="work_position" data-required>ตำแหน่ง</label>
+                <label htmlFor="work_position">ตำแหน่ง</label>
                 <input
                   type="text"
                   id="work_position"
                   name="work_position"
                   value={formData.work_position}
                   onChange={handleChange}
-                  required
                 />
               </div>
 
               <div className={styles.inputGroup}>
-                <label htmlFor="workplace_name" data-required>ชื่อสถานที่ทำงาน</label>
+                <label htmlFor="workplace_name">ชื่อสถานที่ทำงาน</label>
                 <input
                   type="text"
                   id="workplace_name"
                   name="workplace_name"
                   value={formData.workplace_name}
                   onChange={handleChange}
-                  required
                 />
               </div>
 
               <div className={styles.inputGroup}>
-                <label htmlFor="work_phone" data-required>เบอร์โทรศัพท์ที่ทำงาน</label>
+                <label htmlFor="work_phone">เบอร์โทรศัพท์ที่ทำงาน</label>
                 <input
                   type="tel"
                   id="work_phone"
@@ -342,7 +437,6 @@ function UserRegister() {
                   onChange={handleChange}
                   pattern="[0-9]{10}"
                   maxLength={10}
-                  required
                 />
               </div>
 
@@ -371,6 +465,75 @@ function UserRegister() {
                 />
               </div>
 
+              <div className={styles.inputGroup}>
+                <label htmlFor="work_province" data-required>จังหวัดที่ทำงาน</label>
+                <select
+                  id="work_province"
+                  name="work_province"
+                  value={formData.work_province}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">เลือกจังหวัด</option>
+                  {/* TODO: เพิ่มรายการจังหวัด */}
+                </select>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="work_district" data-required>อำเภอ/เขตที่ทำงาน</label>
+                <select
+                  id="work_district"
+                  name="work_district"
+                  value={formData.work_district}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">เลือกอำเภอ/เขต</option>
+                  {/* TODO: เพิ่มรายการอำเภอ/เขต */}
+                </select>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="work_subdistrict" data-required>ตำบล/แขวงที่ทำงาน</label>
+                <select
+                  id="work_subdistrict"
+                  name="work_subdistrict"
+                  value={formData.work_subdistrict}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">เลือกตำบล/แขวง</option>
+                  {/* TODO: เพิ่มรายการตำบล/แขวง */}
+                </select>
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="work_postal_code" data-required>รหัสไปรษณีย์ที่ทำงาน</label>
+                <input
+                  type="text"
+                  id="work_postal_code"
+                  name="work_postal_code"
+                  value={formData.work_postal_code}
+                  onChange={handleChange}
+                  pattern="[0-9]{5}"
+                  maxLength={5}
+                  required
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label htmlFor="work_pin_location" data-required>พิกัดที่ทำงาน</label>
+                <input
+                  type="url"
+                  id="work_pin_location"
+                  name="work_pin_location"
+                  value={formData.work_pin_location}
+                  onChange={handleChange}
+                  placeholder="https://maps.google.com/..."
+                  required
+                />
+              </div>
+
               <div className={styles.buttonGroup}>
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
@@ -382,8 +545,75 @@ function UserRegister() {
             </div>
           )}
 
-          {/* Step 4: รหัสผ่าน */}
+          {/* Step 4: บุคคลอ้างอิง */}
           {currentStep === 4 && (
+            <div className={styles.stepContent}>
+              <h2 className={styles.stepTitle}>บุคคลอ้างอิง</h2>
+              
+              {formData.reference_contacts.map((contact, index) => (
+                <div key={index} className={styles.referenceContact}>
+                  <h3 className={styles.referenceTitle}>บุคคลอ้างอิงที่ {index + 1}</h3>
+                  
+                  <div className={styles.inputGroup}>
+                    <label htmlFor={`reference_full_name_${index}`} data-required>ชื่อ-นามสกุล</label>
+                    <input
+                      type="text"
+                      id={`reference_full_name_${index}`}
+                      value={contact.full_name}
+                      onChange={(e) => handleReferenceChange(index, 'full_name', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label htmlFor={`reference_nickname_${index}`}>ชื่อเล่น</label>
+                    <input
+                      type="text"
+                      id={`reference_nickname_${index}`}
+                      value={contact.nickname}
+                      onChange={(e) => handleReferenceChange(index, 'nickname', e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label htmlFor={`reference_phone_${index}`} data-required>เบอร์โทรศัพท์</label>
+                    <input
+                      type="tel"
+                      id={`reference_phone_${index}`}
+                      value={contact.phone_number}
+                      onChange={(e) => handleReferenceChange(index, 'phone_number', e.target.value)}
+                      pattern="[0-9]{10}"
+                      maxLength={10}
+                      required
+                    />
+                  </div>
+
+                  <div className={styles.inputGroup}>
+                    <label htmlFor={`reference_relationship_${index}`} data-required>ความสัมพันธ์</label>
+                    <input
+                      type="text"
+                      id={`reference_relationship_${index}`}
+                      value={contact.relationship}
+                      onChange={(e) => handleReferenceChange(index, 'relationship', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className={styles.buttonGroup}>
+                <button type="button" className={styles.prevButton} onClick={prevStep}>
+                  ย้อนกลับ
+                </button>
+                <button type="button" className={styles.nextButton} onClick={nextStep}>
+                  ถัดไป
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: รหัสผ่าน */}
+          {currentStep === 5 && (
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>รหัสผ่าน</h2>
               
@@ -443,6 +673,7 @@ function UserRegister() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
+                  minLength={6}
                   required
                 />
               </div>
@@ -455,6 +686,7 @@ function UserRegister() {
                   name="confirm_password"
                   value={formData.confirm_password}
                   onChange={handleChange}
+                  minLength={6}
                   required
                 />
               </div>
