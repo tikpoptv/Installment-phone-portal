@@ -2,6 +2,63 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
 import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, getPostalCodeBySubDistrict } from 'thai-address-universal';
+import { MapPicker } from '../../../components/MapPicker';
+
+interface FormData {
+  // ข้อมูลส่วนตัว
+  first_name: string;
+  last_name: string;
+  nickname: string;
+  gender: string;
+  birth_date: string;
+  citizen_id: string;
+  citizen_id_image_url: string;
+  id_card_issued_date: string;
+  id_card_expired_date: string;
+  
+  // ที่อยู่
+  address: string;
+  address_province: string;
+  address_district: string;
+  address_subdistrict: string;
+  address_postal_code: string;
+  address_pin_location: string;
+  
+  // ติดต่อ
+  phone_number: string;
+  email: string;
+  facebook_url: string;
+  line_id: string;
+  
+  // อาชีพ
+  occupation: string;
+  work_position: string;
+  workplace_name: string;
+  work_phone: string;
+  monthly_income: string;
+  
+  // ที่ทำงาน
+  work_address: string;
+  work_province: string;
+  work_district: string;
+  work_subdistrict: string;
+  work_postal_code: string;
+  work_pin_location: string;
+  
+  // บุคคลอ้างอิง
+  reference_contacts: Array<{
+    full_name: string;
+    nickname: string;
+    phone_number: string;
+    relationship: string;
+  }>;
+  
+  // รหัสผ่าน
+  password: string;
+  confirm_password: string;
+  latitude?: number;
+  longitude?: number;
+}
 
 function UserRegister() {
   const navigate = useNavigate();
@@ -10,7 +67,8 @@ function UserRegister() {
   const [districts, setDistricts] = useState<string[]>([]);
   const [subDistricts, setSubDistricts] = useState<string[]>([]);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     // ข้อมูลส่วนตัว
     first_name: '',
     last_name: '',
@@ -69,7 +127,9 @@ function UserRegister() {
     
     // รหัสผ่าน
     password: '',
-    confirm_password: ''
+    confirm_password: '',
+    latitude: undefined,
+    longitude: undefined
   });
 
   const [error, setError] = useState<string>('');
@@ -203,6 +263,16 @@ function UserRegister() {
     setFormData(prev => ({
       ...prev,
       citizen_id_image_url: 'URL_FROM_API' // แทนที่ด้วย URL จริง
+    }));
+  };
+
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setCoordinates({ lat, lng });
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+      address_pin_location: `https://www.google.com/maps?q=${lat},${lng}`
     }));
   };
 
@@ -511,6 +581,22 @@ function UserRegister() {
                   required
                 />
               </div>
+
+              {formData.address_district && formData.address_subdistrict && (
+                <MapPicker
+                  address={formData.address}
+                  province={formData.address_province}
+                  district={formData.address_district}
+                  subdistrict={formData.address_subdistrict}
+                  onLocationSelect={handleLocationSelect}
+                />
+              )}
+
+              {coordinates && (
+                <div className="text-sm text-gray-500">
+                  ตำแหน่งที่เลือก: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+                </div>
+              )}
 
               <div className={styles.buttonGroup}>
                 <button type="button" className={styles.prevButton} onClick={prevStep}>

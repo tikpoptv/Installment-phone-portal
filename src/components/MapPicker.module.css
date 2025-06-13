@@ -1,0 +1,200 @@
+.mapContainer {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8fafc;
+}
+
+.mapContainer > div {
+  height: 100%;
+  width: 100%;
+}
+
+.searchContainer {
+  margin-bottom: 1rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.searchButton {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+  background-color: #2563eb;
+}
+
+.searchButton:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.instructions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-radius: 0.375rem;
+}
+
+.instructions p {
+  margin: 0.5rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
+/* Popup styles */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popupContent {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.popupHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.closeButton:hover {
+  color: #1e293b;
+}
+
+.popupActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.confirmButton {
+  background-color: #10b981;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.confirmButton:hover {
+  background-color: #059669;
+}
+
+/* Geoapify Autocomplete Styles */
+.geoapify-autocomplete-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.geoapify-autocomplete-items {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.geoapify-autocomplete-item {
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.geoapify-autocomplete-item:hover {
+  background-color: #f1f5f9;
+}
+
+/* OpenLayers Map Styles */
+.ol-control {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ol-zoom {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.ol-attribution {
+  bottom: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.ol-attribution ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.ol-attribution li {
+  display: inline;
+  margin: 0 0.5rem;
+}
+
+.ol-attribution a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.ol-attribution a:hover {
+  text-decoration: underline;
+} 
