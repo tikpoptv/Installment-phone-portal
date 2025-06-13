@@ -251,39 +251,33 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
       {isPopupOpen && (
         <div className={styles.popupOverlay}>
-          <div ref={popupContentRef} className={styles.popupContent}>
+          <div className={styles.popupContent} ref={popupContentRef}>
             <div className={styles.popupHeader}>
               <h3>เลือกตำแหน่งบนแผนที่</h3>
-              <button 
+              <button
                 className={styles.closeButton}
                 onClick={() => setIsPopupOpen(false)}
+                aria-label="ปิด"
               >
                 ×
               </button>
             </div>
 
-            <div className={styles.mapContainer}>
-              <div 
-                ref={mapRef} 
-                style={{ 
-                  height: '100%', 
-                  width: '100%',
-                  position: 'relative'
-                }} 
-              />
+            <div className={styles.mapContainer} ref={mapRef}>
+              {!mapInstanceRef.current && (
+                <div className={styles.loading}>
+                  กำลังโหลดแผนที่...
+                </div>
+              )}
             </div>
 
-            {currentLocation && (
-              <div className={styles.coordinates}>
-                <p>พิกัดปัจจุบัน: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
-                <button 
-                  className={styles.googleMapsButton}
-                  onClick={openInGoogleMaps}
-                >
-                  ดูใน Google Maps
-                </button>
-              </div>
-            )}
+            <div className={styles.instructions}>
+              <p>• คลิกบนแผนที่เพื่อเลือกตำแหน่ง</p>
+              <p>• รัศมีวงกลมแสดงระยะทาง 800 เมตร</p>
+              {currentLocation && (
+                <p>• พิกัดปัจจุบัน: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
+              )}
+            </div>
 
             <div className={styles.popupActions}>
               <button
@@ -293,12 +287,15 @@ export const MapPicker: React.FC<MapPickerProps> = ({
               >
                 ยืนยันตำแหน่ง
               </button>
-            </div>
-
-            <div className={styles.instructions}>
-              <p>1. คลิกที่แผนที่เพื่อเลือกตำแหน่งที่ต้องการ</p>
-              <p>2. วงกลมสีฟ้าแสดงรัศมี 800 เมตรจากตำแหน่งที่เลือก</p>
-              <p>3. กดปุ่ม "ยืนยันตำแหน่ง" เมื่อเลือกตำแหน่งเสร็จ</p>
+              {currentLocation && (
+                <button
+                  className={styles.confirmButton}
+                  onClick={openInGoogleMaps}
+                  style={{ backgroundColor: '#3b82f6' }}
+                >
+                  เปิดใน Google Maps
+                </button>
+              )}
             </div>
           </div>
         </div>
