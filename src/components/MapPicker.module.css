@@ -84,6 +84,16 @@
   cursor: not-allowed;
 }
 
+.disabledButton {
+  background-color: #9ca3af !important;
+  color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+}
+
+.disabledButton:hover {
+  background-color: #9ca3af !important;
+}
+
 .instructions {
   margin-top: 1rem;
   padding: 1rem;

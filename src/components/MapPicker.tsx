@@ -27,6 +27,32 @@ const defaultCenter = {
   lng: 100.5018
 };
 
+// ฟังก์ชันสำหรับจัดการ daily quota
+const getDailyQuota = () => {
+  // แปลงเวลาเป็นประเทศไทย (UTC+7)
+  const now = new Date();
+  const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const today = thaiTime.toISOString().split('T')[0];
+  const quotaKey = `google_maps_quota_${today}`;
+  const quota = localStorage.getItem(quotaKey);
+  return quota ? parseInt(quota) : 0;
+};
+
+const incrementDailyQuota = () => {
+  // แปลงเวลาเป็นประเทศไทย (UTC+7)
+  const now = new Date();
+  const thaiTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+  const today = thaiTime.toISOString().split('T')[0];
+  const quotaKey = `google_maps_quota_${today}`;
+  const currentQuota = getDailyQuota();
+  localStorage.setItem(quotaKey, (currentQuota + 1).toString());
+};
+
+const isQuotaExceeded = () => {
+  const dailyLimit = parseInt(import.meta.env.VITE_GOOGLE_MAPS_DAILY_LIMIT || '1000');
+  return getDailyQuota() >= dailyLimit;
+};
+
 export const MapPicker: React.FC<MapPickerProps> = ({
   address,
   province,
@@ -39,6 +65,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [pendingCoordinate, setPendingCoordinate] = useState<number[] | null>(null);
+  const [isQuotaReached, setIsQuotaReached] = useState(isQuotaExceeded());
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markerLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -108,6 +135,11 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
   // ค้นหาตำแหน่งจากที่อยู่ด้วย Google Geocoding API
   const geocodeAddress = useCallback(async () => {
+    if (isQuotaReached) {
+      alert('ขออภัย ระบบไม่สามารถค้นหาตำแหน่งได้ในขณะนี้ เนื่องจากเกินโควต้าที่กำหนดไว้ กรุณาลองใหม่ในวันถัดไป');
+      return;
+    }
+
     console.log('Calling Google Geocoding API...');
     const fullAddress = `${address} ${subdistrict} ${district} ${province}`;
     const googleApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -122,6 +154,10 @@ export const MapPicker: React.FC<MapPickerProps> = ({
         const { lat, lng } = data.results[0].geometry.location;
         const coordinate = fromLonLat([lng, lat]);
         
+        // เพิ่มจำนวนการใช้งาน
+        incrementDailyQuota();
+        setIsQuotaReached(isQuotaExceeded());
+        
         // เปิด popup และตั้งค่าแผนที่
         setIsPopupOpen(true);
         setPendingCoordinate(coordinate);
@@ -132,7 +168,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
       console.error('Error searching location:', error);
       alert('เกิดข้อผิดพลาดในการค้นหาตำแหน่ง กรุณาลองใหม่อีกครั้ง');
     }
-  }, [address, subdistrict, district, province]);
+  }, [address, subdistrict, district, province, isQuotaReached]);
 
   // สร้าง map
   useEffect(() => {
@@ -242,11 +278,11 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   return (
     <div>
       <button
-        className={styles.searchButton}
+        className={`${styles.searchButton} ${isQuotaReached ? styles.disabledButton : ''}`}
         onClick={geocodeAddress}
-        disabled={!address || !province || !district || !subdistrict}
+        disabled={!address || !province || !district || !subdistrict || isQuotaReached}
       >
-        เลือกตำแหน่งบนแผนที่
+        {isQuotaReached ? 'ไม่พร้อมใช้งาน' : 'เลือกตำแหน่งบนแผนที่'}
       </button>
 
       {isPopupOpen && (
@@ -277,6 +313,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
               {currentLocation && (
                 <p>• พิกัดปัจจุบัน: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
               )}
+              <p>• จำนวนการใช้งานวันนี้: {getDailyQuota()}/{import.meta.env.VITE_GOOGLE_MAPS_DAILY_LIMIT}</p>
             </div>
 
             <div className={styles.popupActions}>
