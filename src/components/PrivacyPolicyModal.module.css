@@ -1,0 +1,163 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #1a1c2e 0%, #0f172a 100%);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 40px -10px rgba(0, 0, 0, 0.3),
+    0 0 100px rgba(59, 130, 246, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1d4ed8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.content {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.content h3 {
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.content ul {
+  list-style-type: none;
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+}
+
+.content li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.content li::before {
+  content: '•';
+  color: #60a5fa;
+  position: absolute;
+  left: 0;
+  font-size: 1.25rem;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.rejectButton,
+.acceptButton {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.rejectButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rejectButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.acceptButton {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #1d4ed8 100%);
+  color: #fff;
+  border: none;
+}
+
+.acceptButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .modalContent {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .content {
+    font-size: 0.8125rem;
+  }
+
+  .content h3 {
+    font-size: 1rem;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .rejectButton,
+  .acceptButton {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+} 

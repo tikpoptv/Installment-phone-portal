@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
+import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
 
 function UserLogin() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ function UserLogin() {
     password: ''
   });
   const [error, setError] = useState('');
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,6 +44,16 @@ function UserLogin() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     }
+  };
+
+  const handleRegisterClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setShowPrivacyPolicy(true);
+  };
+
+  const handlePrivacyPolicyAccept = () => {
+    setShowPrivacyPolicy(false);
+    navigate('/user/register');
   };
 
   return (
@@ -78,10 +90,16 @@ function UserLogin() {
             เข้าสู่ระบบ
           </button>
           <div className={styles.registerLink}>
-            ยังไม่มีบัญชี? <a href="/user/register">สมัครสมาชิก</a>
+            ยังไม่มีบัญชี? <a href="/user/register" onClick={handleRegisterClick}>สมัครสมาชิก</a>
           </div>
         </form>
       </div>
+
+      <PrivacyPolicyModal
+        isOpen={showPrivacyPolicy}
+        onClose={() => setShowPrivacyPolicy(false)}
+        onAccept={handlePrivacyPolicyAccept}
+      />
     </div>
   );
 }
