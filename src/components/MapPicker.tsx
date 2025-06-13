@@ -43,6 +43,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
   const mapInstanceRef = useRef<Map | null>(null);
   const markerLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const circleLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const popupContentRef = useRef<HTMLDivElement>(null);
 
   // สร้าง marker style พร้อมแสดงพิกัด
   const createMarkerStyle = (coordinate: number[]) => {
@@ -228,6 +229,16 @@ export const MapPicker: React.FC<MapPickerProps> = ({
     }
   }, [currentLocation, onLocationSelect]);
 
+  // Scroll to popup when it opens
+  useEffect(() => {
+    if (isPopupOpen && popupContentRef.current) {
+      popupContentRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [isPopupOpen]);
+
   return (
     <div>
       <button
@@ -240,7 +251,7 @@ export const MapPicker: React.FC<MapPickerProps> = ({
 
       {isPopupOpen && (
         <div className={styles.popupOverlay}>
-          <div className={styles.popupContent}>
+          <div ref={popupContentRef} className={styles.popupContent}>
             <div className={styles.popupHeader}>
               <h3>เลือกตำแหน่งบนแผนที่</h3>
               <button 
