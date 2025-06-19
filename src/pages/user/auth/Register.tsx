@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
-import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, getPostalCodeBySubDistrict } from 'thai-address-universal';
+import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, searchAddressBySubDistrict } from 'thai-address-universal';
 import { MapPicker } from '../../../components/MapPicker';
 
 interface FormData {
@@ -68,6 +68,11 @@ function UserRegister() {
   const [subDistricts, setSubDistricts] = useState<string[]>([]);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [workProvinces, setWorkProvinces] = useState<string[]>([]);
+  const [workDistricts, setWorkDistricts] = useState<string[]>([]);
+  const [workSubDistricts, setWorkSubDistricts] = useState<string[]>([]);
+  const [workPostalCodes, setWorkPostalCodes] = useState<string[]>([]);
+  const [workCoordinates, setWorkCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [formData, setFormData] = useState<FormData>({
     // ข้อมูลส่วนตัว
     first_name: '',
@@ -184,28 +189,142 @@ function UserRegister() {
   // โหลดรหัสไปรษณีย์เมื่อเลือกตำบล/แขวง
   useEffect(() => {
     const loadPostalCode = async () => {
-      if (formData.address_subdistrict) {
+      if (formData.address_subdistrict && formData.address_district && formData.address_province) {
         try {
-          const postalCodesData = await getPostalCodeBySubDistrict(formData.address_subdistrict);
-          setPostalCodes(postalCodesData);
-          
-          // ถ้ามีรหัสไปรษณีย์ ให้เลือกอันแรกเป็นค่าเริ่มต้น
-          if (postalCodesData.length > 0) {
+          const results = await searchAddressBySubDistrict(formData.address_subdistrict);
+          // filter เฉพาะที่ตรงกับจังหวัดและอำเภอและตำบล
+          const filtered = results.filter(
+            item =>
+              item.province === formData.address_province &&
+              item.district === formData.address_district &&
+              item.sub_district === formData.address_subdistrict
+          );
+          // ดึงรหัสไปรษณีย์ที่เป็นเลข 5 หลัก
+          const postalCodes = Array.from(
+            new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
+          );
+          setPostalCodes(postalCodes);
+          if (postalCodes.length > 0) {
             setFormData(prev => ({
               ...prev,
-              address_postal_code: postalCodesData[0]
+              address_postal_code: postalCodes[0]
+            }));
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              address_postal_code: ''
             }));
           }
-        } catch (error) {
-          console.error('Error loading postal code:', error);
+        } catch {
           setPostalCodes([]);
+          setFormData(prev => ({
+            ...prev,
+            address_postal_code: ''
+          }));
         }
       } else {
         setPostalCodes([]);
+        setFormData(prev => ({
+          ...prev,
+          address_postal_code: ''
+        }));
       }
     };
     loadPostalCode();
-  }, [formData.address_subdistrict]);
+  }, [formData.address_subdistrict, formData.address_district, formData.address_province]);
+
+  // โหลดข้อมูลจังหวัดที่ทำงานเมื่อ component mount
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const provincesData = await getProvinceAll();
+        setWorkProvinces(provincesData);
+      } catch (error) {
+        console.error('Error loading work provinces:', error);
+      }
+    };
+    loadProvinces();
+  }, []);
+
+  // โหลดข้อมูลอำเภอที่ทำงานเมื่อเลือกจังหวัด
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (formData.work_province) {
+        try {
+          const districtsData = await getDistrictByProvince(formData.work_province);
+          setWorkDistricts(districtsData);
+        } catch (error) {
+          console.error('Error loading work districts:', error);
+        }
+      } else {
+        setWorkDistricts([]);
+      }
+    };
+    loadDistricts();
+  }, [formData.work_province]);
+
+  // โหลดข้อมูลตำบลที่ทำงานเมื่อเลือกอำเภอ
+  useEffect(() => {
+    const loadSubDistricts = async () => {
+      if (formData.work_district) {
+        try {
+          const subDistrictsData = await getSubDistrictByDistrict(formData.work_district);
+          setWorkSubDistricts(subDistrictsData);
+        } catch (error) {
+          console.error('Error loading work sub-districts:', error);
+          setWorkSubDistricts([]);
+        }
+      } else {
+        setWorkSubDistricts([]);
+      }
+    };
+    loadSubDistricts();
+  }, [formData.work_district]);
+
+  // โหลดรหัสไปรษณีย์ที่ทำงานเมื่อเลือกตำบล/แขวง
+  useEffect(() => {
+    const loadPostalCode = async () => {
+      if (formData.work_subdistrict && formData.work_district && formData.work_province) {
+        try {
+          const results = await searchAddressBySubDistrict(formData.work_subdistrict);
+          const filtered = results.filter(
+            item =>
+              item.province === formData.work_province &&
+              item.district === formData.work_district &&
+              item.sub_district === formData.work_subdistrict
+          );
+          const postalCodes = Array.from(
+            new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
+          );
+          setWorkPostalCodes(postalCodes);
+          if (postalCodes.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              work_postal_code: postalCodes[0]
+            }));
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              work_postal_code: ''
+            }));
+          }
+        } catch {
+          setWorkPostalCodes([]);
+          setFormData(prev => ({
+            ...prev,
+            work_postal_code: ''
+          }));
+        }
+      } else {
+        setWorkPostalCodes([]);
+        setFormData(prev => ({
+          ...prev,
+          work_postal_code: ''
+        }));
+      }
+    };
+    loadPostalCode();
+  }, [formData.work_subdistrict, formData.work_district, formData.work_province]);
 
   const formatCitizenId = (value: string) => {
     // ลบทุกอย่างที่ไม่ใช่ตัวเลข
@@ -273,6 +392,14 @@ function UserRegister() {
       latitude: lat,
       longitude: lng,
       address_pin_location: `https://www.google.com/maps?q=${lat},${lng}`
+    }));
+  };
+
+  const handleWorkLocationSelect = (lat: number, lng: number) => {
+    setWorkCoordinates({ lat, lng });
+    setFormData(prev => ({
+      ...prev,
+      work_pin_location: `https://www.google.com/maps?q=${lat},${lng}`
     }));
   };
 
@@ -674,6 +801,7 @@ function UserRegister() {
                 />
               </div>
 
+              {/* ที่อยู่ที่ทำงาน (dynamic) */}
               <div className={styles.inputGroup}>
                 <label htmlFor="work_address" data-required>ที่อยู่ที่ทำงาน</label>
                 <input
@@ -685,7 +813,6 @@ function UserRegister() {
                   required
                 />
               </div>
-
               <div className={styles.inputGroup}>
                 <label htmlFor="work_province" data-required>จังหวัดที่ทำงาน</label>
                 <select
@@ -696,10 +823,13 @@ function UserRegister() {
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
-                  {/* TODO: เพิ่มรายการจังหวัด */}
+                  {workProvinces.map((province) => (
+                    <option key={province} value={province}>
+                      {province}
+                    </option>
+                  ))}
                 </select>
               </div>
-
               <div className={styles.inputGroup}>
                 <label htmlFor="work_district" data-required>อำเภอ/เขตที่ทำงาน</label>
                 <select
@@ -708,12 +838,16 @@ function UserRegister() {
                   value={formData.work_district}
                   onChange={handleChange}
                   required
+                  disabled={!formData.work_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
-                  {/* TODO: เพิ่มรายการอำเภอ/เขต */}
+                  {workDistricts.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
                 </select>
               </div>
-
               <div className={styles.inputGroup}>
                 <label htmlFor="work_subdistrict" data-required>ตำบล/แขวงที่ทำงาน</label>
                 <select
@@ -722,26 +856,53 @@ function UserRegister() {
                   value={formData.work_subdistrict}
                   onChange={handleChange}
                   required
+                  disabled={!formData.work_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
-                  {/* TODO: เพิ่มรายการตำบล/แขวง */}
+                  {workSubDistricts.map((subDistrict) => (
+                    <option key={subDistrict} value={subDistrict}>
+                      {subDistrict}
+                    </option>
+                  ))}
                 </select>
               </div>
-
               <div className={styles.inputGroup}>
                 <label htmlFor="work_postal_code" data-required>รหัสไปรษณีย์ที่ทำงาน</label>
-                <input
-                  type="text"
-                  id="work_postal_code"
-                  name="work_postal_code"
-                  value={formData.work_postal_code}
-                  onChange={handleChange}
-                  pattern="[0-9]{5}"
-                  maxLength={5}
-                  required
-                />
+                {workPostalCodes.length > 1 ? (
+                  <select
+                    id="work_postal_code"
+                    name="work_postal_code"
+                    value={formData.work_postal_code}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">เลือกรหัสไปรษณีย์</option>
+                    {workPostalCodes.map((postalCode) => (
+                      <option key={postalCode} value={postalCode}>
+                        {postalCode}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    id="work_postal_code"
+                    name="work_postal_code"
+                    value={formData.work_postal_code}
+                    onChange={handleChange}
+                    placeholder="รหัสไปรษณีย์ 5 หลัก"
+                    pattern="[0-9]{5}"
+                    maxLength={5}
+                    required
+                    readOnly={workPostalCodes.length === 1}
+                  />
+                )}
+                {workPostalCodes.length > 1 && (
+                  <small className={styles.helperText}>
+                    พื้นที่นี้มีหลายรหัสไปรษณีย์ กรุณาเลือกรหัสที่ถูกต้อง
+                  </small>
+                )}
               </div>
-
               <div className={styles.inputGroup}>
                 <label htmlFor="work_pin_location" data-required>พิกัดที่ทำงาน</label>
                 <input
@@ -754,6 +915,20 @@ function UserRegister() {
                   required
                 />
               </div>
+              {formData.work_district && formData.work_subdistrict && (
+                <MapPicker
+                  address={formData.work_address}
+                  province={formData.work_province}
+                  district={formData.work_district}
+                  subdistrict={formData.work_subdistrict}
+                  onLocationSelect={handleWorkLocationSelect}
+                />
+              )}
+              {workCoordinates && (
+                <div className="text-sm text-gray-500">
+                  ตำแหน่งที่เลือก: {workCoordinates.lat.toFixed(6)}, {workCoordinates.lng.toFixed(6)}
+                </div>
+              )}
 
               <div className={styles.buttonGroup}>
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
