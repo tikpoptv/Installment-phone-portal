@@ -140,6 +140,8 @@ function UserRegister() {
   const [error, setError] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [citizenIdImageFile, setCitizenIdImageFile] = useState<File | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   // โหลดข้อมูลจังหวัดเมื่อ component mount
   useEffect(() => {
@@ -422,19 +424,10 @@ function UserRegister() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // TODO: อัพโหลดไฟล์และรับ URL
-    // const formData = new FormData();
-    // formData.append('file', file);
-    // const response = await fetch('/api/upload', {
-    //   method: 'POST',
-    //   body: formData
-    // });
-    // const { url } = await response.json();
-    
+    setCitizenIdImageFile(file);
     setFormData(prev => ({
       ...prev,
-      citizen_id_image_url: 'URL_FROM_API' // แทนที่ด้วย URL จริง
+      citizen_id_image_url: file.name // สำหรับ preview ชื่อไฟล์ (optional)
     }));
   };
 
@@ -459,22 +452,94 @@ function UserRegister() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
+    // Validation
+    const citizenIdRaw = formData.citizen_id.replace(/-/g, '');
+    if (citizenIdRaw.length !== 13 || !/^\d{13}$/.test(citizenIdRaw)) {
+      setError('เลขบัตรประชาชนต้องมี 13 หลัก');
+      return;
+    }
+    if (formData.password.length < 6) {
+      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+    if (!citizenIdImageFile) {
+      setError('กรุณาอัปโหลดรูปบัตรประชาชน');
+      return;
+    }
+    if (!formData.reference_contacts || formData.reference_contacts.length !== 2) {
+      setError('กรุณากรอกข้อมูลบุคคลอ้างอิงให้ครบ 2 คน');
+      return;
+    }
+    // ฟิลด์ที่ต้องกรอก (required)
+    const requiredFields = [
+      'first_name', 'last_name', 'gender', 'birth_date', 'citizen_id',
+      'id_card_issued_date', 'id_card_expired_date',
+      'address', 'address_province', 'address_district', 'address_subdistrict', 'address_postal_code', 'address_pin_location',
+      'phone_number', 'email', 'occupation',
+      'monthly_income', 'work_address', 'work_province', 'work_district', 'work_subdistrict', 'work_postal_code', 'work_pin_location',
+      'password'
+    ];
+    for (const field of requiredFields) {
+      if (!formData[field as keyof typeof formData] || (typeof formData[field as keyof typeof formData] === 'string' && (formData[field as keyof typeof formData] as string).trim() === '')) {
+        setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+    }
+    // ตรวจสอบ reference_contacts
+    for (const ref of formData.reference_contacts) {
+      if (!ref.full_name || !ref.phone_number || !ref.relationship) {
+        setError('กรุณากรอกข้อมูลบุคคลอ้างอิงให้ครบถ้วน');
+        return;
+      }
+    }
+
     try {
-      // TODO: เรียก API register
-      const response = await fetch('/api/user/register', {
+      const fd = new FormData();
+      fd.append('password', formData.password);
+      fd.append('first_name', formData.first_name);
+      fd.append('last_name', formData.last_name);
+      if (formData.nickname) fd.append('nickname', formData.nickname);
+      fd.append('gender', formData.gender);
+      fd.append('birth_date', formData.birth_date);
+      fd.append('citizen_id', citizenIdRaw);
+      fd.append('citizen_id_image', citizenIdImageFile);
+      fd.append('id_card_issued_date', formData.id_card_issued_date);
+      fd.append('id_card_expired_date', formData.id_card_expired_date);
+      fd.append('address', formData.address);
+      fd.append('address_province', formData.address_province);
+      fd.append('address_district', formData.address_district);
+      fd.append('address_subdistrict', formData.address_subdistrict);
+      fd.append('address_postal_code', formData.address_postal_code);
+      fd.append('address_pin_location', formData.address_pin_location);
+      fd.append('phone_number', formData.phone_number);
+      fd.append('email', formData.email);
+      if (formData.facebook_url) fd.append('facebook_url', formData.facebook_url);
+      if (formData.line_id) fd.append('line_id', formData.line_id);
+      fd.append('occupation', formData.occupation);
+      if (formData.work_position) fd.append('work_position', formData.work_position);
+      if (formData.workplace_name) fd.append('workplace_name', formData.workplace_name);
+      if (formData.work_phone) fd.append('work_phone', formData.work_phone);
+      // monthly_income: แปลงเป็น number
+      fd.append('monthly_income', String(Number(formData.monthly_income.replace(/,/g, ''))));
+      fd.append('work_address', formData.work_address);
+      fd.append('work_province', formData.work_province);
+      fd.append('work_district', formData.work_district);
+      fd.append('work_subdistrict', formData.work_subdistrict);
+      fd.append('work_postal_code', formData.work_postal_code);
+      fd.append('work_pin_location', formData.work_pin_location);
+      // reference_contacts: ส่งเป็น JSON string
+      fd.append('reference_contacts', JSON.stringify(formData.reference_contacts));
+
+      const response = await fetch('/api/users/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          monthly_income: Number(formData.monthly_income)
-        }),
+        body: fd
+        // ไม่ต้องใส่ Content-Type, browser จะใส่ multipart ให้อัตโนมัติ
       });
 
       if (!response.ok) {
-        throw new Error('การสมัครสมาชิกไม่สำเร็จ');
+        const errData = await response.json();
+        throw new Error(errData.message || 'การสมัครสมาชิกไม่สำเร็จ');
       }
 
       const data = await response.json();
@@ -486,13 +551,111 @@ function UserRegister() {
   };
 
   const nextStep = () => {
-    // Bypass all step validations
     setError('');
-    setCurrentStep(prev => prev + 1);
+    let valid = true;
+    if (currentStep === 1) valid = validateStep1();
+    if (currentStep === 2) valid = validateStep2();
+    if (currentStep === 3) valid = validateStep3();
+    if (currentStep === 4) valid = validateStep4();
+    if (valid) {
+      setFieldErrors({});
+      setCurrentStep(prev => prev + 1);
+    }
   };
 
   const prevStep = () => {
     setCurrentStep(prev => prev - 1);
+  };
+
+  // ฟังก์ชันตรวจสอบความครบถ้วนในแต่ละ step
+  const isStep1Valid = () => {
+    return (
+      formData.first_name.trim() &&
+      formData.last_name.trim() &&
+      formData.gender &&
+      formData.birth_date &&
+      formData.citizen_id.replace(/-/g, '').length === 13 &&
+      citizenIdImageFile &&
+      formData.id_card_issued_date &&
+      formData.id_card_expired_date
+    );
+  };
+  const isStep2Valid = () => {
+    return (
+      formData.address.trim() &&
+      formData.address_province &&
+      formData.address_district &&
+      formData.address_subdistrict &&
+      formData.address_postal_code &&
+      formData.address_pin_location
+    );
+  };
+  const isStep3Valid = () => {
+    return (
+      formData.occupation.trim() &&
+      formData.monthly_income &&
+      formData.work_address.trim() &&
+      formData.work_province &&
+      formData.work_district &&
+      formData.work_subdistrict &&
+      formData.work_postal_code &&
+      formData.work_pin_location
+    );
+  };
+  const isStep4Valid = () => {
+    return (
+      formData.reference_contacts.length === 2 &&
+      formData.reference_contacts.every(ref => ref.full_name.trim() && ref.phone_number && ref.relationship)
+    );
+  };
+
+  // ฟังก์ชัน validate แต่ละ step และ set error
+  const validateStep1 = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.first_name.trim()) errors.first_name = 'กรุณากรอกชื่อจริง';
+    if (!formData.last_name.trim()) errors.last_name = 'กรุณากรอกนามสกุล';
+    if (!formData.gender) errors.gender = 'กรุณาเลือกเพศ';
+    if (!formData.birth_date) errors.birth_date = 'กรุณาเลือกวันเกิด';
+    if (formData.citizen_id.replace(/-/g, '').length !== 13) errors.citizen_id = 'เลขบัตรประชาชนต้องมี 13 หลัก';
+    if (!citizenIdImageFile) errors.citizen_id_image = 'กรุณาอัปโหลดรูปบัตรประชาชน';
+    if (!formData.id_card_issued_date) errors.id_card_issued_date = 'กรุณาเลือกวันออกบัตร';
+    if (!formData.id_card_expired_date) errors.id_card_expired_date = 'กรุณาเลือกวันหมดอายุบัตร';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  const validateStep2 = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.address.trim()) errors.address = 'กรุณากรอกที่อยู่';
+    if (!formData.address_province) errors.address_province = 'กรุณาเลือกจังหวัด';
+    if (!formData.address_district) errors.address_district = 'กรุณาเลือกอำเภอ/เขต';
+    if (!formData.address_subdistrict) errors.address_subdistrict = 'กรุณาเลือกตำบล/แขวง';
+    if (!formData.address_postal_code) errors.address_postal_code = 'กรุณากรอกรหัสไปรษณีย์';
+    if (!formData.address_pin_location) errors.address_pin_location = 'กรุณากรอกพิกัดที่อยู่';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  const validateStep3 = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.occupation.trim()) errors.occupation = 'กรุณากรอกอาชีพ';
+    if (!formData.monthly_income) errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือน';
+    if (!formData.work_address.trim()) errors.work_address = 'กรุณากรอกที่อยู่ที่ทำงาน';
+    if (!formData.work_province) errors.work_province = 'กรุณาเลือกจังหวัดที่ทำงาน';
+    if (!formData.work_district) errors.work_district = 'กรุณาเลือกอำเภอ/เขตที่ทำงาน';
+    if (!formData.work_subdistrict) errors.work_subdistrict = 'กรุณาเลือกตำบล/แขวงที่ทำงาน';
+    if (!formData.work_postal_code) errors.work_postal_code = 'กรุณากรอกรหัสไปรษณีย์ที่ทำงาน';
+    if (!formData.work_pin_location) errors.work_pin_location = 'กรุณากรอกพิกัดที่ทำงาน';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  const validateStep4 = () => {
+    const errors: { [key: string]: string } = {};
+    formData.reference_contacts.forEach((ref, idx) => {
+      if (!ref.full_name.trim()) errors[`reference_full_name_${idx}`] = 'กรุณากรอกชื่อ-นามสกุล';
+      if (!ref.phone_number) errors[`reference_phone_${idx}`] = 'กรุณากรอกเบอร์โทรศัพท์';
+      if (!ref.relationship) errors[`reference_relationship_${idx}`] = 'กรุณาเลือกความสัมพันธ์';
+    });
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   return (
@@ -519,6 +682,7 @@ function UserRegister() {
               
               <div className={styles.inputGroup}>
                 <label htmlFor="first_name" data-required>ชื่อ</label>
+                {fieldErrors.first_name && <div className={styles.inputError}>{fieldErrors.first_name}</div>}
                 <input
                   type="text"
                   id="first_name"
@@ -526,11 +690,13 @@ function UserRegister() {
                   value={formData.first_name}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.first_name ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="last_name" data-required>นามสกุล</label>
+                {fieldErrors.last_name && <div className={styles.inputError}>{fieldErrors.last_name}</div>}
                 <input
                   type="text"
                   id="last_name"
@@ -538,6 +704,7 @@ function UserRegister() {
                   value={formData.last_name}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.last_name ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
@@ -554,12 +721,14 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="gender" data-required>เพศ</label>
+                {fieldErrors.gender && <div className={styles.inputError}>{fieldErrors.gender}</div>}
                 <select
                   id="gender"
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.gender ? `${styles.inputErrorBorder}` : ''}
                 >
                   <option value="">เลือกเพศ</option>
                   <option value="male">ชาย</option>
@@ -570,6 +739,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="birth_date" data-required>วันเกิด</label>
+                {fieldErrors.birth_date && <div className={styles.inputError}>{fieldErrors.birth_date}</div>}
                 <input
                   type="date"
                   id="birth_date"
@@ -577,11 +747,13 @@ function UserRegister() {
                   value={formData.birth_date}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.birth_date ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="citizen_id" data-required>เลขบัตรประชาชน</label>
+                {fieldErrors.citizen_id && <div className={styles.inputError}>{fieldErrors.citizen_id}</div>}
                 <input
                   type="text"
                   id="citizen_id"
@@ -591,22 +763,26 @@ function UserRegister() {
                   maxLength={17} // 1-5-5-2-1 + 4 เครื่องหมาย -
                   placeholder="X-XXXX-XXXXX-XX-X"
                   required
+                  className={fieldErrors.citizen_id ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="citizen_id_image" data-required>รูปบัตรประชาชน</label>
+                {fieldErrors.citizen_id_image && <div className={styles.inputError}>{fieldErrors.citizen_id_image}</div>}
                 <input
                   type="file"
                   id="citizen_id_image"
                   accept="image/*"
                   onChange={handleFileUpload}
                   required
+                  className={fieldErrors.citizen_id_image ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="id_card_issued_date" data-required>วันออกบัตร</label>
+                {fieldErrors.id_card_issued_date && <div className={styles.inputError}>{fieldErrors.id_card_issued_date}</div>}
                 <input
                   type="date"
                   id="id_card_issued_date"
@@ -614,11 +790,13 @@ function UserRegister() {
                   value={formData.id_card_issued_date}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.id_card_issued_date ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="id_card_expired_date" data-required>วันหมดอายุบัตร</label>
+                {fieldErrors.id_card_expired_date && <div className={styles.inputError}>{fieldErrors.id_card_expired_date}</div>}
                 <input
                   type="date"
                   id="id_card_expired_date"
@@ -626,11 +804,15 @@ function UserRegister() {
                   value={formData.id_card_expired_date}
                   onChange={handleChange}
                   required
+                  className={fieldErrors.id_card_expired_date ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
               <div className={styles.buttonGroup}>
-                <button type="button" className={styles.nextButton} onClick={nextStep}>
+                <button type="button" className={styles.prevButton} onClick={prevStep}>
+                  ย้อนกลับ
+                </button>
+                <button type="button" className={styles.nextButton} onClick={nextStep} disabled={!isStep1Valid()}>
                   ถัดไป
                 </button>
               </div>
@@ -644,6 +826,7 @@ function UserRegister() {
               
               <div className={styles.inputGroup}>
                 <label htmlFor="address" data-required>ที่อยู่</label>
+                {fieldErrors.address && <div className={styles.inputError}>{fieldErrors.address}</div>}
                 <input
                   type="text"
                   id="address"
@@ -657,6 +840,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_province" data-required>จังหวัด</label>
+                {fieldErrors.address_province && <div className={styles.inputError}>{fieldErrors.address_province}</div>}
                 <select
                   id="address_province"
                   name="address_province"
@@ -675,6 +859,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_district" data-required>อำเภอ/เขต</label>
+                {fieldErrors.address_district && <div className={styles.inputError}>{fieldErrors.address_district}</div>}
                 <select
                   id="address_district"
                   name="address_district"
@@ -694,6 +879,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_subdistrict" data-required>ตำบล/แขวง</label>
+                {fieldErrors.address_subdistrict && <div className={styles.inputError}>{fieldErrors.address_subdistrict}</div>}
                 <select
                   id="address_subdistrict"
                   name="address_subdistrict"
@@ -713,6 +899,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_postal_code" data-required>รหัสไปรษณีย์</label>
+                {fieldErrors.address_postal_code && <div className={styles.inputError}>{fieldErrors.address_postal_code}</div>}
                 {postalCodes.length > 1 ? (
                   <select
                     id="address_postal_code"
@@ -751,6 +938,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="address_pin_location" data-required>พิกัดที่อยู่</label>
+                {fieldErrors.address_pin_location && <div className={styles.inputError}>{fieldErrors.address_pin_location}</div>}
                 <input
                   type="url"
                   id="address_pin_location"
@@ -782,7 +970,7 @@ function UserRegister() {
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
                 </button>
-                <button type="button" className={styles.nextButton} onClick={nextStep}>
+                <button type="button" className={styles.nextButton} onClick={nextStep} disabled={!isStep2Valid()}>
                   ถัดไป
                 </button>
               </div>
@@ -796,6 +984,7 @@ function UserRegister() {
               
               <div className={styles.inputGroup}>
                 <label htmlFor="occupation" data-required>อาชีพ</label>
+                {fieldErrors.occupation && <div className={styles.inputError}>{fieldErrors.occupation}</div>}
                 <input
                   type="text"
                   id="occupation"
@@ -844,6 +1033,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="monthly_income" data-required>รายได้ต่อเดือน</label>
+                {fieldErrors.monthly_income && <div className={styles.inputError}>{fieldErrors.monthly_income}</div>}
                 <input
                   type="text"
                   id="monthly_income"
@@ -860,6 +1050,7 @@ function UserRegister() {
               {/* ที่อยู่ที่ทำงาน (dynamic) */}
               <div className={styles.inputGroup}>
                 <label htmlFor="work_address" data-required>ที่อยู่ที่ทำงาน</label>
+                {fieldErrors.work_address && <div className={styles.inputError}>{fieldErrors.work_address}</div>}
                 <input
                   type="text"
                   id="work_address"
@@ -871,6 +1062,7 @@ function UserRegister() {
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_province" data-required>จังหวัดที่ทำงาน</label>
+                {fieldErrors.work_province && <div className={styles.inputError}>{fieldErrors.work_province}</div>}
                 <select
                   id="work_province"
                   name="work_province"
@@ -888,6 +1080,7 @@ function UserRegister() {
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_district" data-required>อำเภอ/เขตที่ทำงาน</label>
+                {fieldErrors.work_district && <div className={styles.inputError}>{fieldErrors.work_district}</div>}
                 <select
                   id="work_district"
                   name="work_district"
@@ -906,6 +1099,7 @@ function UserRegister() {
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_subdistrict" data-required>ตำบล/แขวงที่ทำงาน</label>
+                {fieldErrors.work_subdistrict && <div className={styles.inputError}>{fieldErrors.work_subdistrict}</div>}
                 <select
                   id="work_subdistrict"
                   name="work_subdistrict"
@@ -924,6 +1118,7 @@ function UserRegister() {
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_postal_code" data-required>รหัสไปรษณีย์ที่ทำงาน</label>
+                {fieldErrors.work_postal_code && <div className={styles.inputError}>{fieldErrors.work_postal_code}</div>}
                 {workPostalCodes.length > 1 ? (
                   <select
                     id="work_postal_code"
@@ -961,6 +1156,7 @@ function UserRegister() {
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_pin_location" data-required>พิกัดที่ทำงาน</label>
+                {fieldErrors.work_pin_location && <div className={styles.inputError}>{fieldErrors.work_pin_location}</div>}
                 <input
                   type="url"
                   id="work_pin_location"
@@ -990,7 +1186,7 @@ function UserRegister() {
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
                 </button>
-                <button type="button" className={styles.nextButton} onClick={nextStep}>
+                <button type="button" className={styles.nextButton} onClick={nextStep} disabled={!isStep3Valid()}>
                   ถัดไป
                 </button>
               </div>
@@ -1008,6 +1204,7 @@ function UserRegister() {
                   
                   <div className={styles.inputGroup}>
                     <label htmlFor={`reference_full_name_${index}`} data-required>ชื่อ-นามสกุล</label>
+                    {fieldErrors[`reference_full_name_${index}`] && <div className={styles.inputError}>{fieldErrors[`reference_full_name_${index}`]}</div>}
                     <input
                       type="text"
                       id={`reference_full_name_${index}`}
@@ -1029,6 +1226,7 @@ function UserRegister() {
 
                   <div className={styles.inputGroup}>
                     <label htmlFor={`reference_phone_${index}`} data-required>เบอร์โทรศัพท์</label>
+                    {fieldErrors[`reference_phone_${index}`] && <div className={styles.inputError}>{fieldErrors[`reference_phone_${index}`]}</div>}
                     <input
                       type="tel"
                       id={`reference_phone_${index}`}
@@ -1042,6 +1240,7 @@ function UserRegister() {
 
                   <div className={styles.inputGroup}>
                     <label htmlFor={`reference_relationship_${index}`} data-required>ความสัมพันธ์</label>
+                    {fieldErrors[`reference_relationship_${index}`] && <div className={styles.inputError}>{fieldErrors[`reference_relationship_${index}`]}</div>}
                     <select
                       id={`reference_relationship_${index}`}
                       value={contact.relationship}
@@ -1061,7 +1260,7 @@ function UserRegister() {
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
                 </button>
-                <button type="button" className={styles.nextButton} onClick={nextStep}>
+                <button type="button" className={styles.nextButton} onClick={nextStep} disabled={!isStep4Valid()}>
                   ถัดไป
                 </button>
               </div>
@@ -1075,6 +1274,7 @@ function UserRegister() {
               
               <div className={styles.inputGroup}>
                 <label htmlFor="phone_number" data-required>เบอร์โทรศัพท์</label>
+                {fieldErrors.phone_number && <div className={styles.inputError}>{fieldErrors.phone_number}</div>}
                 <input
                   type="tel"
                   id="phone_number"
@@ -1089,6 +1289,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="email" data-required>อีเมล</label>
+                {fieldErrors.email && <div className={styles.inputError}>{fieldErrors.email}</div>}
                 <input
                   type="email"
                   id="email"
@@ -1123,6 +1324,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="password" data-required>รหัสผ่าน</label>
+                {fieldErrors.password && <div className={styles.inputError}>{fieldErrors.password}</div>}
                 <div className={styles.passwordWrapper}>
                   <input
                     type={showPassword ? "text" : "password"}
@@ -1147,6 +1349,7 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="confirm_password" data-required>ยืนยันรหัสผ่าน</label>
+                {fieldErrors.confirm_password && <div className={styles.inputError}>{fieldErrors.confirm_password}</div>}
                 <div className={styles.passwordWrapper}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
