@@ -138,6 +138,8 @@ function UserRegister() {
   });
 
   const [error, setError] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // โหลดข้อมูลจังหวัดเมื่อ component mount
   useEffect(() => {
@@ -338,6 +340,13 @@ function UserRegister() {
     return `${numbers.slice(0, 1)}-${numbers.slice(1, 5)}-${numbers.slice(5, 10)}-${numbers.slice(10, 12)}-${numbers.slice(12, 13)}`;
   };
 
+  const formatIncome = (value: string) => {
+    // ลบทุกอย่างที่ไม่ใช่ตัวเลข
+    const numbers = value.replace(/\D/g, '');
+    // ใส่ comma คั่นหลักพัน
+    return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -351,17 +360,61 @@ function UserRegister() {
       return;
     }
 
+    // จัดการ format เฉพาะเบอร์โทรศัพท์ที่ทำงาน (10 หลัก)
+    if (name === 'work_phone') {
+      // รับเฉพาะตัวเลขและจำกัด 10 หลัก
+      const numbers = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numbers
+      }));
+      return;
+    }
+
+    // จัดการ format เฉพาะรายได้ต่อเดือน
+    if (name === 'monthly_income') {
+      const formatted = formatIncome(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatted
+      }));
+      return;
+    }
+
+    // จัดการ format เฉพาะเบอร์โทรศัพท์หลัก
+    if (name === 'phone_number') {
+      const numbers = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numbers
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
+  const referenceRelationshipOptions = [
+    'บิดา',
+    'มารดา',
+    'ญาติ',
+    'เพื่อน',
+    'เพื่อนร่วมงาน',
+    'อื่นๆ'
+  ];
+
   const handleReferenceChange = (index: number, field: string, value: string) => {
+    let newValue = value;
+    if (field === 'phone_number') {
+      newValue = value.replace(/\D/g, '').slice(0, 10);
+    }
     setFormData(prev => ({
       ...prev,
       reference_contacts: prev.reference_contacts.map((contact, i) => 
-        i === index ? { ...contact, [field]: value } : contact
+        i === index ? { ...contact, [field]: newValue } : contact
       )
     }));
   };
@@ -785,17 +838,20 @@ function UserRegister() {
                   onChange={handleChange}
                   pattern="[0-9]{10}"
                   maxLength={10}
+                  required
                 />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="monthly_income" data-required>รายได้ต่อเดือน</label>
                 <input
-                  type="number"
+                  type="text"
                   id="monthly_income"
                   name="monthly_income"
                   value={formData.monthly_income}
                   onChange={handleChange}
+                  inputMode="numeric"
+                  pattern="[0-9,]*"
                   min="0"
                   required
                 />
@@ -986,13 +1042,17 @@ function UserRegister() {
 
                   <div className={styles.inputGroup}>
                     <label htmlFor={`reference_relationship_${index}`} data-required>ความสัมพันธ์</label>
-                    <input
-                      type="text"
+                    <select
                       id={`reference_relationship_${index}`}
                       value={contact.relationship}
                       onChange={(e) => handleReferenceChange(index, 'relationship', e.target.value)}
                       required
-                    />
+                    >
+                      <option value="">เลือกความสัมพันธ์</option>
+                      {referenceRelationshipOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               ))}
@@ -1063,28 +1123,50 @@ function UserRegister() {
 
               <div className={styles.inputGroup}>
                 <label htmlFor="password" data-required>รหัสผ่าน</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  minLength={6}
-                  required
-                />
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    minLength={6}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className={styles.eyeButton}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="confirm_password" data-required>ยืนยันรหัสผ่าน</label>
-                <input
-                  type="password"
-                  id="confirm_password"
-                  name="confirm_password"
-                  value={formData.confirm_password}
-                  onChange={handleChange}
-                  minLength={6}
-                  required
-                />
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirm_password"
+                    name="confirm_password"
+                    value={formData.confirm_password}
+                    onChange={handleChange}
+                    minLength={6}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className={styles.eyeButton}
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                  >
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
               </div>
 
               <div className={styles.buttonGroup}>

@@ -1003,4 +1003,37 @@
   .inputGroup select {
     min-height: 44px;
   }
+}
+
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper input[type="password"],
+.passwordWrapper input[type="text"] {
+  width: 100%;
+  padding-right: 2.5rem; /* space for eye button */
+  box-sizing: border-box;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: #888;
+  padding: 0 0.25rem;
+  z-index: 2;
+  outline: none;
+  transition: color 0.2s;
+}
+.eyeButton:hover,
+.eyeButton:focus {
+  color: #0c4cb3;
 } 
