@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
 import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, searchAddressBySubDistrict } from 'thai-address-universal';
 import { MapPicker } from '../../../components/MapPicker';
+import { registerUser } from '../../../services/auth/register.service';
+import type { RegisterUserPayload, ReferenceContact } from '../../../services/auth/register.service';
 
 interface FormData {
   // ข้อมูลส่วนตัว
@@ -63,11 +65,11 @@ interface FormData {
 function UserRegister() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [provinces, setProvinces] = useState<string[]>([]);
-  const [districts, setDistricts] = useState<string[]>([]);
-  const [subDistricts, setSubDistricts] = useState<string[]>([]);
-  const [postalCodes, setPostalCodes] = useState<string[]>([]);
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [homeProvinces, setHomeProvinces] = useState<string[]>([]);
+  const [homeDistricts, setHomeDistricts] = useState<string[]>([]);
+  const [homeSubDistricts, setHomeSubDistricts] = useState<string[]>([]);
+  const [homePostalCodes, setHomePostalCodes] = useState<string[]>([]);
+  const [homeCoordinates, setHomeCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [workProvinces, setWorkProvinces] = useState<string[]>([]);
   const [workDistricts, setWorkDistricts] = useState<string[]>([]);
   const [workSubDistricts, setWorkSubDistricts] = useState<string[]>([]);
@@ -138,8 +140,6 @@ function UserRegister() {
   });
 
   const [error, setError] = useState<string>('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [citizenIdImageFile, setCitizenIdImageFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
@@ -148,93 +148,63 @@ function UserRegister() {
     const loadProvinces = async () => {
       try {
         const provincesData = await getProvinceAll();
-        setProvinces(provincesData);
+        setHomeProvinces(provincesData);
       } catch (error) {
-        console.error('Error loading provinces:', error);
+        console.error('Error loading home provinces:', error);
       }
     };
     loadProvinces();
   }, []);
 
-  // โหลดข้อมูลอำเภอเมื่อเลือกจังหวัด
+  // 3. useEffect สำหรับโหลดจังหวัดบ้าน (step 2)
   useEffect(() => {
-    const loadDistricts = async () => {
-      if (formData.address_province) {
-        try {
-          const districtsData = await getDistrictByProvince(formData.address_province);
-          setDistricts(districtsData);
-        } catch (error) {
-          console.error('Error loading districts:', error);
-        }
-      } else {
-        setDistricts([]);
+    const loadHomeProvinces = async () => {
+      try {
+        const provincesData = await getProvinceAll();
+        setHomeProvinces(provincesData);
+      } catch (error) {
+        console.error('Error loading home provinces:', error);
       }
     };
-    loadDistricts();
+    loadHomeProvinces();
+  }, []);
+
+  // 4. useEffect สำหรับโหลดอำเภอบ้าน (step 2)
+  useEffect(() => {
+    if (formData.address_province) {
+      getDistrictByProvince(formData.address_province).then(setHomeDistricts);
+    } else {
+      setHomeDistricts([]);
+    }
   }, [formData.address_province]);
 
-  // โหลดข้อมูลตำบลเมื่อเลือกอำเภอ
+  // 5. useEffect สำหรับโหลดตำบลบ้าน (step 2)
   useEffect(() => {
-    const loadSubDistricts = async () => {
-      if (formData.address_district) {
-        try {
-          const subDistrictsData = await getSubDistrictByDistrict(formData.address_district);
-          setSubDistricts(subDistrictsData);
-        } catch (error) {
-          console.error('Error loading sub-districts:', error);
-        }
-      } else {
-        setSubDistricts([]);
-      }
-    };
-    loadSubDistricts();
+    if (formData.address_district) {
+      getSubDistrictByDistrict(formData.address_district).then(setHomeSubDistricts);
+    } else {
+      setHomeSubDistricts([]);
+    }
   }, [formData.address_district]);
 
-  // โหลดรหัสไปรษณีย์เมื่อเลือกตำบล/แขวง
+  // 6. useEffect สำหรับโหลดรหัสไปรษณีย์บ้าน (step 2)
   useEffect(() => {
-    const loadPostalCode = async () => {
-      if (formData.address_subdistrict && formData.address_district && formData.address_province) {
-        try {
-          const results = await searchAddressBySubDistrict(formData.address_subdistrict);
-          // filter เฉพาะที่ตรงกับจังหวัดและอำเภอและตำบล
-          const filtered = results.filter(
-            item =>
-              item.province === formData.address_province &&
-              item.district === formData.address_district &&
-              item.sub_district === formData.address_subdistrict
-          );
-          // ดึงรหัสไปรษณีย์ที่เป็นเลข 5 หลัก
-          const postalCodes = Array.from(
-            new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
-          );
-          setPostalCodes(postalCodes);
-          if (postalCodes.length > 0) {
-            setFormData(prev => ({
-              ...prev,
-              address_postal_code: postalCodes[0]
-            }));
-          } else {
-            setFormData(prev => ({
-              ...prev,
-              address_postal_code: ''
-            }));
-          }
-        } catch {
-          setPostalCodes([]);
-          setFormData(prev => ({
-            ...prev,
-            address_postal_code: ''
-          }));
-        }
-      } else {
-        setPostalCodes([]);
-        setFormData(prev => ({
-          ...prev,
-          address_postal_code: ''
-        }));
-      }
-    };
-    loadPostalCode();
+    if (formData.address_subdistrict && formData.address_district && formData.address_province) {
+      searchAddressBySubDistrict(formData.address_subdistrict).then(results => {
+        const filtered = results.filter(
+          item =>
+            item.province === formData.address_province &&
+            item.district === formData.address_district &&
+            item.sub_district === formData.address_subdistrict
+        );
+        const postalCodes = Array.from(
+          new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
+        );
+        setHomePostalCodes(postalCodes);
+      });
+    } else {
+      setHomePostalCodes([]);
+    }
   }, [formData.address_subdistrict, formData.address_district, formData.address_province]);
 
   // โหลดข้อมูลจังหวัดที่ทำงานเมื่อ component mount
@@ -242,93 +212,110 @@ function UserRegister() {
     const loadProvinces = async () => {
       try {
         const provincesData = await getProvinceAll();
-        setWorkProvinces(provincesData);
+        console.log('workProvinces loaded:', provincesData);
+        if (Array.isArray(provincesData) && provincesData.length > 0) {
+          setWorkProvinces(provincesData);
+        } else {
+          // fallback กรณีโหลดไม่สำเร็จ
+          setWorkProvinces([
+            'กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'ชลบุรี', 'เชียงใหม่', 'นครราชสีมา', 'ขอนแก่น', 'ภูเก็ต'
+          ]);
+          console.warn('ใช้ fallback จังหวัดที่ทำงาน');
+        }
       } catch (error) {
         console.error('Error loading work provinces:', error);
+        setWorkProvinces([
+          'กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'ชลบุรี', 'เชียงใหม่', 'นครราชสีมา', 'ขอนแก่น', 'ภูเก็ต'
+        ]);
+        console.warn('ใช้ fallback จังหวัดที่ทำงาน');
       }
     };
     loadProvinces();
   }, []);
 
-  // โหลดข้อมูลอำเภอที่ทำงานเมื่อเลือกจังหวัด
+  // useEffect สำหรับ work_xxx (step 3)
   useEffect(() => {
-    const loadDistricts = async () => {
-      if (formData.work_province) {
-        try {
-          const districtsData = await getDistrictByProvince(formData.work_province);
-          setWorkDistricts(districtsData);
-        } catch (error) {
-          console.error('Error loading work districts:', error);
-        }
-      } else {
-        setWorkDistricts([]);
-      }
-    };
-    loadDistricts();
+    console.log('work_province:', formData.work_province);
+    if (formData.work_province) {
+      getDistrictByProvince(formData.work_province).then((districts) => {
+        console.log('districts from getDistrictByProvince:', districts);
+        setWorkDistricts(districts);
+      });
+    } else {
+      setWorkDistricts([]);
+    }
   }, [formData.work_province]);
 
-  // โหลดข้อมูลตำบลที่ทำงานเมื่อเลือกอำเภอ
   useEffect(() => {
-    const loadSubDistricts = async () => {
-      if (formData.work_district) {
-        try {
-          const subDistrictsData = await getSubDistrictByDistrict(formData.work_district);
-          setWorkSubDistricts(subDistrictsData);
-        } catch (error) {
-          console.error('Error loading work sub-districts:', error);
-          setWorkSubDistricts([]);
-        }
-      } else {
-        setWorkSubDistricts([]);
-      }
-    };
-    loadSubDistricts();
+    console.log('work_district:', formData.work_district);
+    if (formData.work_district) {
+      getSubDistrictByDistrict(formData.work_district).then((subdistricts) => {
+        console.log('subdistricts from getSubDistrictByDistrict:', subdistricts);
+        setWorkSubDistricts(subdistricts);
+      });
+    } else {
+      setWorkSubDistricts([]);
+    }
   }, [formData.work_district]);
 
-  // โหลดรหัสไปรษณีย์ที่ทำงานเมื่อเลือกตำบล/แขวง
   useEffect(() => {
-    const loadPostalCode = async () => {
-      if (formData.work_subdistrict && formData.work_district && formData.work_province) {
-        try {
-          const results = await searchAddressBySubDistrict(formData.work_subdistrict);
-          const filtered = results.filter(
-            item =>
-              item.province === formData.work_province &&
-              item.district === formData.work_district &&
-              item.sub_district === formData.work_subdistrict
-          );
-          const postalCodes = Array.from(
-            new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
-          );
-          setWorkPostalCodes(postalCodes);
-          if (postalCodes.length > 0) {
-            setFormData(prev => ({
-              ...prev,
-              work_postal_code: postalCodes[0]
-            }));
-          } else {
-            setFormData(prev => ({
-              ...prev,
-              work_postal_code: ''
-            }));
-          }
-        } catch {
-          setWorkPostalCodes([]);
-          setFormData(prev => ({
-            ...prev,
-            work_postal_code: ''
-          }));
-        }
-      } else {
-        setWorkPostalCodes([]);
-        setFormData(prev => ({
-          ...prev,
-          work_postal_code: ''
-        }));
-      }
-    };
-    loadPostalCode();
+    console.log('work_subdistrict:', formData.work_subdistrict, 'work_district:', formData.work_district, 'work_province:', formData.work_province);
+    if (formData.work_subdistrict && formData.work_district && formData.work_province) {
+      searchAddressBySubDistrict(formData.work_subdistrict).then(results => {
+        const filtered = results.filter(
+          item =>
+            item.province === formData.work_province &&
+            item.district === formData.work_district &&
+            item.sub_district === formData.work_subdistrict
+        );
+        const postalCodes = Array.from(
+          new Set(filtered.map(item => item.postal_code).filter(code => /^\d{5}$/.test(code)))
+        );
+        console.log('postalCodes from searchAddressBySubDistrict:', postalCodes, 'filtered:', filtered, 'results:', results);
+        setWorkPostalCodes(postalCodes);
+      });
+    } else {
+      setWorkPostalCodes([]);
+    }
   }, [formData.work_subdistrict, formData.work_district, formData.work_province]);
+
+  // เพิ่ม log state ทุกครั้งที่ render step 3
+  useEffect(() => {
+    if (currentStep === 3) {
+      console.log('workProvinces:', workProvinces);
+      console.log('workDistricts:', workDistricts);
+      console.log('workSubDistricts:', workSubDistricts);
+      console.log('workPostalCodes:', workPostalCodes);
+    }
+  }, [currentStep, workProvinces, workDistricts, workSubDistricts, workPostalCodes]);
+
+  useEffect(() => {
+    console.log('currentStep', currentStep, 'formData', formData);
+  }, [currentStep, formData]);
+
+  // Reset address_postal_code เมื่อเปลี่ยนจังหวัด/อำเภอ/ตำบล
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, address_postal_code: '' }));
+  }, [formData.address_province, formData.address_district, formData.address_subdistrict]);
+
+  // Auto-set address_postal_code ถ้ามีแค่ 1 ค่า
+  useEffect(() => {
+    if (homePostalCodes.length === 1) {
+      setFormData(prev => ({ ...prev, address_postal_code: homePostalCodes[0] }));
+    }
+  }, [homePostalCodes]);
+
+  // Reset work_postal_code เมื่อเปลี่ยนจังหวัด/อำเภอ/ตำบลที่ทำงาน
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, work_postal_code: '' }));
+  }, [formData.work_province, formData.work_district, formData.work_subdistrict]);
+
+  // Auto-set work_postal_code ถ้ามีแค่ 1 ค่า
+  useEffect(() => {
+    if (workPostalCodes.length === 1) {
+      setFormData(prev => ({ ...prev, work_postal_code: workPostalCodes[0] }));
+    }
+  }, [workPostalCodes]);
 
   const formatCitizenId = (value: string) => {
     // ลบทุกอย่างที่ไม่ใช่ตัวเลข
@@ -432,7 +419,7 @@ function UserRegister() {
   };
 
   const handleLocationSelect = (lat: number, lng: number) => {
-    setCoordinates({ lat, lng });
+    setHomeCoordinates({ lat, lng });
     setFormData(prev => ({
       ...prev,
       latitude: lat,
@@ -449,13 +436,19 @@ function UserRegister() {
     }));
   };
 
+  // เพิ่มฟังก์ชันแปลงวันที่เป็น ISO 8601
+  function toISODate(dateStr: string) {
+    if (!dateStr) return '';
+    return `${dateStr}T00:00:00Z`;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     // Validation
     const citizenIdRaw = formData.citizen_id.replace(/-/g, '');
-    if (citizenIdRaw.length !== 13 || !/^\d{13}$/.test(citizenIdRaw)) {
+    if (citizenIdRaw.length !== 13 || !/^[0-9]{13}$/.test(citizenIdRaw)) {
       setError('เลขบัตรประชาชนต้องมี 13 หลัก');
       return;
     }
@@ -476,7 +469,7 @@ function UserRegister() {
       'first_name', 'last_name', 'gender', 'birth_date', 'citizen_id',
       'id_card_issued_date', 'id_card_expired_date',
       'address', 'address_province', 'address_district', 'address_subdistrict', 'address_postal_code', 'address_pin_location',
-      'phone_number', 'email', 'occupation',
+      'email', 'occupation',
       'monthly_income', 'work_address', 'work_province', 'work_district', 'work_subdistrict', 'work_postal_code', 'work_pin_location',
       'password'
     ];
@@ -495,55 +488,48 @@ function UserRegister() {
     }
 
     try {
-      const fd = new FormData();
-      fd.append('password', formData.password);
-      fd.append('first_name', formData.first_name);
-      fd.append('last_name', formData.last_name);
-      if (formData.nickname) fd.append('nickname', formData.nickname);
-      fd.append('gender', formData.gender);
-      fd.append('birth_date', formData.birth_date);
-      fd.append('citizen_id', citizenIdRaw);
-      fd.append('citizen_id_image', citizenIdImageFile);
-      fd.append('id_card_issued_date', formData.id_card_issued_date);
-      fd.append('id_card_expired_date', formData.id_card_expired_date);
-      fd.append('address', formData.address);
-      fd.append('address_province', formData.address_province);
-      fd.append('address_district', formData.address_district);
-      fd.append('address_subdistrict', formData.address_subdistrict);
-      fd.append('address_postal_code', formData.address_postal_code);
-      fd.append('address_pin_location', formData.address_pin_location);
-      fd.append('phone_number', formData.phone_number);
-      fd.append('email', formData.email);
-      if (formData.facebook_url) fd.append('facebook_url', formData.facebook_url);
-      if (formData.line_id) fd.append('line_id', formData.line_id);
-      fd.append('occupation', formData.occupation);
-      if (formData.work_position) fd.append('work_position', formData.work_position);
-      if (formData.workplace_name) fd.append('workplace_name', formData.workplace_name);
-      if (formData.work_phone) fd.append('work_phone', formData.work_phone);
-      // monthly_income: แปลงเป็น number
-      fd.append('monthly_income', String(Number(formData.monthly_income.replace(/,/g, ''))));
-      fd.append('work_address', formData.work_address);
-      fd.append('work_province', formData.work_province);
-      fd.append('work_district', formData.work_district);
-      fd.append('work_subdistrict', formData.work_subdistrict);
-      fd.append('work_postal_code', formData.work_postal_code);
-      fd.append('work_pin_location', formData.work_pin_location);
-      // reference_contacts: ส่งเป็น JSON string
-      fd.append('reference_contacts', JSON.stringify(formData.reference_contacts));
+      // เตรียม payload ให้ตรงกับ RegisterUserPayload
+      const payload: RegisterUserPayload = {
+        password: formData.password,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        nickname: formData.nickname || undefined,
+        gender: formData.gender,
+        birth_date: toISODate(formData.birth_date),
+        citizen_id: citizenIdRaw,
+        citizen_id_image: citizenIdImageFile!,
+        id_card_issued_date: toISODate(formData.id_card_issued_date),
+        id_card_expired_date: toISODate(formData.id_card_expired_date),
+        address: formData.address,
+        address_province: formData.address_province,
+        address_district: formData.address_district,
+        address_subdistrict: formData.address_subdistrict,
+        address_postal_code: formData.address_postal_code,
+        address_pin_location: formData.address_pin_location,
+        phone_number: formData.phone_number,
+        email: formData.email,
+        facebook_url: formData.facebook_url || undefined,
+        line_id: formData.line_id || undefined,
+        occupation: formData.occupation,
+        work_position: formData.work_position || undefined,
+        workplace_name: formData.workplace_name || undefined,
+        work_phone: formData.work_phone || undefined,
+        monthly_income: Number(formData.monthly_income.replace(/,/g, '')),
+        work_address: formData.work_address,
+        work_province: formData.work_province,
+        work_district: formData.work_district,
+        work_subdistrict: formData.work_subdistrict,
+        work_postal_code: formData.work_postal_code,
+        work_pin_location: formData.work_pin_location,
+        reference_contacts: formData.reference_contacts.map(ref => ({
+          full_name: ref.full_name,
+          nickname: ref.nickname || undefined,
+          phone_number: ref.phone_number,
+          relationship: ref.relationship
+        })) as ReferenceContact[],
+      };
 
-      const response = await fetch('/api/users/register', {
-        method: 'POST',
-        body: fd
-        // ไม่ต้องใส่ Content-Type, browser จะใส่ multipart ให้อัตโนมัติ
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'การสมัครสมาชิกไม่สำเร็จ');
-      }
-
-      const data = await response.json();
-      console.log('Registration successful:', data);
+      await registerUser(payload);
       navigate('/user/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
@@ -656,6 +642,33 @@ function UserRegister() {
     });
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleWorkProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      work_province: e.target.value,
+      work_district: '',
+      work_subdistrict: '',
+      work_postal_code: ''
+    }));
+  };
+
+  const handleWorkDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      work_district: e.target.value,
+      work_subdistrict: '',
+      work_postal_code: ''
+    }));
+  };
+
+  const handleWorkSubDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      work_subdistrict: e.target.value,
+      work_postal_code: ''
+    }));
   };
 
   return (
@@ -849,7 +862,7 @@ function UserRegister() {
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
-                  {provinces.map((province) => (
+                  {homeProvinces.map((province) => (
                     <option key={province} value={province}>
                       {province}
                     </option>
@@ -869,7 +882,7 @@ function UserRegister() {
                   disabled={!formData.address_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
-                  {districts.map((district) => (
+                  {homeDistricts.map((district) => (
                     <option key={district} value={district}>
                       {district}
                     </option>
@@ -889,7 +902,7 @@ function UserRegister() {
                   disabled={!formData.address_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
-                  {subDistricts.map((subDistrict) => (
+                  {homeSubDistricts.map((subDistrict) => (
                     <option key={subDistrict} value={subDistrict}>
                       {subDistrict}
                     </option>
@@ -900,7 +913,19 @@ function UserRegister() {
               <div className={styles.inputGroup}>
                 <label htmlFor="address_postal_code" data-required>รหัสไปรษณีย์</label>
                 {fieldErrors.address_postal_code && <div className={styles.inputError}>{fieldErrors.address_postal_code}</div>}
-                {postalCodes.length > 1 ? (
+                {homePostalCodes.length === 0 ? (
+                  <input
+                    type="text"
+                    id="address_postal_code"
+                    name="address_postal_code"
+                    value={formData.address_postal_code}
+                    onChange={handleChange}
+                    placeholder="รหัสไปรษณีย์ 5 หลัก"
+                    pattern="[0-9]{5}"
+                    maxLength={5}
+                    required
+                  />
+                ) : homePostalCodes.length > 1 ? (
                   <select
                     id="address_postal_code"
                     name="address_postal_code"
@@ -909,7 +934,7 @@ function UserRegister() {
                     required
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
-                    {postalCodes.map((postalCode) => (
+                    {homePostalCodes.map((postalCode) => (
                       <option key={postalCode} value={postalCode}>
                         {postalCode}
                       </option>
@@ -926,10 +951,10 @@ function UserRegister() {
                     pattern="[0-9]{5}"
                     maxLength={5}
                     required
-                    readOnly={postalCodes.length === 1}
+                    readOnly={homePostalCodes.length === 1}
                   />
                 )}
-                {postalCodes.length > 1 && (
+                {homePostalCodes.length > 1 && (
                   <small className={styles.helperText}>
                     พื้นที่นี้มีหลายรหัสไปรษณีย์ กรุณาเลือกรหัสที่ถูกต้อง
                   </small>
@@ -960,9 +985,9 @@ function UserRegister() {
                 />
               )}
 
-              {coordinates && (
+              {homeCoordinates && (
                 <div className="text-sm text-gray-500">
-                  ตำแหน่งที่เลือก: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+                  ตำแหน่งที่เลือก: {homeCoordinates.lat.toFixed(6)}, {homeCoordinates.lng.toFixed(6)}
                 </div>
               )}
 
@@ -1067,14 +1092,12 @@ function UserRegister() {
                   id="work_province"
                   name="work_province"
                   value={formData.work_province}
-                  onChange={handleChange}
+                  onChange={handleWorkProvinceChange}
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
                   {workProvinces.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
+                    <option key={province} value={province}>{province}</option>
                   ))}
                 </select>
               </div>
@@ -1085,15 +1108,13 @@ function UserRegister() {
                   id="work_district"
                   name="work_district"
                   value={formData.work_district}
-                  onChange={handleChange}
+                  onChange={handleWorkDistrictChange}
                   required
                   disabled={!formData.work_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
                   {workDistricts.map((district) => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
+                    <option key={district} value={district}>{district}</option>
                   ))}
                 </select>
               </div>
@@ -1104,22 +1125,32 @@ function UserRegister() {
                   id="work_subdistrict"
                   name="work_subdistrict"
                   value={formData.work_subdistrict}
-                  onChange={handleChange}
+                  onChange={handleWorkSubDistrictChange}
                   required
                   disabled={!formData.work_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
                   {workSubDistricts.map((subDistrict) => (
-                    <option key={subDistrict} value={subDistrict}>
-                      {subDistrict}
-                    </option>
+                    <option key={subDistrict} value={subDistrict}>{subDistrict}</option>
                   ))}
                 </select>
               </div>
               <div className={styles.inputGroup}>
                 <label htmlFor="work_postal_code" data-required>รหัสไปรษณีย์ที่ทำงาน</label>
                 {fieldErrors.work_postal_code && <div className={styles.inputError}>{fieldErrors.work_postal_code}</div>}
-                {workPostalCodes.length > 1 ? (
+                {workPostalCodes.length === 0 ? (
+                  <input
+                    type="text"
+                    id="work_postal_code"
+                    name="work_postal_code"
+                    value={formData.work_postal_code}
+                    onChange={handleChange}
+                    placeholder="รหัสไปรษณีย์ 5 หลัก"
+                    pattern="[0-9]{5}"
+                    maxLength={5}
+                    required
+                  />
+                ) : workPostalCodes.length > 1 ? (
                   <select
                     id="work_postal_code"
                     name="work_postal_code"
@@ -1129,9 +1160,7 @@ function UserRegister() {
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
                     {workPostalCodes.map((postalCode) => (
-                      <option key={postalCode} value={postalCode}>
-                        {postalCode}
-                      </option>
+                      <option key={postalCode} value={postalCode}>{postalCode}</option>
                     ))}
                   </select>
                 ) : (
@@ -1248,7 +1277,7 @@ function UserRegister() {
                       required
                     >
                       <option value="">เลือกความสัมพันธ์</option>
-                      {referenceRelationshipOptions.map(option => (
+                      {referenceRelationshipOptions.map((option) => (
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </select>
@@ -1273,6 +1302,20 @@ function UserRegister() {
               <h2 className={styles.stepTitle}>รหัสผ่าน</h2>
               
               <div className={styles.inputGroup}>
+                <label htmlFor="email" data-required>อีเมล</label>
+                {fieldErrors.email && <div className={styles.inputError}>{fieldErrors.email}</div>}
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className={fieldErrors.email ? `${styles.inputErrorBorder}` : ''}
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
                 <label htmlFor="phone_number" data-required>เบอร์โทรศัพท์</label>
                 {fieldErrors.phone_number && <div className={styles.inputError}>{fieldErrors.phone_number}</div>}
                 <input
@@ -1284,19 +1327,7 @@ function UserRegister() {
                   pattern="[0-9]{10}"
                   maxLength={10}
                   required
-                />
-              </div>
-
-              <div className={styles.inputGroup}>
-                <label htmlFor="email" data-required>อีเมล</label>
-                {fieldErrors.email && <div className={styles.inputError}>{fieldErrors.email}</div>}
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
+                  className={fieldErrors.phone_number ? `${styles.inputErrorBorder}` : ''}
                 />
               </div>
 
@@ -1325,51 +1356,29 @@ function UserRegister() {
               <div className={styles.inputGroup}>
                 <label htmlFor="password" data-required>รหัสผ่าน</label>
                 {fieldErrors.password && <div className={styles.inputError}>{fieldErrors.password}</div>}
-                <div className={styles.passwordWrapper}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    minLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className={styles.eyeButton}
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    tabIndex={-1}
-                    aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                  >
-                    {showPassword ? "🙈" : "👁️"}
-                  </button>
-                </div>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className={fieldErrors.password ? `${styles.inputErrorBorder}` : ''}
+                />
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="confirm_password" data-required>ยืนยันรหัสผ่าน</label>
                 {fieldErrors.confirm_password && <div className={styles.inputError}>{fieldErrors.confirm_password}</div>}
-                <div className={styles.passwordWrapper}>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirm_password"
-                    name="confirm_password"
-                    value={formData.confirm_password}
-                    onChange={handleChange}
-                    minLength={6}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className={styles.eyeButton}
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    tabIndex={-1}
-                    aria-label={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                  >
-                    {showConfirmPassword ? "🙈" : "👁️"}
-                  </button>
-                </div>
+                <input
+                  type="password"
+                  id="confirm_password"
+                  name="confirm_password"
+                  value={formData.confirm_password}
+                  onChange={handleChange}
+                  required
+                  className={fieldErrors.confirm_password ? `${styles.inputErrorBorder}` : ''}
+                />
               </div>
 
               <div className={styles.buttonGroup}>
@@ -1388,4 +1397,4 @@ function UserRegister() {
   );
 }
 
-export default UserRegister; 
+export default UserRegister;
