@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Register.module.css';
 import { getProvinceAll, getDistrictByProvince, getSubDistrictByDistrict, searchAddressBySubDistrict } from 'thai-address-universal';
@@ -141,7 +141,15 @@ function UserRegister() {
 
   const [error, setError] = useState<string>('');
   const [citizenIdImageFile, setCitizenIdImageFile] = useState<File | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const stepCount = 5;
+  const [stepErrors, setStepErrors] = useState<Array<{ [key: string]: string }>>(
+    Array.from({ length: stepCount }, () => ({}))
+  );
+
+  // LOG: ตรวจสอบ fieldErrors ทุกครั้งที่เปลี่ยน
+  useEffect(() => {
+    console.log('fieldErrors:', stepErrors[currentStep - 1]);
+  }, [stepErrors, currentStep]);
 
   // โหลดข้อมูลจังหวัดเมื่อ component mount
   useEffect(() => {
@@ -207,27 +215,15 @@ function UserRegister() {
     }
   }, [formData.address_subdistrict, formData.address_district, formData.address_province]);
 
-  // โหลดข้อมูลจังหวัดที่ทำงานเมื่อ component mount
+  // โหลดข้อมูลจังหวัดที่ทำงานเมื่อ component mount (เหมือน step 2)
   useEffect(() => {
     const loadProvinces = async () => {
       try {
         const provincesData = await getProvinceAll();
-        console.log('workProvinces loaded:', provincesData);
-        if (Array.isArray(provincesData) && provincesData.length > 0) {
-          setWorkProvinces(provincesData);
-        } else {
-          // fallback กรณีโหลดไม่สำเร็จ
-          setWorkProvinces([
-            'กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'ชลบุรี', 'เชียงใหม่', 'นครราชสีมา', 'ขอนแก่น', 'ภูเก็ต'
-          ]);
-          console.warn('ใช้ fallback จังหวัดที่ทำงาน');
-        }
+        setWorkProvinces(provincesData);
       } catch (error) {
         console.error('Error loading work provinces:', error);
-        setWorkProvinces([
-          'กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'สมุทรปราการ', 'ชลบุรี', 'เชียงใหม่', 'นครราชสีมา', 'ขอนแก่น', 'ภูเก็ต'
-        ]);
-        console.warn('ใช้ fallback จังหวัดที่ทำงาน');
+        setWorkProvinces([]);
       }
     };
     loadProvinces();
@@ -336,6 +332,15 @@ function UserRegister() {
     return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
+  // helper สำหรับลบ key ออกจาก object (ไม่ set undefined)
+  function omitKey(obj: { [key: string]: string }, key: string): { [key: string]: string } {
+    const result: { [key: string]: string } = {};
+    Object.keys(obj).forEach(k => {
+      if (k !== key) result[k] = obj[k];
+    });
+    return result;
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -384,6 +389,7 @@ function UserRegister() {
       ...prev,
       [name]: value
     }));
+    setStepErrors(prev => prev.map((err, idx) => idx === currentStep - 1 ? omitKey(err, name) : err));
   };
 
   const referenceRelationshipOptions = [
@@ -406,6 +412,12 @@ function UserRegister() {
         i === index ? { ...contact, [field]: newValue } : contact
       )
     }));
+    if (currentStep === 4) {
+      const errorKey = field === 'full_name' ? `reference_full_name_${index}` : field === 'phone_number' ? `reference_phone_${index}` : field === 'relationship' ? `reference_relationship_${index}` : '';
+      if (errorKey) {
+        setStepErrors(prev => prev.map((err, idx) => idx === 3 ? omitKey(err, errorKey) : err));
+      }
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -445,46 +457,12 @@ function UserRegister() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    // Validation
-    const citizenIdRaw = formData.citizen_id.replace(/-/g, '');
-    if (citizenIdRaw.length !== 13 || !/^[0-9]{13}$/.test(citizenIdRaw)) {
-      setError('เลขบัตรประชาชนต้องมี 13 หลัก');
+    const allErrors = [getStep1Errors(), getStep2Errors(), getStep3Errors(), getStep4Errors(), {}];
+    setStepErrors(allErrors);
+    const hasError = allErrors.some(err => Object.keys(err).length > 0);
+    if (hasError) {
+      setError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
-    }
-    if (formData.password.length < 6) {
-      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
-      return;
-    }
-    if (!citizenIdImageFile) {
-      setError('กรุณาอัปโหลดรูปบัตรประชาชน');
-      return;
-    }
-    if (!formData.reference_contacts || formData.reference_contacts.length !== 2) {
-      setError('กรุณากรอกข้อมูลบุคคลอ้างอิงให้ครบ 2 คน');
-      return;
-    }
-    // ฟิลด์ที่ต้องกรอก (required)
-    const requiredFields = [
-      'first_name', 'last_name', 'gender', 'birth_date', 'citizen_id',
-      'id_card_issued_date', 'id_card_expired_date',
-      'address', 'address_province', 'address_district', 'address_subdistrict', 'address_postal_code', 'address_pin_location',
-      'email', 'occupation',
-      'monthly_income', 'work_address', 'work_province', 'work_district', 'work_subdistrict', 'work_postal_code', 'work_pin_location',
-      'password'
-    ];
-    for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData] || (typeof formData[field as keyof typeof formData] === 'string' && (formData[field as keyof typeof formData] as string).trim() === '')) {
-        setError('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-      }
-    }
-    // ตรวจสอบ reference_contacts
-    for (const ref of formData.reference_contacts) {
-      if (!ref.full_name || !ref.phone_number || !ref.relationship) {
-        setError('กรุณากรอกข้อมูลบุคคลอ้างอิงให้ครบถ้วน');
-        return;
-      }
     }
 
     try {
@@ -496,7 +474,7 @@ function UserRegister() {
         nickname: formData.nickname || undefined,
         gender: formData.gender,
         birth_date: toISODate(formData.birth_date),
-        citizen_id: citizenIdRaw,
+        citizen_id: formData.citizen_id.replace(/-/g, ''),
         citizen_id_image: citizenIdImageFile!,
         id_card_issued_date: toISODate(formData.id_card_issued_date),
         id_card_expired_date: toISODate(formData.id_card_expired_date),
@@ -536,21 +514,85 @@ function UserRegister() {
     }
   };
 
+  const getStep1Errors = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.first_name.trim()) errors.first_name = 'กรุณากรอกชื่อจริง';
+    if (!formData.last_name.trim()) errors.last_name = 'กรุณากรอกนามสกุล';
+    if (!formData.gender) errors.gender = 'กรุณาเลือกเพศ';
+    if (!formData.birth_date) errors.birth_date = 'กรุณาเลือกวันเกิด';
+    if (formData.citizen_id.replace(/-/g, '').length !== 13) errors.citizen_id = 'เลขบัตรประชาชนต้องมี 13 หลัก';
+    if (!citizenIdImageFile) errors.citizen_id_image = 'กรุณาอัปโหลดรูปบัตรประชาชน';
+    if (!formData.id_card_issued_date) errors.id_card_issued_date = 'กรุณาเลือกวันออกบัตร';
+    if (!formData.id_card_expired_date) errors.id_card_expired_date = 'กรุณาเลือกวันหมดอายุบัตร';
+    return errors;
+  };
+
+  const getStep2Errors = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.address.trim()) errors.address = 'กรุณากรอกที่อยู่';
+    if (!formData.address_province) errors.address_province = 'กรุณาเลือกจังหวัด';
+    if (!formData.address_district) errors.address_district = 'กรุณาเลือกอำเภอ/เขต';
+    if (!formData.address_subdistrict) errors.address_subdistrict = 'กรุณาเลือกตำบล/แขวง';
+    if (!formData.address_postal_code) errors.address_postal_code = 'กรุณากรอกรหัสไปรษณีย์';
+    if (!formData.address_pin_location) errors.address_pin_location = 'กรุณากรอกพิกัดที่อยู่';
+    return errors;
+  };
+
+  const getStep3Errors = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.occupation.trim()) errors.occupation = 'กรุณากรอกอาชีพ';
+    if (!formData.monthly_income) errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือน';
+    if (!formData.work_address.trim()) errors.work_address = 'กรุณากรอกที่อยู่ที่ทำงาน';
+    if (!formData.work_province) errors.work_province = 'กรุณาเลือกจังหวัดที่ทำงาน';
+    if (!formData.work_district) errors.work_district = 'กรุณาเลือกอำเภอ/เขตที่ทำงาน';
+    if (!formData.work_subdistrict) errors.work_subdistrict = 'กรุณาเลือกตำบล/แขวงที่ทำงาน';
+    if (!formData.work_postal_code) errors.work_postal_code = 'กรุณากรอกรหัสไปรษณีย์ที่ทำงาน';
+    if (!formData.work_pin_location) errors.work_pin_location = 'กรุณากรอกพิกัดที่ทำงาน';
+    return errors;
+  };
+
+  const getStep4Errors = () => {
+    const errors: { [key: string]: string } = {};
+    formData.reference_contacts.forEach((ref, idx) => {
+      if (!ref.full_name.trim()) errors[`reference_full_name_${idx}`] = 'กรุณากรอกชื่อ-นามสกุล';
+      if (!ref.phone_number) errors[`reference_phone_${idx}`] = 'กรุณากรอกเบอร์โทรศัพท์';
+      if (!ref.relationship) errors[`reference_relationship_${idx}`] = 'กรุณาเลือกความสัมพันธ์';
+    });
+    return errors;
+  };
+
   const nextStep = () => {
     setError('');
     let valid = true;
-    if (currentStep === 1) valid = validateStep1();
-    if (currentStep === 2) valid = validateStep2();
-    if (currentStep === 3) valid = validateStep3();
-    if (currentStep === 4) valid = validateStep4();
-    if (valid) {
-      setFieldErrors({});
+    let errors: { [key: string]: string } = {};
+    if (currentStep === 1) {
+      errors = getStep1Errors();
+      valid = Object.keys(errors).length === 0;
+    }
+    if (currentStep === 2) {
+      errors = getStep2Errors();
+      valid = Object.keys(errors).length === 0;
+    }
+    if (currentStep === 3) {
+      errors = getStep3Errors();
+      valid = Object.keys(errors).length === 0;
+    }
+    if (currentStep === 4) {
+      errors = getStep4Errors();
+      valid = Object.keys(errors).length === 0;
+    }
+    setStepErrors(prev => prev.map((err, idx) => idx === currentStep - 1 ? errors : err));
+    if (valid && currentStep < stepCount) {
+      setStepErrors(prev => prev.map((err, idx) => idx === currentStep ? {} : err)); // clear error ของ step ถัดไป
       setCurrentStep(prev => prev + 1);
     }
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
+    if (currentStep > 1) {
+      setStepErrors(prev => prev.map((err, idx) => idx === currentStep - 2 ? {} : err)); // clear error ของ step ก่อนหน้า
+      setCurrentStep(prev => prev - 1);
+    }
   };
 
   // ฟังก์ชันตรวจสอบความครบถ้วนในแต่ละ step
@@ -595,81 +637,51 @@ function UserRegister() {
     );
   };
 
-  // ฟังก์ชัน validate แต่ละ step และ set error
-  const validateStep1 = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formData.first_name.trim()) errors.first_name = 'กรุณากรอกชื่อจริง';
-    if (!formData.last_name.trim()) errors.last_name = 'กรุณากรอกนามสกุล';
-    if (!formData.gender) errors.gender = 'กรุณาเลือกเพศ';
-    if (!formData.birth_date) errors.birth_date = 'กรุณาเลือกวันเกิด';
-    if (formData.citizen_id.replace(/-/g, '').length !== 13) errors.citizen_id = 'เลขบัตรประชาชนต้องมี 13 หลัก';
-    if (!citizenIdImageFile) errors.citizen_id_image = 'กรุณาอัปโหลดรูปบัตรประชาชน';
-    if (!formData.id_card_issued_date) errors.id_card_issued_date = 'กรุณาเลือกวันออกบัตร';
-    if (!formData.id_card_expired_date) errors.id_card_expired_date = 'กรุณาเลือกวันหมดอายุบัตร';
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  const validateStep2 = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formData.address.trim()) errors.address = 'กรุณากรอกที่อยู่';
-    if (!formData.address_province) errors.address_province = 'กรุณาเลือกจังหวัด';
-    if (!formData.address_district) errors.address_district = 'กรุณาเลือกอำเภอ/เขต';
-    if (!formData.address_subdistrict) errors.address_subdistrict = 'กรุณาเลือกตำบล/แขวง';
-    if (!formData.address_postal_code) errors.address_postal_code = 'กรุณากรอกรหัสไปรษณีย์';
-    if (!formData.address_pin_location) errors.address_pin_location = 'กรุณากรอกพิกัดที่อยู่';
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  const validateStep3 = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formData.occupation.trim()) errors.occupation = 'กรุณากรอกอาชีพ';
-    if (!formData.monthly_income) errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือน';
-    if (!formData.work_address.trim()) errors.work_address = 'กรุณากรอกที่อยู่ที่ทำงาน';
-    if (!formData.work_province) errors.work_province = 'กรุณาเลือกจังหวัดที่ทำงาน';
-    if (!formData.work_district) errors.work_district = 'กรุณาเลือกอำเภอ/เขตที่ทำงาน';
-    if (!formData.work_subdistrict) errors.work_subdistrict = 'กรุณาเลือกตำบล/แขวงที่ทำงาน';
-    if (!formData.work_postal_code) errors.work_postal_code = 'กรุณากรอกรหัสไปรษณีย์ที่ทำงาน';
-    if (!formData.work_pin_location) errors.work_pin_location = 'กรุณากรอกพิกัดที่ทำงาน';
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  const validateStep4 = () => {
-    const errors: { [key: string]: string } = {};
-    formData.reference_contacts.forEach((ref, idx) => {
-      if (!ref.full_name.trim()) errors[`reference_full_name_${idx}`] = 'กรุณากรอกชื่อ-นามสกุล';
-      if (!ref.phone_number) errors[`reference_phone_${idx}`] = 'กรุณากรอกเบอร์โทรศัพท์';
-      if (!ref.relationship) errors[`reference_relationship_${idx}`] = 'กรุณาเลือกความสัมพันธ์';
-    });
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  // Memoize dropdown options สำหรับบ้าน
+  const homeProvinceOptions = useMemo(() => (
+    homeProvinces.map((province) => (
+      <option key={province} value={province}>{province}</option>
+    ))
+  ), [homeProvinces]);
+  const homeDistrictOptions = useMemo(() => (
+    homeDistricts.map((district) => (
+      <option key={district} value={district}>{district}</option>
+    ))
+  ), [homeDistricts]);
+  const homeSubDistrictOptions = useMemo(() => (
+    homeSubDistricts.map((subDistrict) => (
+      <option key={subDistrict} value={subDistrict}>{subDistrict}</option>
+    ))
+  ), [homeSubDistricts]);
+  const homePostalCodeOptions = useMemo(() => (
+    homePostalCodes.map((postalCode) => (
+      <option key={postalCode} value={postalCode}>{postalCode}</option>
+    ))
+  ), [homePostalCodes]);
+  // Memoize dropdown options สำหรับที่ทำงาน
+  const workProvinceOptions = useMemo(() => (
+    workProvinces.map((province) => (
+      <option key={province} value={province}>{province}</option>
+    ))
+  ), [workProvinces]);
+  const workDistrictOptions = useMemo(() => (
+    workDistricts.map((district) => (
+      <option key={district} value={district}>{district}</option>
+    ))
+  ), [workDistricts]);
+  const workSubDistrictOptions = useMemo(() => (
+    workSubDistricts.map((subDistrict) => (
+      <option key={subDistrict} value={subDistrict}>{subDistrict}</option>
+    ))
+  ), [workSubDistricts]);
+  const workPostalCodeOptions = useMemo(() => (
+    workPostalCodes.map((postalCode) => (
+      <option key={postalCode} value={postalCode}>{postalCode}</option>
+    ))
+  ), [workPostalCodes]);
 
-  const handleWorkProvinceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      work_province: e.target.value,
-      work_district: '',
-      work_subdistrict: '',
-      work_postal_code: ''
-    }));
-  };
-
-  const handleWorkDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      work_district: e.target.value,
-      work_subdistrict: '',
-      work_postal_code: ''
-    }));
-  };
-
-  const handleWorkSubDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      work_subdistrict: e.target.value,
-      work_postal_code: ''
-    }));
-  };
+  // ใช้ error ของ step ปัจจุบัน (ป้องกัน undefined)
+  const fieldErrors = stepErrors[currentStep - 1] || {};
 
   return (
     <div className={styles.container}>
@@ -822,9 +834,6 @@ function UserRegister() {
               </div>
 
               <div className={styles.buttonGroup}>
-                <button type="button" className={styles.prevButton} onClick={prevStep}>
-                  ย้อนกลับ
-                </button>
                 <button type="button" className={styles.nextButton} onClick={nextStep} disabled={!isStep1Valid()}>
                   ถัดไป
                 </button>
@@ -862,11 +871,7 @@ function UserRegister() {
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
-                  {homeProvinces.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
-                  ))}
+                  {homeProvinceOptions}
                 </select>
               </div>
 
@@ -882,11 +887,7 @@ function UserRegister() {
                   disabled={!formData.address_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
-                  {homeDistricts.map((district) => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
-                  ))}
+                  {homeDistrictOptions}
                 </select>
               </div>
 
@@ -902,11 +903,7 @@ function UserRegister() {
                   disabled={!formData.address_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
-                  {homeSubDistricts.map((subDistrict) => (
-                    <option key={subDistrict} value={subDistrict}>
-                      {subDistrict}
-                    </option>
-                  ))}
+                  {homeSubDistrictOptions}
                 </select>
               </div>
 
@@ -934,11 +931,7 @@ function UserRegister() {
                     required
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
-                    {homePostalCodes.map((postalCode) => (
-                      <option key={postalCode} value={postalCode}>
-                        {postalCode}
-                      </option>
-                    ))}
+                    {homePostalCodeOptions}
                   </select>
                 ) : (
                   <input
@@ -975,7 +968,7 @@ function UserRegister() {
                 />
               </div>
 
-              {formData.address_district && formData.address_subdistrict && (
+              {formData.address && formData.address_province && formData.address_district && formData.address_subdistrict && (
                 <MapPicker
                   address={formData.address}
                   province={formData.address_province}
@@ -1092,13 +1085,11 @@ function UserRegister() {
                   id="work_province"
                   name="work_province"
                   value={formData.work_province}
-                  onChange={handleWorkProvinceChange}
+                  onChange={handleChange}
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
-                  {workProvinces.map((province) => (
-                    <option key={province} value={province}>{province}</option>
-                  ))}
+                  {workProvinceOptions}
                 </select>
               </div>
               <div className={styles.inputGroup}>
@@ -1108,14 +1099,12 @@ function UserRegister() {
                   id="work_district"
                   name="work_district"
                   value={formData.work_district}
-                  onChange={handleWorkDistrictChange}
+                  onChange={handleChange}
                   required
                   disabled={!formData.work_province}
                 >
                   <option value="">เลือกอำเภอ/เขต</option>
-                  {workDistricts.map((district) => (
-                    <option key={district} value={district}>{district}</option>
-                  ))}
+                  {workDistrictOptions}
                 </select>
               </div>
               <div className={styles.inputGroup}>
@@ -1125,14 +1114,12 @@ function UserRegister() {
                   id="work_subdistrict"
                   name="work_subdistrict"
                   value={formData.work_subdistrict}
-                  onChange={handleWorkSubDistrictChange}
+                  onChange={handleChange}
                   required
                   disabled={!formData.work_district}
                 >
                   <option value="">เลือกตำบล/แขวง</option>
-                  {workSubDistricts.map((subDistrict) => (
-                    <option key={subDistrict} value={subDistrict}>{subDistrict}</option>
-                  ))}
+                  {workSubDistrictOptions}
                 </select>
               </div>
               <div className={styles.inputGroup}>
@@ -1159,9 +1146,7 @@ function UserRegister() {
                     required
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
-                    {workPostalCodes.map((postalCode) => (
-                      <option key={postalCode} value={postalCode}>{postalCode}</option>
-                    ))}
+                    {workPostalCodeOptions}
                   </select>
                 ) : (
                   <input
@@ -1196,7 +1181,7 @@ function UserRegister() {
                   required
                 />
               </div>
-              {formData.work_district && formData.work_subdistrict && (
+              {formData.work_address && formData.work_province && formData.work_district && formData.work_subdistrict && (
                 <MapPicker
                   address={formData.work_address}
                   province={formData.work_province}
