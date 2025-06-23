@@ -1,7 +1,8 @@
 import type { FC } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import styles from './Navbar.module.css';
+import { authService } from '../../services/auth/auth.service';
 
 interface UserData {
   name: string;
@@ -11,6 +12,7 @@ interface UserData {
 
 const Navbar: FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +69,11 @@ const Navbar: FC = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/admin/login');
   };
 
   const renderUserSection = () => {
@@ -142,7 +149,7 @@ const Navbar: FC = () => {
           </ul>
 
           <div className={styles.bottomSection}>
-            <button className={styles.logoutButton}>
+            <button className={styles.logoutButton} onClick={handleLogout}>
               <span className={styles.logoutIcon}>🚪</span>
               <span className={styles.logoutText}>ออกจากระบบ</span>
             </button>

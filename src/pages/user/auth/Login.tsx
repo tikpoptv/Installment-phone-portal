@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
+import { authService } from '../../../services/auth/auth.service';
+
+// เพิ่ม type สำหรับ error response
+interface ApiError {
+  status?: number;
+  message?: string;
+}
 
 function UserLogin() {
   const navigate = useNavigate();
@@ -25,24 +32,22 @@ function UserLogin() {
     setError('');
 
     try {
-      // TODO: เรียก API login สำหรับ user
-      const response = await fetch('/api/user/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('เข้าสู่ระบบไม่สำเร็จ');
-      }
-
-      const data = await response.json();
+      // เรียก service loginUser
+      const data = await authService.loginUser(formData.phone, formData.password);
+      // เก็บ token และ user ใน localStorage แล้ว navigate
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('expires_in', data.expires_in.toString());
       navigate('/user');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      if (error?.status === 400) {
+        setError('ข้อมูลไม่ถูกต้อง');
+      } else if (error?.status === 401) {
+        setError('เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง');
+      } else {
+        setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+      }
     }
   };
 

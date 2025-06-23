@@ -1,5 +1,6 @@
 import api from '../api';
-import type { LoginResponse } from './types';
+import type { LoginResponse, UserLoginResponse } from './types';
+import { AUTH_ENDPOINTS, AUTH_STORAGE_KEYS } from './constants';
 
 const AUTH_ENDPOINT = '/api/admin/login';
 
@@ -39,5 +40,22 @@ export const authService = {
     // ตรวจสอบว่า token หมดอายุหรือยัง
     const expiresAt = parseInt(expiresIn) * 1000; // แปลงเป็น milliseconds
     return Date.now() < expiresAt;
+  },
+
+  async loginUser(phone_number: string, password: string): Promise<UserLoginResponse> {
+    const response = await api.post<UserLoginResponse>(AUTH_ENDPOINTS.userLogin, { phone_number, password });
+    localStorage.setItem(AUTH_STORAGE_KEYS.token, response.data.token);
+    localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(response.data.user));
+    localStorage.setItem('expires_in', response.data.expires_in.toString());
+    return response.data;
+  },
+
+  logout() {
+    localStorage.removeItem(STORAGE_KEYS.token);
+    localStorage.removeItem(STORAGE_KEYS.expiresIn);
+    localStorage.removeItem(STORAGE_KEYS.user);
+    localStorage.removeItem(AUTH_STORAGE_KEYS.token);
+    localStorage.removeItem(AUTH_STORAGE_KEYS.user);
+    localStorage.removeItem('expires_in');
   }
 }; 
