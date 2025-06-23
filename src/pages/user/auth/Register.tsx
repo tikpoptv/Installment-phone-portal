@@ -217,17 +217,20 @@ function UserRegister() {
 
   // โหลดข้อมูลจังหวัดที่ทำงานเมื่อ component mount (เหมือน step 2)
   useEffect(() => {
-    const loadProvinces = async () => {
-      try {
-        const provincesData = await getProvinceAll();
-        setWorkProvinces(provincesData);
-      } catch (error) {
-        console.error('Error loading work provinces:', error);
-        setWorkProvinces([]);
-      }
-    };
-    loadProvinces();
-  }, []);
+    if (currentStep === 3) {
+      const loadProvinces = async () => {
+        try {
+          const provincesData = await getProvinceAll();
+          console.log('provincesData (work):', provincesData);
+          setWorkProvinces(provincesData);
+        } catch (error) {
+          console.error('Error loading work provinces:', error);
+          setWorkProvinces([]);
+        }
+      };
+      loadProvinces();
+    }
+  }, [currentStep]);
 
   // useEffect สำหรับ work_xxx (step 3)
   useEffect(() => {
@@ -510,7 +513,12 @@ function UserRegister() {
       await registerUser(payload);
       navigate('/user/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
+      let backendMsg = '';
+      if (typeof err === 'object' && err !== null) {
+        const e = err as Record<string, unknown>;
+        backendMsg = (typeof e.error === 'string' && e.error) || (typeof e.message === 'string' && e.message) || JSON.stringify(err);
+      }
+      setError(`เกิดข้อผิดพลาดในการสมัครสมาชิก: ${backendMsg}`);
     }
   };
 
