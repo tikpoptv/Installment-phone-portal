@@ -1,0 +1,374 @@
+/* Dashboard Layout */
+.dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.main {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 32px rgba(14, 165, 233, 0.10);
+  padding: 2.5rem 2rem 2rem 2rem;
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Card กล่องข้อมูลหลัก */
+.card {
+  background: #f1f5f9;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(14, 165, 233, 0.06);
+  padding: 1.5rem 1rem 1.2rem 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+/* UserSummary */
+.userSummary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.avatarBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  color: #fff;
+  font-size: 2.1rem;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.18);
+}
+.userInfoBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.userName {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #0e3a5e;
+}
+.userPhone {
+  font-size: 0.98rem;
+  color: #64748b;
+}
+.userBalance {
+  font-size: 1.01rem;
+  color: #0ea5e9;
+  margin-top: 2px;
+}
+.userBalanceAmount {
+  font-weight: 700;
+  color: #ef4444;
+}
+
+/* InstallmentList */
+.installmentHeader {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #0369a1;
+  margin-bottom: 0.7rem;
+}
+.installmentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.98rem;
+}
+.installmentTable th, .installmentTable td {
+  padding: 0.5rem 0.3rem;
+  text-align: left;
+}
+.installmentTable th {
+  color: #0ea5e9;
+  font-weight: 700;
+  border-bottom: 2px solid #bae6fd;
+}
+.installmentTable tr:not(:last-child) td {
+  border-bottom: 1px solid #e0e7ef;
+}
+.installmentTable th:nth-child(1), .installmentTable td:nth-child(1) { min-width: 110px; word-break: break-word; }
+.installmentTable th:nth-child(2), .installmentTable td:nth-child(2) { min-width: 60px; }
+.installmentTable th:nth-child(3), .installmentTable td:nth-child(3) { min-width: 80px; }
+.installmentTable th:nth-child(4), .installmentTable td:nth-child(4) { min-width: 100px; }
+.badgeDue {
+  background: #fef3c7;
+  color: #f59e42;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 0.95em;
+}
+.badgePaid {
+  background: #d1fae5;
+  color: #059669;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 0.95em;
+}
+
+/* Notification */
+.notification {
+  background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin: 18px 0 10px 0;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.13);
+  text-align: center;
+  font-size: 1.01rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid #bae6fd;
+}
+.notificationIcon {
+  font-size: 1.5em;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+}
+
+/* Logout Button */
+.logoutButton {
+  background: linear-gradient(90deg, #f87171 0%, #fbbf24 100%);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  margin-top: 18px;
+  font-size: 1.08rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.12);
+  transition: background 0.2s, transform 0.2s;
+}
+.logoutButton:hover {
+  background: linear-gradient(90deg, #fbbf24 0%, #f87171 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Modal */
+.modalBackdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(14, 165, 233, 0.13);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(14, 165, 233, 0.13);
+  padding: 28px 20px 16px 20px;
+  min-width: 320px;
+  max-width: 480px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.modalButton {
+  background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.modalButton:hover {
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.detailButtonCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detailButton {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 7px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.08);
+  margin-bottom: 0;
+  width: auto;
+  height: auto;
+  display: inline-block;
+}
+.detailButton:hover, .detailButton:focus {
+  background: #0ea5e9;
+  color: #fff;
+  border-color: #38bdf8;
+  outline: none;
+}
+
+.installmentCardList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: unset;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+.installmentCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(14, 165, 233, 0.10);
+  padding: 1.5rem 1rem 1.2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: unset;
+  box-sizing: border-box;
+  margin-left: 0;
+  margin-right: 0;
+  position: relative;
+}
+.installmentCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.2rem;
+}
+.installmentProduct {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #0e3a5e;
+}
+.installmentCardInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.98rem;
+  color: #64748b;
+}
+.installmentLabel {
+  color: #0ea5e9;
+  font-weight: 600;
+  min-width: 60px;
+}
+.installmentAmount {
+  color: #ef4444;
+  font-weight: 700;
+}
+.detailButtonFull {
+  background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1.05rem;
+  margin-top: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
+}
+.detailButtonFull:hover {
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    padding: 1rem 0.2rem;
+    align-items: flex-start;
+  }
+  .main {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    max-width: 100vw;
+    border-radius: 12px;
+    min-height: unset;
+    margin: 0 8px;
+  }
+  .card {
+    padding: 1rem 0.5rem 0.8rem 0.5rem;
+    border-radius: 10px;
+  }
+  .userSummary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+  }
+  .installmentTable th, .installmentTable td {
+    padding: 0.35rem 0.1rem;
+    font-size: 0.92rem;
+  }
+  .notification {
+    font-size: 0.97rem;
+    padding: 8px 4px;
+    margin: 10px 0 6px 0;
+    border-radius: 8px;
+    gap: 6px;
+    border-width: 1px;
+  }
+  .notificationIcon {
+    font-size: 1.2em;
+    margin-right: 4px;
+  }
+  .logoutButton {
+    padding: 10px 0;
+    width: 100%;
+    font-size: 1rem;
+  }
+  .modalContent {
+    min-width: 90vw;
+    max-width: 98vw;
+    padding: 16px 4px 10px 4px;
+  }
+}
+
+@media (max-width: 400px) {
+  .main {
+    padding: 0.5rem 0.1rem 0.5rem 0.1rem;
+    border-radius: 8px;
+  }
+  .notification {
+    font-size: 0.9rem;
+    padding: 7px 2px;
+  }
+} 

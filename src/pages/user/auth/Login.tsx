@@ -58,6 +58,7 @@ function UserLogin() {
 
   const handlePrivacyPolicyAccept = () => {
     setShowPrivacyPolicy(false);
+    localStorage.setItem('accept_privacy_policy', 'yes');
     navigate('/user/register');
   };
 

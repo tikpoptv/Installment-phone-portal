@@ -4,6 +4,7 @@ import Dashboard from './pages/admin/dashboard/Dashboard';
 import AdminLogin from './pages/admin/auth/Login';
 import UserLogin from './pages/user/auth/Login';
 import UserRegister from './pages/user/auth/Register';
+import UserDashboard from './pages/user/dashboard/Dashboard';
 import styles from './App.module.css';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -236,18 +237,18 @@ function AppContent() {
               <UserLogin />
             )
           } />
-          <Route path="/user/register" element={<UserRegister />} />
+          <Route path="/user/register" element={
+            isLoggedIn ? (
+              <Navigate to="/user" replace />
+            ) : localStorage.getItem('accept_privacy_policy') === 'yes' ? (
+              <UserRegister />
+            ) : (
+              <Navigate to="/user/login" replace />
+            )
+          } />
           <Route path="/user/*" element={
             isLoggedIn ? (
-              <div className={styles.app}>
-                <main className={styles.mainContent}>
-                  <Routes>
-                    <Route index element={<Dashboard />} />
-                    {/* เพิ่ม routes อื่นๆ ของ user ตรงนี้ */}
-                    <Route path="*" element={<Error404 />} />
-                  </Routes>
-                </main>
-              </div>
+              <UserDashboard />
             ) : (
               <Navigate to="/user/login" replace />
             )
