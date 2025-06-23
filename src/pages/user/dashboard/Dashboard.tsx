@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserSummary from './components/UserSummary';
 import InstallmentList from './components/InstallmentList';
@@ -15,7 +15,6 @@ export interface Installment {
 }
 
 const UserDashboard = () => {
-  const [selectedDetailOrder, setSelectedDetailOrder] = useState<Installment | null>(null);
   const navigate = useNavigate();
 
   // mock data
@@ -40,7 +39,6 @@ const UserDashboard = () => {
   ];
 
   const handleViewDetail = (order: Installment) => {
-    setSelectedDetailOrder(order);
     alert(`รายละเอียดเต็ม: ${order.product} งวดที่ ${order.period}`);
   };
 
