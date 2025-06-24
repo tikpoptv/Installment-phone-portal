@@ -1,0 +1,178 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30, 41, 59, 0.18);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.18);
+  padding: 16px 10px 12px 10px;
+  min-width: 260px;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  animation: modalIn 0.18s cubic-bezier(.4,2,.6,1) both;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(40px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.modalTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.tableWrapper {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.userTable {
+  width: 100%;
+  font-size: 0.97rem;
+  border-collapse: collapse;
+  background: #fff;
+}
+.userTable th, .userTable td {
+  padding: 6px 4px;
+  text-align: left;
+}
+.userTable th {
+  background: #f1f5f9;
+  color: #0ea5e9;
+  font-weight: 700;
+  border-radius: 4px 4px 0 0;
+}
+.userTable tr:not(:last-child) td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.closeButton {
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  margin-top: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
+}
+.closeButton:hover, .closeButton:focus {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
+}
+
+.detailButton {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.08);
+  margin: 0;
+  width: auto;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  justify-content: center;
+  min-width: 0;
+}
+.detailButtonIcon {
+  font-size: 1em;
+  margin-right: 2px;
+  display: flex;
+  align-items: center;
+}
+.detailButtonText {
+  display: inline-block;
+}
+.detailButton:hover, .detailButton:focus {
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+  color: #fff;
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.13);
+}
+.userTable td {
+  vertical-align: middle;
+  text-align: center;
+}
+.userTable th:last-child, .userTable td:last-child {
+  text-align: center;
+  width: 1%;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .modalContent {
+    min-width: 0;
+    max-width: 98vw;
+    padding: 8px 1vw 8px 1vw;
+    border-radius: 7px;
+  }
+  .modalTitle {
+    font-size: 0.98rem;
+  }
+  .userTable th, .userTable td {
+    padding: 4px 1px;
+    font-size: 0.91rem;
+  }
+}
+
+.mobileAlertBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 10px 18px 10px;
+  min-width: 220px;
+  max-width: 90vw;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(14, 165, 233, 0.13);
+  text-align: center;
+}
+.mobileAlertIcon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+.mobileAlertTitle {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+.mobileAlertText {
+  font-size: 0.98rem;
+  color: #64748b;
+  margin-bottom: 10px;
+  line-height: 1.6;
+} 

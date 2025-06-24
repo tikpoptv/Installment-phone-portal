@@ -136,9 +136,9 @@ const AdminLogin: FC = () => {
             {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
 
-          <div className={styles.registerLink}>
+          {/* <div className={styles.registerLink}>
             ยังไม่มีบัญชี? <a href="/register" className={styles.link}>สมัครสมาชิก</a>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>

@@ -10,9 +10,12 @@ import InventoryStatus from './components/InventoryStatus/InventoryStatus';
 import PaymentStatus from './components/PaymentStatus/PaymentStatus';
 import TodoList from './components/TodoList/TodoList';
 import Notifications from './components/Notifications/Notifications';
+import VerifyCustomerModal from './components/VerifyCustomerModal/VerifyCustomerModal';
 
 const Dashboard: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState<string>('');
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   useEffect(() => {
     // Simulate loading data
@@ -20,6 +23,12 @@ const Dashboard: FC = () => {
       try {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 2000));
+        // ดึง username จาก localStorage
+        const userStr = localStorage.getItem('auth_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setUsername(user.username || '');
+        }
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -42,7 +51,7 @@ const Dashboard: FC = () => {
           <div className={styles.headerContent}>
             <div>
               <h1 className={styles.title}>แดชบอร์ด</h1>
-              <p className={styles.subtitle}>ยินดีต้อนรับกลับ, Admin</p>
+              <p className={styles.subtitle}>ยินดีต้อนรับกลับ, <b>{username || 'Admin User'}</b></p>
             </div>
             <div className={styles.dateInfo}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={styles.dateIcon}>
@@ -54,7 +63,7 @@ const Dashboard: FC = () => {
         </div>
 
         <div className={styles.topSection}>
-          <QuickActions />
+          <QuickActions onVerifyClick={() => setShowVerifyModal(true)} />
           <StatsCards />
         </div>
 
@@ -70,6 +79,9 @@ const Dashboard: FC = () => {
           </div>
         </div>
       </main>
+      {showVerifyModal && (
+        <VerifyCustomerModal open={showVerifyModal} onClose={() => setShowVerifyModal(false)} />
+      )}
     </div>
   );
 };

@@ -37,15 +37,18 @@ const Navbar: FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Simulate API call delay
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock data
+        // ดึง username จาก localStorage
+        let username = 'Admin User';
+        const userStr = localStorage.getItem('auth_user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          username = user.username || 'Admin User';
+        }
         setUserData({
-          name: 'Admin User',
+          name: username,
           role: 'ผู้ดูแลระบบ',
-          avatar: 'A'
+          avatar: (username[0] || 'A').toUpperCase()
         });
       } catch (err) {
         setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
