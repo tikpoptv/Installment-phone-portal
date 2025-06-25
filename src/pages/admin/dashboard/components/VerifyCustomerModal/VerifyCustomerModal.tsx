@@ -55,7 +55,7 @@ const VerifyCustomerModal: React.FC<VerifyCustomerModalProps> = ({ open, onClose
   return (
     <>
       {/* Popup รายละเอียด user */}
-      <UserDetailModal open={!!selectedUserId} onClose={handleCloseDetail} />
+      <UserDetailModal open={!!selectedUserId} onClose={handleCloseDetail} userId={selectedUserId || ''} />
       {/* Popup รายชื่อ (modal หลัก) */}
       {open && !selectedUserId && (
         <div className={styles.modalBackdrop}>
