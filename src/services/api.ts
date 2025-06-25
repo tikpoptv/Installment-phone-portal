@@ -22,7 +22,7 @@ const api: AxiosInstance = axios.create({
 
 // เพิ่ม interceptor สำหรับเพิ่ม token ในทุก request
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

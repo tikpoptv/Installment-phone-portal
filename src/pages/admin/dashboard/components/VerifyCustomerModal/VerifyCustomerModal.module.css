@@ -6,16 +6,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 24px;
 }
 
 .modalContent {
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.18);
-  padding: 16px 10px 12px 10px;
-  min-width: 260px;
-  max-width: 600px;
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(14, 165, 233, 0.18);
+  padding: 32px 32px 24px 32px;
+  min-width: 600px;
+  max-width: 1100px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -29,59 +29,76 @@
 }
 
 .modalTitle {
-  font-size: 1.08rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #0ea5e9;
-  margin-bottom: 10px;
+  margin-bottom: 18px;
   text-align: center;
 }
 
 .tableWrapper {
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .userTable {
   width: 100%;
-  font-size: 0.97rem;
+  font-size: 1.08rem;
   border-collapse: collapse;
   background: #fff;
 }
 .userTable th, .userTable td {
-  padding: 6px 4px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.userTable th:first-child, .userTable td:first-child {
   text-align: left;
+  min-width: 160px;
+  width: 28%;
 }
 .userTable th {
   background: #f1f5f9;
   color: #0ea5e9;
   font-weight: 700;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
+  font-size: 1.08rem;
 }
 .userTable tr:not(:last-child) td {
   border-bottom: 1px solid #e5e7eb;
 }
 
+@media (max-width: 1024px) {
+  .userTable th:first-child, .userTable td:first-child {
+    min-width: 120px;
+    width: 36%;
+  }
+}
+
 .closeButton {
-  background: #0ea5e9;
-  color: #fff;
-  font-weight: bold;
+  background: #e0f2fe;
+  color: #0ea5e9;
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
-  padding: 10px 0;
-  font-size: 1rem;
-  margin-top: 8px;
+  border-radius: 20px;
+  padding: 6px 0;
+  font-size: 0.93rem;
+  margin-top: 6px;
   cursor: pointer;
-  width: 100%;
-  transition: background 0.2s;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
+  width: 60%;
+  min-width: 80px;
+  max-width: 120px;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.08);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 .closeButton:hover, .closeButton:focus {
-  background: #0ea5e9;
-  color: #fff;
+  background: #bae6fd;
+  color: #0ea5e9;
   border: none;
   outline: none;
-  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
 }
 
 .detailButton {
@@ -89,23 +106,23 @@
   color: #0ea5e9;
   border: 1.5px solid #0ea5e9;
   border-radius: 7px;
-  padding: 4px 10px;
-  font-size: 0.95rem;
+  padding: 7px 18px;
+  font-size: 1.05rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.18s, color 0.18s, border 0.18s, box-shadow 0.18s;
   box-shadow: 0 1px 4px rgba(14, 165, 233, 0.08);
   margin: 0;
   width: auto;
-  height: 32px;
+  height: 38px;
   display: flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.5em;
   justify-content: center;
   min-width: 0;
 }
 .detailButtonIcon {
-  font-size: 1em;
+  font-size: 1.1em;
   margin-right: 2px;
   display: flex;
   align-items: center;
@@ -130,49 +147,35 @@
   white-space: nowrap;
 }
 
-@media (max-width: 700px) {
-  .modalContent {
-    min-width: 0;
-    max-width: 98vw;
-    padding: 8px 1vw 8px 1vw;
-    border-radius: 7px;
-  }
-  .modalTitle {
-    font-size: 0.98rem;
-  }
-  .userTable th, .userTable td {
-    padding: 4px 1px;
-    font-size: 0.91rem;
-  }
-}
-
 .mobileAlertBox {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 10px 18px 10px;
-  min-width: 220px;
+  padding: 10px 8px 8px 8px;
+  min-width: 120px;
   max-width: 90vw;
   width: 100%;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(14, 165, 233, 0.13);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.10);
   text-align: center;
 }
 .mobileAlertIcon {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+  font-size: 1.4rem;
+  margin-bottom: 4px;
 }
 .mobileAlertTitle {
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #ef4444;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  letter-spacing: 0.01em;
 }
 .mobileAlertText {
-  font-size: 0.98rem;
+  font-size: 0.89rem;
   color: #64748b;
-  margin-bottom: 10px;
-  line-height: 1.6;
+  margin-bottom: 8px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
 } 
