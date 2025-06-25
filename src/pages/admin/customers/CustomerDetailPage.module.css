@@ -1,0 +1,228 @@
+.container {
+  max-width: 1100px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px 0 rgba(14,165,233,0.13), 0 1.5px 8px 0 #bae6fd33;
+  padding: 48px 48px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  top: 0;
+  padding-top: 70px;
+}
+.backButton {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  z-index: 2;
+  margin-bottom: 0;
+  background: #e0e7ef;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 1px 4px #bae6fd33;
+}
+.backButton:hover {
+  background: #bae6fd;
+  color: #0369a1;
+}
+.header {
+  color: #0ea5e9;
+  margin-bottom: 12px;
+  font-size: 2.3rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.status {
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin-left: 12px;
+  padding: 2px 14px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  box-shadow: 0 1px 4px #bae6fd33;
+}
+.status.verified {
+  color: #22c55e;
+  background: #e7fbe9;
+}
+.status.unverified {
+  color: #f59e42;
+  background: #fff7e6;
+}
+.section {
+  margin-bottom: 36px;
+  background: #f3f8fc;
+  border-radius: 10px;
+  padding: 18px 12px;
+}
+.sectionTitle {
+  font-size: 1.18rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0284c7;
+  letter-spacing: 0.2px;
+}
+.infoGrid {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.infoCol {
+  flex: 1;
+  min-width: 300px;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 18px 20px 14px 20px;
+  box-shadow: 0 1px 4px #bae6fd33;
+  margin-bottom: 16px;
+  border: 1px solid #e0e7ef;
+}
+.infoCol a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  word-break: break-all;
+}
+.tableWrapper {
+  background: #f8fafc;
+  border-radius: 10px;
+  overflow-x: auto;
+  box-shadow: 0 1px 4px #bae6fd33;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+.table th {
+  padding: 12px 8px;
+  border: 1px solid #bae6fd;
+  background: #e0f2fe;
+  font-weight: 700;
+  color: #0ea5e9;
+  font-size: 1.08rem;
+}
+.table td {
+  padding: 12px 8px;
+  border: 1px solid #e0e7ef;
+  color: #334155;
+  font-size: 1.05rem;
+}
+.table tr:nth-child(even) {
+  background: #e0f2fe;
+}
+.table tr:nth-child(odd) {
+  background: #f8fafc;
+}
+.table tr:hover {
+  background: #bae6fd55;
+}
+.verifyButton {
+  position: absolute;
+  top: 24px;
+  right: 135px;
+  z-index: 2;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px #bae6fd33;
+  margin-right: 12px;
+}
+.citizenIdImage {
+  width: 120px;
+  height: 80px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  object-fit: cover;
+  display: block;
+  margin: 8px auto 4px auto;
+  background: #f8fafc;
+}
+@media (max-width: 1200px) {
+  .container {
+    max-width: 100vw;
+    padding: 0 4vw 0 4vw;
+    padding-top: 70px;
+  }
+  .infoGrid {
+    gap: 16px;
+  }
+}
+@media (max-width: 900px) {
+  .container {
+    padding: 0 4vw 0 4vw;
+    max-width: 100vw;
+    padding-top: 56px;
+  }
+  .verifyButton {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    margin-right: 0;
+    margin-bottom: 16px;
+    display: block;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .backButton {
+    position: static;
+    width: 100%;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .infoGrid {
+    gap: 8px;
+  }
+  .infoCol {
+    min-width: 220px;
+    padding: 12px 8px 8px 8px;
+  }
+}
+@media (max-width: 600px) {
+  .container {
+    padding: 0 4vw 0 4vw;
+    border-radius: 0;
+    min-height: 100vh;
+    padding-top: 44px;
+  }
+  .backButton {
+    top: 6px;
+    right: 6px;
+    padding: 5px 10px;
+    font-size: 0.92rem;
+  }
+  .infoGrid {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .infoCol {
+    min-width: 0;
+    padding: 8px 4px 6px 4px;
+  }
+  .header {
+    font-size: 1.2rem;
+    gap: 6px;
+  }
+}
+body {
+  background: #f1f5f9;
+} 

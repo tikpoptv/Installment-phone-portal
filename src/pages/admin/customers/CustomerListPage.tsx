@@ -1,0 +1,313 @@
+import { useState, useEffect } from 'react';
+import React from 'react';
+import styles from './CustomerListPage.module.css';
+import { MdVerified, MdHourglassEmpty, MdClose } from 'react-icons/md';
+import { getCustomers } from '../../../services/customer/customer.service';
+import type { Customer } from '../../../services/customer/customer.service';
+import { useNavigate } from 'react-router-dom';
+
+type FilterType = 'all' | 'verified' | 'unverified';
+
+const statusLabel = (is_verified: boolean) =>
+  is_verified ? (
+    <span className={styles.statusVerified} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <MdVerified size={20} color="#22c55e" style={{ marginRight: 2 }} />
+      ยืนยันแล้ว
+    </span>
+  ) : (
+    <span className={styles.statusPending} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <MdHourglassEmpty size={20} color="#f59e42" style={{ marginRight: 2 }} />
+      รอการยืนยัน
+    </span>
+  );
+
+function exportCustomersToCSV(customers: Customer[]) {
+  const header = ['ลำดับ', 'ชื่อ', 'นามสกุล', 'เบอร์โทร', 'อีเมล', 'สมัครเมื่อ', 'สถานะ'];
+  const rows = customers.map((c, idx) => [
+    idx + 1,
+    c.first_name,
+    c.last_name,
+    c.phone_number,
+    c.email,
+    c.created_at,
+    c.is_verified ? 'ยืนยันแล้ว' : 'รอการยืนยัน',
+  ]);
+  const csvContent = [header, ...rows]
+    .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+    .join('\r\n');
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'customer-list.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  // ดึงค่า UTC แล้วบวก 7 ชั่วโมง
+  let hour = date.getUTCHours() + 7;
+  let day = date.getUTCDate();
+  let month = date.getUTCMonth() + 1;
+  let year = date.getUTCFullYear();
+  if (hour >= 24) {
+    hour -= 24;
+    day += 1;
+    // handle ข้ามเดือน/ปี (กรณีข้ามวัน)
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day > daysInMonth) {
+      day = 1;
+      month += 1;
+      if (month > 12) {
+        month = 1;
+        year += 1;
+      }
+    }
+  }
+  const hourStr = hour.toString().padStart(2, '0');
+  const minStr = date.getUTCMinutes().toString().padStart(2, '0');
+  const dayStr = day.toString().padStart(2, '0');
+  const monthStr = month.toString().padStart(2, '0');
+  return `${dayStr}/${monthStr}/${year} ${hourStr}:${minStr}`;
+}
+
+// Modal Popup Component
+function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
+  open: boolean;
+  onClose: () => void;
+  onExportFiltered: () => void;
+  onExportAll: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(0,0,0,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: 32, minWidth: 320, boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 4,
+            borderRadius: '50%',
+            transition: 'background 0.18s',
+          }}
+          onMouseOver={e => (e.currentTarget.style.background = '#f1f5f9')}
+          onMouseOut={e => (e.currentTarget.style.background = 'none')}
+          aria-label="ปิด"
+        >
+          <MdClose size={22} color="#64748b" />
+        </button>
+        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#0ea5e9' }}>Export ข้อมูลลูกค้า</div>
+        <div style={{ marginBottom: 24, color: '#334155' }}>คุณต้องการ export ข้อมูลลูกค้าแบบไหน?</div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+          <button style={{
+            background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer',
+          }} onClick={() => { onExportFiltered(); onClose(); }}>เฉพาะข้อมูลที่แสดงอยู่</button>
+          <button style={{
+            background: '#e0e7ef', color: '#0ea5e9', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer',
+          }} onClick={() => { onExportAll(); onClose(); }}>ข้อมูลทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Popup แจ้งเตือนสำหรับ mobile
+function MobileWarningModal({ open, onContinue, onCancel }: { open: boolean; onContinue: () => void; onCancel: () => void }) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(0,0,0,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 300, maxWidth: 340, boxShadow: '0 4px 24px rgba(0,0,0,0.12)', textAlign: 'center' }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#0ea5e9', marginBottom: 12 }}>ฟีเจอร์นี้เหมาะกับหน้าจอใหญ่</div>
+        <div style={{ color: '#334155', fontSize: 15, marginBottom: 24, lineHeight: 1.7 }}>
+          หน้าดูรายละเอียดลูกค้าไม่ได้ถูกออกแบบมาสำหรับมือถือ<br />
+          การแสดงผลอาจผิดเพี้ยนหรือใช้งานไม่สะดวก<br />
+          <span style={{ color: '#f59e42', fontWeight: 600 }}>แนะนำให้ใช้งานบน iPad หรือคอมพิวเตอร์เพื่อประสบการณ์ที่ดีที่สุด</span><br />
+          <br />คุณต้องการดำเนินการต่อหรือไม่?
+        </div>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={onContinue}>ดำเนินการต่อ</button>
+          <button style={{ background: '#e0e7ef', color: '#0ea5e9', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={onCancel}>ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CustomerListPage() {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [mobileWarningOpen, setMobileWarningOpen] = useState(false);
+  const [pendingDetailId, setPendingDetailId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCustomers()
+      .then(data => setCustomers(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = customers.filter((c) => {
+    const match =
+      c.first_name.includes(search) ||
+      c.last_name.includes(search) ||
+      c.phone_number.includes(search) ||
+      c.email.includes(search);
+    if (filter === 'all') return match;
+    if (filter === 'verified') return c.is_verified && match;
+    if (filter === 'unverified') return !c.is_verified && match;
+    return match;
+  });
+
+  const totalRows = filtered.length;
+  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const startIdx = (currentPage - 1) * rowsPerPage;
+  const endIdx = startIdx + rowsPerPage;
+  const paginated = filtered.slice(startIdx, endIdx);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [rowsPerPage, search, filter]);
+
+  if (loading) {
+    return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 18 }}>กำลังโหลดข้อมูล...</div>;
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>รายชื่อลูกค้า</h2>
+        <div className={styles.actionGroup}>
+          <button className={styles.addButton}>เพิ่มลูกค้าใหม่</button>
+          <button className={styles.exportButton} onClick={() => setExportModalOpen(true)}>Export</button>
+        </div>
+      </div>
+      <div className={styles.filterRow}>
+        <input
+          type="text"
+          placeholder="ค้นหาชื่อ, เบอร์, อีเมล..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className={styles.searchInput}
+        />
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value as FilterType)}
+          className={styles.select}
+        >
+          <option value="all">ทั้งหมด</option>
+          <option value="verified">ยืนยันแล้ว</option>
+          <option value="unverified">ยังไม่ยืนยัน</option>
+        </select>
+        <select
+          value={rowsPerPage}
+          onChange={e => setRowsPerPage(Number(e.target.value))}
+          className={styles.select}
+          style={{ marginLeft: 8 }}
+        >
+          <option value={25}>25 รายการ/หน้า</option>
+          <option value={50}>50 รายการ/หน้า</option>
+          <option value={75}>75 รายการ/หน้า</option>
+          <option value={100}>100 รายการ/หน้า</option>
+        </select>
+      </div>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>อันดับ</th>
+              <th>ชื่อ-นามสกุล</th>
+              <th>เบอร์โทร</th>
+              <th>อีเมล</th>
+              <th>สมัครเมื่อ</th>
+              <th>สถานะ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginated.length === 0 ? (
+              <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 32 }}>ไม่พบข้อมูล</td></tr>
+            ) : paginated.map((c, idx) => (
+              <tr key={c.id}>
+                <td style={{ textAlign: 'center' }}>{startIdx + idx + 1}</td>
+                <td>{c.first_name} {c.last_name}</td>
+                <td>{c.phone_number}</td>
+                <td>{c.email}</td>
+                <td style={{ textAlign: 'center' }}>{formatDate(c.created_at)}</td>
+                <td style={{ textAlign: 'center' }}>{statusLabel(c.is_verified)}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <button
+                    className={styles.detailButton}
+                    onClick={() => {
+                      if (window.innerWidth < 768) {
+                        setPendingDetailId(c.id);
+                        setMobileWarningOpen(true);
+                      } else {
+                        navigate(`/admin/customers/${c.id}`);
+                      }
+                    }}
+                  >ดูรายละเอียด</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.paginationBar}>
+        <span>แสดง {startIdx + 1}-{Math.min(endIdx, totalRows)} จาก {totalRows} รายการ</span>
+        <div className={styles.paginationControls}>
+          <button
+            className={styles.paginationButton}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >ย้อนกลับ</button>
+          <span>หน้า {currentPage} / {totalPages}</span>
+          <button
+            className={styles.paginationButton}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >ถัดไป</button>
+        </div>
+      </div>
+      {/* Export Modal */}
+      <ExportModal
+        open={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        onExportFiltered={() => exportCustomersToCSV(filtered)}
+        onExportAll={() => exportCustomersToCSV(customers)}
+      />
+      {/* Mobile Warning Modal */}
+      <MobileWarningModal
+        open={mobileWarningOpen}
+        onContinue={() => {
+          setMobileWarningOpen(false);
+          if (pendingDetailId) navigate(`/admin/customers/${pendingDetailId}`);
+        }}
+        onCancel={() => {
+          setMobileWarningOpen(false);
+          setPendingDetailId(null);
+        }}
+      />
+    </div>
+  );
+} 

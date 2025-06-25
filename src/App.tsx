@@ -12,6 +12,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorPage from './components/ErrorPage';
 import ContractDetailPage from './pages/user/contract/ContractDetailPage';
+import CustomerListPage from './pages/admin/customers/CustomerListPage';
+import CustomerDetailPage from './pages/admin/customers/CustomerDetailPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -220,6 +222,8 @@ function AppContent() {
                 <main className={styles.mainContent}>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="customers" element={<CustomerListPage />} />
+                    <Route path="customers/:id" element={<CustomerDetailPage />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>

@@ -44,6 +44,10 @@ export interface UserDetail {
   work_pin_location: string;
   created_at: string;
   updated_at: string;
+  is_verified: boolean;
+  verified_by: string | null;
+  verified_at: string | null;
+  citizen_id_image_filename: string;
 }
 
 export interface UserDetailResponse {
