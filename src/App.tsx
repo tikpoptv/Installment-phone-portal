@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ErrorPage from './components/ErrorPage';
+import ContractDetailPage from './pages/user/contract/ContractDetailPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -249,6 +250,7 @@ function AppContent() {
               <Navigate to="/user/login" replace />
             )
           } />
+          <Route path="/user/contract/:id" element={<ContractDetailPage />} />
           <Route path="/user/*" element={
             isLoggedIn ? (
               <UserDashboard />

@@ -3,6 +3,7 @@ import UserSummary from './components/UserSummary';
 import InstallmentList from './components/InstallmentList';
 import styles from './Dashboard.module.css';
 import { authService } from '../../../services/auth/auth.service';
+import React from 'react';
 
 export interface Installment {
   id: string;
@@ -16,8 +17,24 @@ export interface Installment {
 const UserDashboard = () => {
   const navigate = useNavigate();
 
-  // mock data
-  const user = { name: 'สมชาย ใจดี', phone: '0812345678', balance: 12000 };
+  // ดึงข้อมูล user จาก localStorage (key 'user')
+  let userData = null;
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      userData = JSON.parse(userStr);
+    } catch { /* ignore */ }
+  }
+  const user = userData
+    ? {
+        name: userData.first_name && userData.last_name
+          ? `${userData.first_name} ${userData.last_name}`
+          : userData.username || '-',
+        phone: userData.phone_number || '-',
+        balance: 12000 // TODO: ดึงจาก API จริงในอนาคต
+      }
+    : { name: '-', phone: '-', balance: 12000 };
+
   const installments: Installment[] = [
     {
       id: '1',
@@ -37,10 +54,6 @@ const UserDashboard = () => {
     },
   ];
 
-  const handleViewDetail = (order: Installment) => {
-    alert(`รายละเอียดเต็ม: ${order.product} งวดที่ ${order.period}`);
-  };
-
   const handleLogout = () => {
     authService.logout();
     navigate('/user/login');
@@ -48,14 +61,9 @@ const UserDashboard = () => {
 
   return (
     <div className={styles.dashboard}>
-      {/* สามารถเพิ่ม UserNavbar ได้ถ้ามี */}
       <main className={styles.main}>
         <UserSummary user={user} />
-        <InstallmentList
-          installments={installments}
-          onViewDetail={handleViewDetail}
-        />
-        {/* แจ้งเตือน */}
+        <InstallmentList installments={installments} />
         <div className={styles.notification}>
           <span className={styles.notificationIcon} role="img" aria-label="alert">⚠️</span>
           งวดที่ 3 ของ iPhone 15 กำลังจะครบกำหนด!

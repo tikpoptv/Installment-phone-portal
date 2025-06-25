@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from '../Dashboard.module.css';
+import { useNavigate } from 'react-router-dom';
 
 interface Installment {
   id: string;
@@ -12,10 +13,15 @@ interface Installment {
 
 interface InstallmentListProps {
   installments: Installment[];
-  onViewDetail: (order: Installment) => void;
 }
 
-const InstallmentList: React.FC<InstallmentListProps> = ({ installments, onViewDetail }) => {
+const InstallmentList = ({ installments }: InstallmentListProps) => {
+  const navigate = useNavigate();
+
+  const handleViewDetail = (id: string) => {
+    navigate(`/user/contract/${id}`);
+  };
+
   return (
     <div className={styles.card}>
       <div className={styles.installmentHeader}>รายการผ่อนของฉัน</div>
@@ -41,12 +47,8 @@ const InstallmentList: React.FC<InstallmentListProps> = ({ installments, onViewD
               <td className={styles.detailButtonCell}>
                 <button
                   className={styles.detailButton}
-                  onClick={() => onViewDetail(item)}
-                  aria-label="รายละเอียด"
-                  type="button"
-                >
-                  รายละเอียด
-                </button>
+                  onClick={() => handleViewDetail(item.id)}
+                >ดูรายละเอียด</button>
               </td>
             </tr>
           ))}

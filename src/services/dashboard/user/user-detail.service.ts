@@ -65,7 +65,10 @@ export async function getCitizenIdImage(userId: string, filename: string): Promi
 }
 
 // ยืนยันตัวตนผู้ใช้ (Admin Only)
-export async function verifyUser(userId: string): Promise<string> {
-  const res = await apiClient.post<{ status: string }>(`/api/admin/users/${userId}/verify`);
+export async function verifyUser(userId: string, approve: boolean): Promise<string> {
+  const res = await apiClient.post<{ status: string }>(
+    `/api/admin/users/${userId}/verify`,
+    { approve }
+  );
   return res.data.status;
 } 

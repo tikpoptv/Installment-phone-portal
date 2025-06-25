@@ -56,6 +56,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
   const [citizenIdImageLoading, setCitizenIdImageLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   useEffect(() => {
     if (open && userId) {
@@ -194,13 +195,56 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
   async function handleConfirm() {
     if (!userId) return;
     try {
-      await verifyUser(userId);
-      toast.success('ยืนยันตัวตนสำเร็จ!');
+      const status = await verifyUser(userId, true);
+      if (status === 'approved') {
+        toast.success('ยืนยันตัวตนสำเร็จ!');
+      } else {
+        toast.info('สถานะ: ' + status);
+      }
       setTimeout(() => {
         window.location.href = '/admin';
       }, 800);
-    } catch {
-      toast.error('ยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ');
+    } catch (err: unknown) {
+      const error = err as { status?: number };
+      if (error?.status === 401) {
+        toast.error('กรุณาเข้าสู่ระบบใหม่');
+      } else if (error?.status === 403) {
+        toast.error('คุณไม่มีสิทธิ์ดำเนินการนี้');
+      } else if (error?.status === 404) {
+        toast.error('ไม่พบผู้ใช้');
+      } else if (error?.status === 400) {
+        toast.error('ข้อมูลไม่ถูกต้อง');
+      } else {
+        toast.error('ยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ');
+      }
+    }
+  }
+
+  async function handleReject() {
+    if (!userId) return;
+    try {
+      const status = await verifyUser(userId, false);
+      if (status === 'rejected') {
+        toast.success('ดำเนินการ "ไม่อนุมัติ" สำเร็จ!');
+      } else {
+        toast.info('สถานะ: ' + status);
+      }
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 800);
+    } catch (err: unknown) {
+      const error = err as { status?: number };
+      if (error?.status === 401) {
+        toast.error('กรุณาเข้าสู่ระบบใหม่');
+      } else if (error?.status === 403) {
+        toast.error('คุณไม่มีสิทธิ์ดำเนินการนี้');
+      } else if (error?.status === 404) {
+        toast.error('ไม่พบผู้ใช้');
+      } else if (error?.status === 400) {
+        toast.error('ข้อมูลไม่ถูกต้อง');
+      } else {
+        toast.error('ไม่อนุมัติไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ');
+      }
     }
   }
 
@@ -374,29 +418,42 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
             </div>
           </>
         ) : null}
-        <button
-          style={{
-            background: '#22c55e',
-            color: '#fff',
-            fontWeight: 600,
-            border: 'none',
-            borderRadius: 20,
-            padding: '10px 0',
-            fontSize: '1em',
-            marginTop: 24,
-            cursor: 'pointer',
-            width: '70%',
-            minWidth: 100,
-            maxWidth: 220,
-            display: 'block',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-            boxShadow: '0 1px 4px rgba(34,197,94,0.08)'
-          }}
-          onClick={() => setShowConfirmModal(true)}
-        >
-          ยืนยันตัวตน
-        </button>
+        <div style={{ display: 'flex', gap: 16, marginTop: 24, justifyContent: 'center' }}>
+          <button
+            style={{
+              background: '#22c55e',
+              color: '#fff',
+              fontWeight: 600,
+              border: 'none',
+              borderRadius: 20,
+              padding: '10px 0',
+              fontSize: '1em',
+              cursor: 'pointer',
+              minWidth: 120,
+              boxShadow: '0 1px 4px rgba(34,197,94,0.08)'
+            }}
+            onClick={() => setShowConfirmModal(true)}
+          >
+            ยืนยันตัวตน
+          </button>
+          <button
+            style={{
+              background: 'linear-gradient(90deg, #ef4444 0%, #f87171 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              border: 'none',
+              borderRadius: 20,
+              padding: '10px 0',
+              fontSize: '1em',
+              cursor: 'pointer',
+              minWidth: 120,
+              boxShadow: '0 1px 4px rgba(239,68,68,0.10)'
+            }}
+            onClick={() => setShowRejectModal(true)}
+          >
+            ไม่อนุมัติ
+          </button>
+        </div>
       </div>
       {/* Popup ยืนยัน */}
       {showConfirmModal && (
@@ -420,6 +477,32 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
               <button
                 style={{background: '#e0e7ef', color: '#64748b', border: 'none', borderRadius: 18, padding: '7px 28px', fontWeight: 500, fontSize: 15, cursor: 'pointer'}}
                 onClick={() => setShowConfirmModal(false)}
+              >ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRejectModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.25)', zIndex: 4001,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 14, boxShadow: '0 8px 32px rgba(239,68,68,0.18)',
+            padding: '32px 28px 24px 28px', minWidth: 280, maxWidth: '90vw', textAlign: 'center',
+          }}>
+            <div style={{fontSize: 20, fontWeight: 700, color: '#ef4444', marginBottom: 12}}>ยืนยันคำสั่ง</div>
+            <div style={{fontSize: 16, color: '#334155', marginBottom: 24}}>คุณแน่ใจหรือไม่ว่าต้องการ "ไม่อนุมัติ" ผู้ใช้นี้?</div>
+            <div style={{display: 'flex', gap: 16, justifyContent: 'center'}}>
+              <button
+                style={{background: '#ef4444', color: '#fff', border: 'none', borderRadius: 18, padding: '7px 28px', fontWeight: 600, fontSize: 15, cursor: 'pointer'}}
+                onClick={handleReject}
+              >ยืนยัน</button>
+              <button
+                style={{background: '#e0e7ef', color: '#64748b', border: 'none', borderRadius: 18, padding: '7px 28px', fontWeight: 500, fontSize: 15, cursor: 'pointer'}}
+                onClick={() => setShowRejectModal(false)}
               >ยกเลิก</button>
             </div>
           </div>
