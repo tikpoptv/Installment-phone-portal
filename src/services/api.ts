@@ -61,45 +61,30 @@ export const apiClient = {
   },
 
   post: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    try {
-      const response = await api.post<T>(url, data, config);
-      return {
-        data: response.data,
-        status: response.status,
-        message: response.statusText
-      };
-    } catch {
-      window.location.replace('/error');
-      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
-    }
+    const response = await api.post<T>(url, data, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
   },
 
   put: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    try {
-      const response = await api.put<T>(url, data, config);
-      return {
-        data: response.data,
-        status: response.status,
-        message: response.statusText
-      };
-    } catch {
-      window.location.replace('/error');
-      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
-    }
+    const response = await api.put<T>(url, data, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
   },
 
   delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    try {
-      const response = await api.delete<T>(url, config);
-      return {
-        data: response.data,
-        status: response.status,
-        message: response.statusText
-      };
-    } catch {
-      window.location.replace('/error');
-      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
-    }
+    const response = await api.delete<T>(url, config);
+    return {
+      data: response.data,
+      status: response.status,
+      message: response.statusText
+    };
   }
 };
 

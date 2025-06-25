@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './VerifyCustomerModal.module.css';
-import { getUserDetail, getCitizenIdImage } from '../../../../../services/dashboard/user/user-detail.service';
+import { getUserDetail, getCitizenIdImage, verifyUser } from '../../../../../services/dashboard/user/user-detail.service';
 import type { ReferenceContact } from '../../../../../services/dashboard/user/user-detail.service';
 import { toast } from 'react-toastify';
 
@@ -191,11 +191,17 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
     return dateStr.replace(/T00:00:00Z$/, '');
   }
 
-  function handleConfirm() {
-    toast.success('ยืนยันตัวตนสำเร็จ!');
-    setTimeout(() => {
-      window.location.href = '/admin';
-    }, 800);
+  async function handleConfirm() {
+    if (!userId) return;
+    try {
+      await verifyUser(userId);
+      toast.success('ยืนยันตัวตนสำเร็จ!');
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 800);
+    } catch {
+      toast.error('ยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ');
+    }
   }
 
   if (!open) return null;
