@@ -3,7 +3,6 @@ import UserSummary from './components/UserSummary';
 import InstallmentList from './components/InstallmentList';
 import styles from './Dashboard.module.css';
 import { authService } from '../../../services/auth/auth.service';
-import React from 'react';
 
 export interface Installment {
   id: string;
