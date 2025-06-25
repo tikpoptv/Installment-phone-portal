@@ -8,6 +8,9 @@ import UserDashboard from './pages/user/dashboard/Dashboard';
 import styles from './App.module.css';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ErrorPage from './components/ErrorPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -256,6 +259,9 @@ function AppContent() {
         </>
       )}
 
+      {/* Global Error Page */}
+      <Route path="/error" element={<ErrorPage />} />
+
       {/* 404 Route - สำหรับ path ที่ไม่มีอยู่จริง */}
       <Route path="*" element={<Error404 />} />
     </Routes>
@@ -266,6 +272,7 @@ function App() {
   return (
     <Router>
       <AppContent />
+      <ToastContainer position="top-right" autoClose={3000} />
     </Router>
   );
 }

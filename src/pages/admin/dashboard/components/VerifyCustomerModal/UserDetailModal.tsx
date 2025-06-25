@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './VerifyCustomerModal.module.css';
 import { getUserDetail, getCitizenIdImage } from '../../../../../services/dashboard/user/user-detail.service';
 import type { ReferenceContact } from '../../../../../services/dashboard/user/user-detail.service';
+import { toast } from 'react-toastify';
 
 export interface UserDetail {
   ID: string;
@@ -54,6 +55,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
   const [citizenIdImageUrl, setCitizenIdImageUrl] = useState<string>('');
   const [citizenIdImageLoading, setCitizenIdImageLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     if (open && userId) {
@@ -189,10 +191,41 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
     return dateStr.replace(/T00:00:00Z$/, '');
   }
 
+  function handleConfirm() {
+    toast.success('ยืนยันตัวตนสำเร็จ!');
+    setTimeout(() => {
+      window.location.href = '/admin';
+    }, 800);
+  }
+
   if (!open) return null;
   return (
     <div className={styles.modalBackdrop}>
-      <div className={styles.modalContent} style={{maxWidth: 700, minWidth: 320}}>
+      <div
+        className={styles.modalContent}
+        style={{maxWidth: 700, minWidth: 320, position: 'relative'}} 
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ปุ่มปิด (X) มุมขวาบน */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            background: 'transparent',
+            border: 'none',
+            fontSize: 22,
+            color: '#64748b',
+            cursor: 'pointer',
+            zIndex: 100,
+            padding: 8,
+            lineHeight: 1,
+          }}
+          aria-label="ปิด"
+        >
+          ×
+        </button>
         <h2 className={styles.modalTitle}>ข้อมูลผู้ใช้</h2>
         {loading ? (
           <div style={{textAlign: 'center', color: '#0ea5e9', padding: '32px 0'}}>กำลังโหลดข้อมูล...</div>
@@ -335,8 +368,57 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
             </div>
           </>
         ) : null}
-        <button className={styles.closeButton} onClick={onClose}>ปิด</button>
+        <button
+          style={{
+            background: '#22c55e',
+            color: '#fff',
+            fontWeight: 600,
+            border: 'none',
+            borderRadius: 20,
+            padding: '10px 0',
+            fontSize: '1em',
+            marginTop: 24,
+            cursor: 'pointer',
+            width: '70%',
+            minWidth: 100,
+            maxWidth: 220,
+            display: 'block',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            boxShadow: '0 1px 4px rgba(34,197,94,0.08)'
+          }}
+          onClick={() => setShowConfirmModal(true)}
+        >
+          ยืนยันตัวตน
+        </button>
       </div>
+      {/* Popup ยืนยัน */}
+      {showConfirmModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.25)', zIndex: 4001,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 14, boxShadow: '0 8px 32px rgba(30,41,59,0.18)',
+            padding: '32px 28px 24px 28px', minWidth: 280, maxWidth: '90vw', textAlign: 'center',
+          }}>
+            <div style={{fontSize: 20, fontWeight: 700, color: '#0ea5e9', marginBottom: 12}}>ยืนยันคำสั่ง</div>
+            <div style={{fontSize: 16, color: '#334155', marginBottom: 24}}>คุณต้องการยืนยันตัวตนผู้ใช้นี้ใช่หรือไม่?</div>
+            <div style={{display: 'flex', gap: 16, justifyContent: 'center'}}>
+              <button
+                style={{background: '#22c55e', color: '#fff', border: 'none', borderRadius: 18, padding: '7px 28px', fontWeight: 600, fontSize: 15, cursor: 'pointer'}}
+                onClick={handleConfirm}
+              >ยืนยัน</button>
+              <button
+                style={{background: '#e0e7ef', color: '#64748b', border: 'none', borderRadius: 18, padding: '7px 28px', fontWeight: 500, fontSize: 15, cursor: 'pointer'}}
+                onClick={() => setShowConfirmModal(false)}
+              >ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modal แสดงรูปขยาย */}
       {showImageModal && citizenIdImageUrl && (
         <div
@@ -352,21 +434,44 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          onClick={() => setShowImageModal(false)}
+          onClick={e => { e.stopPropagation(); setShowImageModal(false); }}
         >
-          <img
-            src={citizenIdImageUrl}
-            alt="รูปบัตรประชาชนขยาย"
-            style={{
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              borderRadius: 12,
-              boxShadow: '0 4px 32px rgba(30,41,59,0.18)',
-              background: '#fff',
-              border: '2px solid #e0e7ef',
-            }}
-            onClick={e => e.stopPropagation()}
-          />
+          <div style={{position: 'relative'}} onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowImageModal(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                background: 'rgba(255,255,255,0.95)',
+                border: 'none',
+                fontSize: 22,
+                color: '#64748b',
+                cursor: 'pointer',
+                zIndex: 10,
+                padding: 8,
+                lineHeight: 1,
+                boxShadow: '0 2px 8px rgba(30,41,59,0.10)'
+              }}
+              aria-label="ปิด"
+            >
+              ×
+            </button>
+            <img
+              src={citizenIdImageUrl}
+              alt="รูปบัตรประชาชนขยาย"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '80vh',
+                borderRadius: 12,
+                boxShadow: '0 4px 32px rgba(30,41,59,0.18)',
+                background: '#fff',
+                border: '2px solid #e0e7ef',
+                display: 'block',
+              }}
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
         </div>
       )}
     </div>

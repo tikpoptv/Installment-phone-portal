@@ -47,39 +47,59 @@ api.interceptors.response.use(
 // สร้าง wrapper functions สำหรับ HTTP methods
 export const apiClient = {
   get: async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    const response = await api.get<T>(url, config);
-    return {
-      data: response.data,
-      status: response.status,
-      message: response.statusText
-    };
+    try {
+      const response = await api.get<T>(url, config);
+      return {
+        data: response.data,
+        status: response.status,
+        message: response.statusText
+      };
+    } catch {
+      window.location.replace('/error');
+      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+    }
   },
 
   post: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    const response = await api.post<T>(url, data, config);
-    return {
-      data: response.data,
-      status: response.status,
-      message: response.statusText
-    };
+    try {
+      const response = await api.post<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+        message: response.statusText
+      };
+    } catch {
+      window.location.replace('/error');
+      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+    }
   },
 
   put: async <T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    const response = await api.put<T>(url, data, config);
-    return {
-      data: response.data,
-      status: response.status,
-      message: response.statusText
-    };
+    try {
+      const response = await api.put<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+        message: response.statusText
+      };
+    } catch {
+      window.location.replace('/error');
+      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+    }
   },
 
   delete: async <T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> => {
-    const response = await api.delete<T>(url, config);
-    return {
-      data: response.data,
-      status: response.status,
-      message: response.statusText
-    };
+    try {
+      const response = await api.delete<T>(url, config);
+      return {
+        data: response.data,
+        status: response.status,
+        message: response.statusText
+      };
+    } catch {
+      window.location.replace('/error');
+      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+    }
   }
 };
 
