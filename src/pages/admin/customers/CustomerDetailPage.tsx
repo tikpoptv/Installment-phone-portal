@@ -6,15 +6,7 @@ import { ReadOnlyMap } from '../../../components/ReadOnlyMap';
 import { getUserDetail, getCitizenIdImage } from '../../../services/dashboard/user/user-detail.service';
 import type { UserDetail, ReferenceContact } from '../../../services/dashboard/user/user-detail.service';
 import UserDetailModal from '../dashboard/components/VerifyCustomerModal/UserDetailModal';
-
-function formatDateShort(dateStr: string) {
-  if (!dateStr) return '-';
-  const d = new Date(dateStr);
-  const day = d.getUTCDate().toString().padStart(2, '0');
-  const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
-  const year = d.getUTCFullYear();
-  return `${day}/${month}/${year}`;
-}
+import { formatDateThai, formatDateShort } from '../../../utils/date';
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
@@ -27,34 +19,6 @@ function extractLatLngFromGoogleMapsUrl(url: string): [number, number] | null {
     return [parseFloat(match[1]), parseFloat(match[2])];
   }
   return null;
-}
-
-function formatDateThai(dateStr: string) {
-  if (!dateStr) return '-';
-  const date = new Date(dateStr);
-  let hour = date.getUTCHours() + 7;
-  let day = date.getUTCDate();
-  let month = date.getUTCMonth() + 1;
-  let year = date.getUTCFullYear();
-  if (hour >= 24) {
-    hour -= 24;
-    day += 1;
-    // handle ข้ามเดือน/ปี (กรณีข้ามวัน)
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day > daysInMonth) {
-      day = 1;
-      month += 1;
-      if (month > 12) {
-        month = 1;
-        year += 1;
-      }
-    }
-  }
-  const hourStr = hour.toString().padStart(2, '0');
-  const minStr = date.getUTCMinutes().toString().padStart(2, '0');
-  const dayStr = day.toString().padStart(2, '0');
-  const monthStr = month.toString().padStart(2, '0');
-  return `${dayStr}/${monthStr}/${year} ${hourStr}:${minStr}`;
 }
 
 export default function CustomerDetailPage() {

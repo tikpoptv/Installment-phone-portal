@@ -5,6 +5,7 @@ import { MdVerified, MdHourglassEmpty, MdClose } from 'react-icons/md';
 import { getCustomers } from '../../../services/customer/customer.service';
 import type { Customer } from '../../../services/customer/customer.service';
 import { useNavigate } from 'react-router-dom';
+import { formatDateThai } from '../../../utils/date';
 
 type FilterType = 'all' | 'verified' | 'unverified';
 
@@ -45,35 +46,6 @@ function exportCustomersToCSV(customers: Customer[]) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
-
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  // ดึงค่า UTC แล้วบวก 7 ชั่วโมง
-  let hour = date.getUTCHours() + 7;
-  let day = date.getUTCDate();
-  let month = date.getUTCMonth() + 1;
-  let year = date.getUTCFullYear();
-  if (hour >= 24) {
-    hour -= 24;
-    day += 1;
-    // handle ข้ามเดือน/ปี (กรณีข้ามวัน)
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day > daysInMonth) {
-      day = 1;
-      month += 1;
-      if (month > 12) {
-        month = 1;
-        year += 1;
-      }
-    }
-  }
-  const hourStr = hour.toString().padStart(2, '0');
-  const minStr = date.getUTCMinutes().toString().padStart(2, '0');
-  const dayStr = day.toString().padStart(2, '0');
-  const monthStr = month.toString().padStart(2, '0');
-  return `${dayStr}/${monthStr}/${year} ${hourStr}:${minStr}`;
 }
 
 // Modal Popup Component
@@ -253,7 +225,7 @@ export default function CustomerListPage() {
                 <td>{c.first_name} {c.last_name}</td>
                 <td>{c.phone_number}</td>
                 <td>{c.email}</td>
-                <td style={{ textAlign: 'center' }}>{formatDate(c.created_at)}</td>
+                <td style={{ textAlign: 'center' }}>{formatDateThai(c.created_at)}</td>
                 <td style={{ textAlign: 'center' }}>{statusLabel(c.is_verified)}</td>
                 <td style={{ textAlign: 'center' }}>
                   <button

@@ -3,6 +3,7 @@ import styles from './VerifyCustomerModal.module.css';
 import { getUserDetail, getCitizenIdImage, verifyUser } from '../../../../../services/dashboard/user/user-detail.service';
 import type { ReferenceContact } from '../../../../../services/dashboard/user/user-detail.service';
 import { toast } from 'react-toastify';
+import { formatDateShort } from '../../../../../utils/date';
 
 export interface UserDetail {
   ID: string;
@@ -186,12 +187,6 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
     };
   }
 
-  // ฟังก์ชันตัด T00:00:00Z ออกจากวันที่
-  function formatDate(dateStr: string): string {
-    if (!dateStr) return '-';
-    return dateStr.replace(/T00:00:00Z$/, '');
-  }
-
   async function handleConfirm() {
     if (!userId) return;
     try {
@@ -202,7 +197,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
         toast.info('สถานะ: ' + status);
       }
       setTimeout(() => {
-        window.location.href = '/admin';
+        window.location.href = `/admin/customers/${userId}`;
       }, 800);
     } catch (err: unknown) {
       const error = err as { status?: number };
@@ -308,7 +303,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
                   </div>
                   <div className={styles.userDetailRow}>
                     <span className={styles.userDetailLabel}>เพศ:</span>{user.Gender}
-                    <span className={styles.userDetailLabel} style={{marginLeft: 12}}>วันเกิด:</span>{formatDate(user.BirthDate)}
+                    <span className={styles.userDetailLabel} style={{marginLeft: 12}}>วันเกิด:</span>{formatDateShort(user.BirthDate)}
                   </div>
                   <div className={styles.userDetailRow}>
                     <span className={styles.userDetailLabel}>เลขบัตร:</span><b>{user.CitizenID}</b>
@@ -395,15 +390,15 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ open, onClose, userId
             <div className={styles.userDetailSection}>
               <div className={styles.userDetailSectionTitle}>ข้อมูลบัตรประชาชน</div>
               <div className={styles.userDetailRow}>
-                <span className={styles.userDetailLabel}>วันที่ออกบัตร:</span> {formatDate(user.IDCardIssuedDate)}
-                <span className={styles.userDetailLabel} style={{marginLeft: 12}}>บัตรหมดอายุ:</span> {formatDate(user.IDCardExpiredDate)}
+                <span className={styles.userDetailLabel}>วันที่ออกบัตร:</span> {formatDateShort(user.IDCardIssuedDate)}
+                <span className={styles.userDetailLabel} style={{marginLeft: 12}}>บัตรหมดอายุ:</span> {formatDateShort(user.IDCardExpiredDate)}
               </div>
             </div>
             <div className={styles.userDetailSection}>
               <div className={styles.userDetailSectionTitle}>วันสมัครและอัปเดต</div>
               <div className={styles.userDetailRow}>
-                <span className={styles.userDetailLabel}>วันที่สมัคร:</span> {user.CreatedAt ? new Date(user.CreatedAt).toLocaleString('th-TH') : '-'}
-                <span className={styles.userDetailLabel} style={{marginLeft: 12}}>อัปเดตล่าสุด:</span> {user.UpdatedAt ? new Date(user.UpdatedAt).toLocaleString('th-TH') : '-'}
+                <span className={styles.userDetailLabel}>วันที่สมัคร:</span> {formatDateShort(user.CreatedAt)}
+                <span className={styles.userDetailLabel} style={{marginLeft: 12}}>อัปเดตล่าสุด:</span> {formatDateShort(user.UpdatedAt)}
               </div>
             </div>
             <div className={styles.userDetailSection}>
