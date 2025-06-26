@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from './ProductListPage.module.css';
 import { formatDateThai } from '../../../utils/date';
-import React from 'react';
 import MobileAccessModal from '../../../components/MobileAccessModal';
 import ProductCreateModal from './ProductCreateModal';
 
