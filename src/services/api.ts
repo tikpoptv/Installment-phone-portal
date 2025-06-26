@@ -3,6 +3,7 @@ import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosReques
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_TIMEOUT = 30000; // 30 seconds
+const GET_FETCH_ERROR = import.meta.env.VITE_GET_FETCH_ERROR === 'true';
 
 // Types
 export interface ApiResponse<T> {
@@ -54,9 +55,13 @@ export const apiClient = {
         status: response.status,
         message: response.statusText
       };
-    } catch {
-      window.location.replace('/error');
-      throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+    } catch (err) {
+      if (GET_FETCH_ERROR) {
+        window.location.replace('/error');
+        throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+      } else {
+        throw err;
+      }
     }
   },
 

@@ -1,0 +1,336 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(30,41,59,0.22);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(1.5px);
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 12px 48px rgba(14,165,233,0.16), 0 1.5px 8px #e0e7ef;
+  border: 1.5px solid #e0e7ef;
+  min-width: 340px;
+  max-width: 520px;
+  width: 100%;
+  padding: 38px 32px 30px 32px;
+  position: relative;
+  animation: fadeIn 0.5s;
+  max-height: 90vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(32px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+.closeBtn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #64748b;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s;
+}
+.closeBtn:hover {
+  background: #f1f5f9;
+}
+
+.title {
+  color: #0ea5e9;
+  font-size: 1.7rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 28px;
+  letter-spacing: 0.2px;
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+}
+
+label {
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 1.08rem;
+  letter-spacing: 0.1px;
+}
+
+.inputBox {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1.7px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 1.12rem;
+  margin-top: 2px;
+  background: #f8fafc;
+  transition: border 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 4px #f1f5f9;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+.inputBox:focus {
+  border-color: #0ea5e9;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 2px 12px #bae6fd;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+textarea {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.imagePreview {
+  display: flex;
+  gap: 14px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.imageBox {
+  position: relative;
+}
+.image {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1.7px solid #e5e7eb;
+  background: #f1f5f9;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.image:hover {
+  transform: scale(1.09);
+  box-shadow: 0 2px 16px #bae6fd;
+}
+.removeBtn {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 1px 4px #fca5a5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s;
+}
+.removeBtn:hover {
+  background: #dc2626;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 18px;
+  margin-top: 22px;
+  justify-content: flex-end;
+}
+.submitBtn {
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 36px;
+  font-weight: 700;
+  font-size: 1.13rem;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s;
+  box-shadow: 0 1px 8px #bae6fd;
+}
+.submitBtn:hover {
+  background: #0ea5e9;
+  box-shadow: 0 2px 16px #bae6fd;
+}
+.cancelBtn {
+  background: #e0e7ef;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 36px;
+  font-weight: 700;
+  font-size: 1.13rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.cancelBtn:hover {
+  background: #bae6fd;
+}
+
+.error {
+  color: #ef4444;
+  margin-top: 8px;
+  font-size: 1.07rem;
+  font-weight: 600;
+}
+.success {
+  color: #22c55e;
+  margin-top: 8px;
+  font-size: 1.07rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .modalContent {
+    padding: 18px 6vw;
+    border-radius: 16px;
+  }
+  .title {
+    font-size: 1.18rem;
+  }
+  .form {
+    gap: 13px;
+  }
+  .image {
+    width: 68px;
+    height: 68px;
+  }
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    padding: 8px 2vw;
+    border-radius: 10px;
+  }
+  .title {
+    font-size: 1.03rem;
+  }
+  .form {
+    gap: 7px;
+  }
+  .image {
+    width: 48px;
+    height: 48px;
+  }
+  .addModelBtn {
+    width: 28px;
+    height: 28px;
+    font-size: 1.18rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .modalContent {
+    padding: 12px 4vw 18px 4vw;
+    border-radius: 11px;
+    min-width: unset;
+    max-width: 99vw;
+    width: 99vw;
+    font-size: 0.97rem;
+  }
+  .title {
+    font-size: 0.98rem;
+    margin-bottom: 14px;
+  }
+  .form {
+    gap: 5px;
+  }
+  label {
+    font-size: 0.97rem;
+    margin-bottom: 4px;
+  }
+  .inputBox {
+    font-size: 0.99rem;
+    padding: 10px 8px;
+    border-radius: 7px;
+  }
+  textarea {
+    min-height: 38px;
+  }
+  .imagePreview {
+    gap: 7px;
+    margin-top: 7px;
+  }
+  .image {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+  }
+  .imageBox {
+    margin-bottom: 2px;
+  }
+  .removeBtn {
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    top: -7px;
+    right: -7px;
+  }
+  .buttonRow {
+    gap: 7px;
+    margin-top: 10px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .submitBtn, .cancelBtn {
+    padding: 10px 0;
+    font-size: 1.01rem;
+    border-radius: 7px;
+    width: 100%;
+    min-width: 0;
+  }
+  .error, .success {
+    font-size: 0.97rem;
+    margin-top: 4px;
+  }
+  .addModelBtn {
+    width: 24px;
+    height: 24px;
+    font-size: 1.01rem;
+    margin-left: 1px;
+  }
+}
+
+.addModelBtn {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px #bae6fd;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  margin-left: 2px;
+}
+.addModelBtn:hover {
+  background: #0ea5e9;
+  color: #fff;
+  box-shadow: 0 2px 12px #bae6fd;
+} 

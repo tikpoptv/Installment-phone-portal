@@ -6,6 +6,7 @@ import { getCustomers } from '../../../services/customer/customer.service';
 import type { Customer } from '../../../services/customer/customer.service';
 import { useNavigate } from 'react-router-dom';
 import { formatDateThai } from '../../../utils/date';
+import MobileAccessModal from '../../../components/MobileAccessModal';
 
 type FilterType = 'all' | 'verified' | 'unverified';
 
@@ -96,37 +97,13 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
   );
 }
 
-// Popup แจ้งเตือนสำหรับ mobile
-function MobileWarningModal({ open, onContinue, onCancel }: { open: boolean; onContinue: () => void; onCancel: () => void }) {
-  if (!open) return null;
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(0,0,0,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 300, maxWidth: 340, boxShadow: '0 4px 24px rgba(0,0,0,0.12)', textAlign: 'center' }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#0ea5e9', marginBottom: 12 }}>ฟีเจอร์นี้เหมาะกับหน้าจอใหญ่</div>
-        <div style={{ color: '#334155', fontSize: 15, marginBottom: 24, lineHeight: 1.7 }}>
-          หน้าดูรายละเอียดลูกค้าไม่ได้ถูกออกแบบมาสำหรับมือถือ<br />
-          การแสดงผลอาจผิดเพี้ยนหรือใช้งานไม่สะดวก<br />
-          <span style={{ color: '#f59e42', fontWeight: 600 }}>แนะนำให้ใช้งานบน iPad หรือคอมพิวเตอร์เพื่อประสบการณ์ที่ดีที่สุด</span><br />
-          <br />คุณต้องการดำเนินการต่อหรือไม่?
-        </div>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={onContinue}>ดำเนินการต่อ</button>
-          <button style={{ background: '#e0e7ef', color: '#0ea5e9', border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }} onClick={onCancel}>ยกเลิก</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function CustomerListPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -170,7 +147,7 @@ export default function CustomerListPage() {
       <div className={styles.header}>
         <h2 className={styles.title}>รายชื่อลูกค้า</h2>
         <div className={styles.actionGroup}>
-          <button className={styles.addButton}>เพิ่มลูกค้าใหม่</button>
+          <button className={styles.addButton} onClick={() => setShowQrModal(true)}>เพิ่มลูกค้าใหม่</button>
           <button className={styles.exportButton} onClick={() => setExportModalOpen(true)}>Export</button>
         </div>
       </div>
@@ -269,8 +246,9 @@ export default function CustomerListPage() {
         onExportAll={() => exportCustomersToCSV(customers)}
       />
       {/* Mobile Warning Modal */}
-      <MobileWarningModal
+      <MobileAccessModal
         open={mobileWarningOpen}
+        mode="warn"
         onContinue={() => {
           setMobileWarningOpen(false);
           if (pendingDetailId) navigate(`/admin/customers/${pendingDetailId}`);
@@ -280,6 +258,50 @@ export default function CustomerListPage() {
           setPendingDetailId(null);
         }}
       />
+      {showQrModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: 32, minWidth: 320, boxShadow: '0 4px 24px rgba(0,0,0,0.12)', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowQrModal(false)}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 4,
+                borderRadius: '50%',
+                transition: 'background 0.18s',
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = '#f1f5f9')}
+              onMouseOut={e => (e.currentTarget.style.background = 'none')}
+              aria-label="ปิด"
+            >
+              <MdClose size={22} color="#64748b" />
+            </button>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#0ea5e9' }}>เพิ่มลูกค้าใหม่</div>
+            <div style={{ marginBottom: 18 }}>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent('https://installment.mobile.phitik.com/')}`}
+                alt="QR Code สมัครลูกค้าใหม่"
+                style={{ width: 220, height: 220, borderRadius: 12, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
+              />
+            </div>
+            <a
+              href="https://installment.mobile.phitik.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#0ea5e9', fontWeight: 600, fontSize: 16, textDecoration: 'underline' }}
+            >
+              ไปที่หน้าสมัครลูกค้าใหม่
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

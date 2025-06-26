@@ -14,6 +14,7 @@ import ErrorPage from './components/ErrorPage';
 import ContractDetailPage from './pages/user/contract/ContractDetailPage';
 import CustomerListPage from './pages/admin/customers/CustomerListPage';
 import CustomerDetailPage from './pages/admin/customers/CustomerDetailPage';
+import ProductListPage from './pages/admin/products/ProductListPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -224,6 +225,7 @@ function AppContent() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="customers" element={<CustomerListPage />} />
                     <Route path="customers/:id" element={<CustomerDetailPage />} />
+                    <Route path="products" element={<ProductListPage />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>
