@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styles from './ProductDetailPage.module.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getProductDetail, getProductImageBlob } from '../../../services/products.service';
 
 export interface ProductDetail {
   id: string;
@@ -31,61 +32,55 @@ const icloudLabel = (icloud: string) => {
   return icloud;
 };
 
-// mock data สำหรับทดสอบ
-const mockProduct: ProductDetail = {
-  id: 'PD00001',
-  model_name: 'iPhone 13 Pro Max',
-  status: 'leased',
-  imei: '123456789012345',
-  price: 29900.00,
-  cost_price: 25000.00,
-  available_stock: 1,
-  icloud_status: 'locked',
-  owner_id: null,
-  product_image_filenames: ['abc123.jpg', 'def456.png', 'ghi789.jpg'],
-  remark: 'สภาพดีมาก',
-  created_at: '2024-07-01T12:00:00Z',
-  updated_at: '2024-07-01T12:00:00Z',
-};
-
-// mock order info
-const mockOrder = mockProduct.status === 'leased' || mockProduct.status === 'sold'
-  ? {
-      id: 'ORDER12345',
-      status: mockProduct.status === 'leased' ? 'ติดสัญญา' : 'ขายแล้ว',
-      detailUrl: `/admin/orders/ORDER12345`,
-    }
-  : null;
-
 const ProductDetailPage: React.FC = () => {
-  const product = mockProduct; // ในอนาคตจะ fetch จาก API ตาม id
-  const order = mockOrder;
-  const navigate = useNavigate();
-
-  // โหลดภาพแบบ async ทีละไฟล์
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<(string|null)[]>([]);
   const [imageLoading, setImageLoading] = useState<boolean[]>([]);
+  const [previewIdx, setPreviewIdx] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const imageUrlsRef = useRef<(string | null)[]>([]);
+
+  const productImageFilenames = useMemo(() => product?.product_image_filenames || [], [product]);
 
   useEffect(() => {
-    if (!product || !product.product_image_filenames.length) {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    getProductDetail(id)
+      .then((data) => {
+        setProduct(data as ProductDetail);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('ไม่พบข้อมูลสินค้า');
+        setLoading(false);
+      });
+  }, [id]);
+
+  useEffect(() => {
+    imageUrlsRef.current = imageUrls;
+  }, [imageUrls]);
+
+  // โหลดภาพแบบ async ทีละไฟล์ เมื่อ product เปลี่ยน
+  useEffect(() => {
+    if (!product || !productImageFilenames.length) {
       setImageUrls([]);
       setImageLoading([]);
       return;
     }
-    setImageUrls(Array(product.product_image_filenames.length).fill(null));
-    setImageLoading(Array(product.product_image_filenames.length).fill(true));
+    setImageUrls(Array(productImageFilenames.length).fill(null));
+    setImageLoading(Array(productImageFilenames.length).fill(true));
 
-    product.product_image_filenames.forEach((filename, idx) => {
+    productImageFilenames.forEach((filename, idx) => {
       setImageLoading(prev => {
         const arr = [...prev];
         arr[idx] = true;
         return arr;
       });
-      fetch(`/api/products/files/product_image/${product.id}/${filename}`)
-        .then(res => {
-          if (!res.ok) throw new Error('โหลดรูปไม่สำเร็จ');
-          return res.blob();
-        })
+      getProductImageBlob(product.id, filename)
         .then(blob => {
           const url = URL.createObjectURL(blob);
           setImageUrls(prev => {
@@ -109,12 +104,24 @@ const ProductDetailPage: React.FC = () => {
           });
         });
     });
-    // cleanup revoke url
+    // cleanup revoke url (ใช้ imageUrlsRef)
     return () => {
-      imageUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
+      imageUrlsRef.current.forEach(url => { if (url) URL.revokeObjectURL(url); });
     };
-    // eslint-disable-next-line
-  }, [product.id, product.product_image_filenames.join(',')]);
+  }, [product, productImageFilenames]);
+
+  if (loading) return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
+  if (error) return <div className={styles.container}>{error}</div>;
+  if (!product) return <div className={styles.container}>ไม่พบข้อมูลสินค้า</div>;
+
+  // mock order info (ถ้าต้องการเชื่อมกับ order จริง ให้แก้ไขภายหลัง)
+  const order = product.status === 'leased' || product.status === 'sold'
+    ? {
+        id: 'ORDER12345',
+        status: product.status === 'leased' ? 'ติดสัญญา' : 'ขายแล้ว',
+        detailUrl: `/admin/orders/ORDER12345`,
+      }
+    : null;
 
   return (
     <div className={styles.container}>
@@ -124,17 +131,22 @@ const ProductDetailPage: React.FC = () => {
       <section className={styles.section}>
         <div className={styles.sectionTitle}>รูปสินค้า</div>
         <div className={styles.imageList}>
-          {product.product_image_filenames.length === 0 ? (
+          {productImageFilenames.length === 0 ? (
             <div className={styles.noImage}>ไม่มีรูป</div>
-          ) : product.product_image_filenames.map((filename, idx) => (
-            <div key={filename} className={styles.imageBox}>
+          ) : productImageFilenames.map((filename, idx) => (
+            <div key={filename} className={styles.imageBox} onClick={() => {
+              if (imageUrls[idx]) {
+                setPreviewIdx(idx);
+              }
+            }}>
               {imageLoading[idx] && (
                 <div className={styles.imageLoading}>กำลังโหลด...</div>
               )}
               {imageUrls[idx] ? (
                 <img
                   src={imageUrls[idx] as string}
-                  alt={`product-img-${idx}`}
+                  alt={filename}
+                  title={filename}
                   className={styles.image}
                   style={imageLoading[idx] ? {opacity:0.5,filter:'blur(2px)'} : {}}
                 />
@@ -144,6 +156,30 @@ const ProductDetailPage: React.FC = () => {
             </div>
           ))}
         </div>
+        {/* Modal Preview (with next/prev) */}
+        {previewIdx !== null && imageUrls[previewIdx] && (
+          <div className={styles.imageModalOverlay} onClick={() => setPreviewIdx(null)}>
+            <div className={styles.imageModalContent} onClick={e => e.stopPropagation()}>
+              <img src={imageUrls[previewIdx] as string} alt={productImageFilenames[previewIdx]} className={styles.imageModalImg} />
+              <div className={styles.imageModalFilename}>{productImageFilenames[previewIdx]}</div>
+              <button className={styles.imageModalClose} onClick={() => setPreviewIdx(null)}>&times;</button>
+              {productImageFilenames.length > 1 && (
+                <>
+                  <button
+                    className={styles.imageModalPrev}
+                    onClick={() => setPreviewIdx((previewIdx - 1 + productImageFilenames.length) % productImageFilenames.length)}
+                    aria-label="ดูรูปก่อนหน้า"
+                  >&#8592;</button>
+                  <button
+                    className={styles.imageModalNext}
+                    onClick={() => setPreviewIdx((previewIdx + 1) % productImageFilenames.length)}
+                    aria-label="ดูรูปถัดไป"
+                  >&#8594;</button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* หมวดข้อมูลหลัก */}

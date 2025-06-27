@@ -47,6 +47,7 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
   const [loadingModels, setLoadingModels] = useState(false);
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -110,8 +111,9 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
   };
 
   const handleConfirmSubmit = async () => {
+    setIsSubmitting(true);
     try {
-      await createProduct({
+      const created = await createProduct({
         phone_model_id: form.phone_model_id,
         status: form.status,
         imei: form.imei || undefined,
@@ -126,7 +128,11 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
       toast.success('บันทึกสินค้าสำเร็จ!');
       setShowConfirm(false);
       if (onSuccess) onSuccess();
-      navigate('/admin/products');
+      if (created && created.id) {
+        navigate(`/admin/products/${created.id}`);
+      } else {
+        navigate('/admin/products');
+      }
     } catch (err: unknown) {
       let msg = 'เกิดข้อผิดพลาดในการสร้างสินค้าใหม่';
       if (typeof err === 'object' && err !== null) {
@@ -135,6 +141,8 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
       }
       setError(msg);
       setShowConfirm(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -253,9 +261,14 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
               <span style={{color:'#64748b'}}>คุณต้องการบันทึกสินค้านี้ใช่หรือไม่?</span>
             </div>
             <div style={{display:'flex',gap:16,justifyContent:'center',marginTop:8}}>
-              <button style={{background:'#22c55e',color:'#fff',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:600,fontSize:15,cursor:'pointer'}} onClick={handleConfirmSubmit}>ยืนยัน</button>
-              <button style={{background:'#e0e7ef',color:'#64748b',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:500,fontSize:15,cursor:'pointer'}} onClick={()=>setShowConfirm(false)}>ยกเลิก</button>
+              <button style={{background:'#22c55e',color:'#fff',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:600,fontSize:15,cursor:'pointer'}} onClick={handleConfirmSubmit} disabled={isSubmitting}>{isSubmitting ? 'กำลังบันทึก...' : 'ยืนยัน'}</button>
+              <button style={{background:'#e0e7ef',color:'#64748b',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:500,fontSize:15,cursor:'pointer'}} onClick={()=>setShowConfirm(false)} disabled={isSubmitting}>ยกเลิก</button>
             </div>
+            {isSubmitting && (
+              <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(255,255,255,0.7)',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',zIndex:10}}>
+                <div style={{color:'#0ea5e9',fontWeight:700,fontSize:22}}>กำลังอัปโหลดสินค้า...</div>
+              </div>
+            )}
           </div>
         </div>
       )}

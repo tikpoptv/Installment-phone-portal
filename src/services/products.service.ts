@@ -56,4 +56,16 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
 export async function getProducts(): Promise<Product[]> {
   const res = await apiClient.get<Product[]>('/api/products');
   return res.data;
+}
+
+export async function getProductDetail(productId: string) {
+  const res = await apiClient.get(`/api/products/${productId}/detail`);
+  return res.data;
+}
+
+export async function getProductImageBlob(productId: string, filename: string): Promise<Blob> {
+  const res = await apiClient.get(`/api/products/files/product_image/${productId}/${filename}`, {
+    responseType: 'blob',
+  });
+  return res.data as Blob;
 } 
