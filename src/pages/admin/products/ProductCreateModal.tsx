@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import styles from './ProductCreateModal.module.css';
 import PhoneModelModal from './PhoneModelModal';
 import { getPhoneModels } from '../../../services/phone-model.service';
+import { createProduct } from '../../../services/products.service';
+import { authService } from '../../../services/auth/auth.service';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 // import { FaBarcode, FaUser } from 'react-icons/fa';
 
 interface ProductCreateModalProps {
@@ -41,6 +45,8 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
   const [showModelModal, setShowModelModal] = useState(false);
   const [phoneModelsState, setPhoneModelsState] = useState<{ id: string; model_name: string }[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const navigate = useNavigate();
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -49,6 +55,11 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
       .then(data => setPhoneModelsState(data))
       .catch(() => setPhoneModelsState([]))
       .finally(() => setLoadingModels(false));
+    // ดึง user id แล้ว set owner_id
+    const user = authService.getUser();
+    if (user && user.id) {
+      setForm(prev => ({ ...prev, owner_id: user.id }));
+    }
   }, [open]);
 
   if (!open) return null;
@@ -87,18 +98,44 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
   };
 
   // handle submit
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-
     if (!form.phone_model_id || !form.price || !form.icloud_status || form.images.length === 0) {
       setError('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
       return;
     }
-    // mock submit
-    setSuccess('ส่งข้อมูลสำเร็จ (mock)');
-    if (onSuccess) onSuccess();
+    setShowConfirm(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    try {
+      await createProduct({
+        phone_model_id: form.phone_model_id,
+        status: form.status,
+        imei: form.imei || undefined,
+        price: Number(form.price),
+        cost_price: form.cost_price ? Number(form.cost_price) : undefined,
+        available_stock: form.available_stock ? Number(form.available_stock) : undefined,
+        icloud_status: form.icloud_status,
+        owner_id: form.owner_id || undefined,
+        remark: form.remark || undefined,
+        images: form.images,
+      });
+      toast.success('บันทึกสินค้าสำเร็จ!');
+      setShowConfirm(false);
+      if (onSuccess) onSuccess();
+      navigate('/admin/products');
+    } catch (err: unknown) {
+      let msg = 'เกิดข้อผิดพลาดในการสร้างสินค้าใหม่';
+      if (typeof err === 'object' && err !== null) {
+        const e = err as Record<string, unknown>;
+        msg = (typeof e.error === 'string' && e.error) || (typeof e.message === 'string' && e.message) || msg;
+      }
+      setError(msg);
+      setShowConfirm(false);
+    }
   };
 
   // เพิ่ม callback สำหรับปุ่ม +
@@ -171,7 +208,7 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
             </div>
             <div>
               <label>เจ้าของ</label>
-              <input name="owner_id" value={form.owner_id} onChange={handleChange} className={styles.inputBox} />
+              <input name="owner_id" value={form.owner_id} className={styles.inputBox} disabled style={{ background: '#f1f5f9', color: '#64748b' }} />
             </div>
             <div>
               <label>หมายเหตุ</label>
@@ -206,6 +243,22 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
         </div>
       </div>
       <PhoneModelModal open={showModelModal} onClose={handleModelModalClose} onAdd={handleModelAdded} />
+      {showConfirm && (
+        <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(30,41,59,0.32)',zIndex:10000,display:'flex',alignItems:'center',justifyContent:'center',padding:24,backdropFilter:'blur(2px)'}}>
+          <div style={{background:'#fff',borderRadius:18,boxShadow:'0 8px 32px #bae6fd',padding:'32px 24px',maxWidth:380,width:'100%',textAlign:'center',position:'relative'}}>
+            <div style={{fontSize:38,color:'#0ea5e9',marginBottom:12}}>📦</div>
+            <div style={{fontWeight:700,fontSize:'1.13rem',color:'#0ea5e9',marginBottom:10}}>ยืนยันการสร้างสินค้าใหม่</div>
+            <div style={{color:'#334155',fontSize:'1.01rem',marginBottom:18,lineHeight:1.6}}>
+              กรุณาตรวจสอบข้อมูลสินค้าให้ถูกต้องก่อนบันทึก<br/>
+              <span style={{color:'#64748b'}}>คุณต้องการบันทึกสินค้านี้ใช่หรือไม่?</span>
+            </div>
+            <div style={{display:'flex',gap:16,justifyContent:'center',marginTop:8}}>
+              <button style={{background:'#22c55e',color:'#fff',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:600,fontSize:15,cursor:'pointer'}} onClick={handleConfirmSubmit}>ยืนยัน</button>
+              <button style={{background:'#e0e7ef',color:'#64748b',border:'none',borderRadius:18,padding:'7px 28px',fontWeight:500,fontSize:15,cursor:'pointer'}} onClick={()=>setShowConfirm(false)}>ยกเลิก</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

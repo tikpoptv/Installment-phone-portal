@@ -1,42 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './ProductListPage.module.css';
 import { formatDateThai } from '../../../utils/date';
 import MobileAccessModal from '../../../components/MobileAccessModal';
 import ProductCreateModal from './ProductCreateModal';
-
-interface Product {
-  id: string;
-  model_name: string;
-  status: string;
-  imei: string;
-  price: number;
-  icloud_status: string;
-  remark: string;
-  created_at: string;
-}
-
-const mockProducts: Product[] = [
-  {
-    id: 'PD00001',
-    model_name: 'iPhone 13 Pro Max',
-    status: 'available',
-    imei: '123456789012345',
-    price: 29900.0,
-    icloud_status: 'unlocked',
-    remark: 'สภาพดีมาก',
-    created_at: '2024-07-01T12:00:00Z',
-  },
-  {
-    id: 'PD00002',
-    model_name: 'iPhone 12',
-    status: 'sold',
-    imei: '987654321098765',
-    price: 15900.0,
-    icloud_status: 'locked',
-    remark: 'มีรอยขีดข่วน',
-    created_at: '2024-07-02T10:30:00Z',
-  },
-];
+import { getProducts } from '../../../services/products.service';
+import type { Product } from '../../../services/products.service';
 
 const statusLabel = (status: string) => {
   if (status === 'available') return <span style={{ color: '#22c55e', fontWeight: 600 }}>ว่าง</span>;
@@ -102,7 +71,8 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
 }
 
 export default function ProductListPage() {
-  const [products] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'available' | 'leased' | 'sold'>('all');
   const [icloudFilter, setIcloudFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
@@ -114,11 +84,20 @@ export default function ProductListPage() {
   const [maxPrice, setMaxPrice] = useState('');
   const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // จำลองโหลดข้อมูล
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
+    setLoading(true);
+    getProducts()
+      .then(data => {
+        setProducts(data);
+        setFetchError(null);
+      })
+      .catch(() => {
+        setFetchError('เกิดข้อผิดพลาดในการโหลดข้อมูลสินค้า');
+        setProducts([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -165,6 +144,10 @@ export default function ProductListPage() {
 
   if (loading) {
     return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
+  }
+
+  if (fetchError) {
+    return <div className={styles.loadingMessage} style={{color:'#ef4444'}}>{fetchError}</div>;
   }
 
   return (
@@ -264,9 +247,9 @@ export default function ProductListPage() {
                 <th>IMEI</th>
                 <th>ราคา</th>
                 <th>iCloud</th>
-                <th>หมายเหตุ</th>
                 <th>สถานะ</th>
                 <th>วันที่เพิ่ม</th>
+                <th>หมายเหตุ</th>
                 <th></th>
               </tr>
             </thead>
@@ -281,11 +264,11 @@ export default function ProductListPage() {
                   <td>{p.imei}</td>
                   <td>{p.price.toLocaleString('th-TH')} บาท</td>
                   <td>{p.icloud_status === 'unlocked' ? 'ปลดล็อก' : p.icloud_status}</td>
-                  <td>{p.remark}</td>
                   <td>{statusLabel(p.status)}</td>
                   <td>{formatDateThai(p.created_at)}</td>
+                  <td>{p.remark}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <button className={styles.detailButton} onClick={() => alert('ฟีเจอร์ดูรายละเอียดสินค้าอยู่ระหว่างพัฒนา')}>ดูรายละเอียด</button>
+                    <button className={styles.detailButton} onClick={() => navigate(`/admin/products/${p.id}`)}>ดูรายละเอียด</button>
                   </td>
                 </tr>
               ))}

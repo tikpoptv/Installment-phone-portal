@@ -29,7 +29,7 @@ const VerifyCustomerModal: React.FC<VerifyCustomerModalProps> = ({ open, onClose
       setLoading(true);
       setError(null);
       getUnverifiedUsers()
-        .then(setUsers)
+        .then(data => setUsers(data ?? []))
         .catch((err: unknown) => {
           const error = err as { status?: number };
           if (error.status === 401 || error.status === 403) {
@@ -70,6 +70,8 @@ const VerifyCustomerModal: React.FC<VerifyCustomerModalProps> = ({ open, onClose
                     <div style={{textAlign: 'center', color: '#0ea5e9', padding: '24px 0'}}>กำลังโหลดข้อมูล...</div>
                   ) : error ? (
                     <div style={{textAlign: 'center', color: '#ef4444', padding: '24px 0'}}>{error}</div>
+                  ) : !users || users.length === 0 ? (
+                    <div style={{textAlign: 'center', color: '#64748b', padding: '24px 0'}}>ไม่พบข้อมูลผู้ใช้ที่ยังไม่ได้ยืนยันตัวตน</div>
                   ) : (
                     <table className={styles.userTable}>
                       <thead>
@@ -82,9 +84,7 @@ const VerifyCustomerModal: React.FC<VerifyCustomerModalProps> = ({ open, onClose
                         </tr>
                       </thead>
                       <tbody>
-                        {users.length === 0 ? (
-                          <tr><td colSpan={5} style={{textAlign: 'center', color: '#64748b'}}>ไม่พบข้อมูลผู้ใช้ที่ยังไม่ได้ยืนยันตัวตน</td></tr>
-                        ) : users.map((user) => (
+                        {users.map((user) => (
                           <tr key={user.id}>
                             <td>{user.first_name} {user.last_name}</td>
                             <td>{user.phone_number}</td>
