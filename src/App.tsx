@@ -16,6 +16,7 @@ import CustomerListPage from './pages/admin/customers/CustomerListPage';
 import CustomerDetailPage from './pages/admin/customers/CustomerDetailPage';
 import ProductListPage from './pages/admin/products/ProductListPage';
 import ProductDetailPage from './pages/admin/products/ProductDetailPage';
+import SessionExpiredModal from './components/SessionExpiredModal';
 
 // Loading Component
 function LoadingScreen() {
@@ -71,6 +72,8 @@ function AppContent() {
     const hasLoaded = localStorage.getItem('app_initialized');
     return !hasLoaded;
   });
+
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const navigate = useNavigate();
 
@@ -129,8 +132,18 @@ function AppContent() {
     }
   }, [isLoading, isLoggedIn, showAdminUI, showUserUI, navigate]);
 
+  useEffect(() => {
+    const handler = () => setSessionExpired(true);
+    window.addEventListener('session-expired', handler);
+    return () => window.removeEventListener('session-expired', handler);
+  }, []);
+
   if (isLoading) {
     return <LoadingScreen />;
+  }
+
+  if (sessionExpired) {
+    return <SessionExpiredModal open={true} />;
   }
 
   // ตรวจสอบ env ที่จำเป็น

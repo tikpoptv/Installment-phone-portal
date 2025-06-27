@@ -38,8 +38,7 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     // จัดการเฉพาะการลบ token เมื่อหมดอายุ
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('session-expired'));
     }
     return Promise.reject(error.response?.data);
   }
