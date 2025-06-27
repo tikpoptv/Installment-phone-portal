@@ -90,7 +90,7 @@ export default function ProductListPage() {
     setLoading(true);
     getProducts()
       .then(data => {
-        setProducts(data);
+        setProducts(data ?? []);
         setFetchError(null);
       })
       .catch(() => {

@@ -18,6 +18,7 @@ import ProductListPage from './pages/admin/products/ProductListPage';
 import ProductDetailPage from './pages/admin/products/ProductDetailPage';
 import SessionExpiredModal from './components/SessionExpiredModal';
 import OrderListPage from './pages/admin/orders/OrderListPage';
+import ErrorBackendModal from './components/ErrorBackendModal';
 
 // Loading Component
 function LoadingScreen() {
@@ -298,6 +299,7 @@ function App() {
     <Router>
       <AppContent />
       <ToastContainer position="top-right" autoClose={3000} />
+      <ErrorBackendModal />
     </Router>
   );
 }

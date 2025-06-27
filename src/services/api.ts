@@ -36,13 +36,29 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // เช็ค network error หรือ backend ดับ
+    if (
+      !error.response ||
+      error.code === 'ERR_NETWORK' ||
+      error.message === 'Network Error'
+    ) {
+      console.error('Network error intercepted by axios:', error);
+      showBackendErrorModal();
+    }
     // จัดการเฉพาะการลบ token เมื่อหมดอายุ
     if (error.response?.status === 401) {
       window.dispatchEvent(new Event('session-expired'));
     }
-    return Promise.reject(error.response?.data);
+    return Promise.reject(error.response?.data || error);
   }
 );
+
+/**
+ * เพิ่ม global error modal เมื่อเชื่อมต่อ backend ไม่ได้
+ */
+function showBackendErrorModal() {
+  window.dispatchEvent(new CustomEvent('error-backend'));
+}
 
 // สร้าง wrapper functions สำหรับ HTTP methods
 export const apiClient = {
@@ -56,8 +72,8 @@ export const apiClient = {
       };
     } catch (err) {
       if (GET_FETCH_ERROR) {
-        window.location.replace('/error');
-        throw new Error('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาติดต่อผู้ดูแลระบบให้ดำเนินการแก้ไข');
+        showBackendErrorModal();
+        throw new Error('เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบหลังบ้าน กรุณาติดต่อผู้ดูแลระบบ');
       } else {
         throw err;
       }

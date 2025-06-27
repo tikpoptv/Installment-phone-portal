@@ -112,7 +112,7 @@ export default function CustomerListPage() {
 
   useEffect(() => {
     getCustomers()
-      .then(data => setCustomers(data))
+      .then(data => setCustomers(data ?? []))
       .finally(() => setLoading(false));
   }, []);
 

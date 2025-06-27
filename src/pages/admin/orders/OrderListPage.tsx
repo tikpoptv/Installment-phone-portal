@@ -2,18 +2,9 @@ import { useState, useEffect } from 'react';
 import styles from './OrderListPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import MobileAccessModal from '../../../components/MobileAccessModal';
-
-interface Order {
-  id: string;
-  user_name: string;
-  product_name: string;
-  category: string;
-  total_price: number;
-  status: string;
-  start_date: string;
-  end_date: string;
-  created_at: string;
-}
+import { getContracts } from '../../../services/contract.service';
+import type { Contract } from '../../../services/contract.service';
+import OrderCreateModal from './OrderCreateModal';
 
 const statusLabel = (status: string) => {
   if (status === 'active') return <span className={styles.statusActive}>ใช้งานอยู่</span>;
@@ -29,42 +20,6 @@ const categoryLabel = (cat: string) => {
   return cat;
 };
 
-const mockOrders: Order[] = [
-  {
-    id: 'CT00001',
-    user_name: 'สมชาย ใจดี',
-    product_name: 'iPhone 13 Pro Max',
-    category: 'rent',
-    total_price: 20000.00,
-    status: 'active',
-    start_date: '2024-07-01',
-    end_date: '2025-06-30',
-    created_at: '2024-07-01T12:00:00Z',
-  },
-  {
-    id: 'CT00002',
-    user_name: 'สายใจ สายทอง',
-    product_name: 'iPhone 12',
-    category: 'installment',
-    total_price: 15000.00,
-    status: 'completed',
-    start_date: '2023-01-01',
-    end_date: '2023-12-31',
-    created_at: '2023-01-01T10:00:00Z',
-  },
-  {
-    id: 'CT00003',
-    user_name: 'สมปอง สมหวัง',
-    product_name: 'Samsung S22',
-    category: 'full',
-    total_price: 25000.00,
-    status: 'cancelled',
-    start_date: '2024-03-01',
-    end_date: '2024-03-01',
-    created_at: '2024-03-01T09:00:00Z',
-  },
-];
-
 const statusOptions = [
   { value: 'all', label: 'ทุกสถานะ' },
   { value: 'active', label: 'ใช้งานอยู่' },
@@ -78,7 +33,7 @@ const categoryOptions = [
   { value: 'full', label: 'ซื้อขาด' },
 ];
 
-function exportOrdersToCSV(orders: Order[]) {
+function exportOrdersToCSV(orders: Contract[]) {
   const header = ['ลำดับ', 'รหัสคำสั่งซื้อ', 'ลูกค้า', 'สินค้า', 'ประเภท', 'ยอดรวม', 'สถานะ', 'วันที่เริ่ม', 'วันที่สิ้นสุด', 'วันที่สร้าง'];
   const rows = orders.map((o, idx) => [
     idx + 1,
@@ -136,7 +91,7 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
 }
 
 export default function OrderListPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -149,16 +104,21 @@ export default function OrderListPage() {
   const [endDate, setEndDate] = useState('');
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showMobileWarn, setShowMobileWarn] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
-    // mock fetch
-    setTimeout(() => {
-      setOrders(mockOrders);
-      setLoading(false);
-      setFetchError(null);
-    }, 500);
+    getContracts()
+      .then(data => {
+        setOrders(data ?? []);
+        setLoading(false);
+        setFetchError(null);
+      })
+      .catch(() => {
+        setFetchError('เกิดข้อผิดพลาดในการโหลดข้อมูลคำสั่งซื้อ');
+        setLoading(false);
+      });
   }, []);
 
   // สร้างรายการสินค้าไม่ซ้ำสำหรับ filter
@@ -201,6 +161,9 @@ export default function OrderListPage() {
   if (fetchError) {
     return <div className={styles.errorText}>{fetchError}</div>;
   }
+  if (!orders) {
+    return <div className={styles.centerTextEmpty}>ไม่มีข้อมูลคำสั่งซื้อ</div>;
+  }
 
   return (
     <>
@@ -210,11 +173,12 @@ export default function OrderListPage() {
         onContinue={() => setShowMobileWarn(false)}
         onCancel={() => navigate(-1)}
       />
+      <OrderCreateModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
       <div className={styles.container}>
         <div className={styles.header}>
           <h2 className={styles.title}>รายการคำสั่งซื้อ</h2>
           <div className={styles.actionGroup}>
-            <button className={styles.addButton} onClick={() => alert('TODO: เปิด modal สร้างคำสั่งซื้อ')}>สร้างคำสั่งซื้อ</button>
+            <button className={styles.addButton} onClick={() => setCreateModalOpen(true)}>สร้างคำสั่งซื้อ</button>
             <button className={styles.exportButton} onClick={() => setExportModalOpen(true)}>Export</button>
           </div>
         </div>
