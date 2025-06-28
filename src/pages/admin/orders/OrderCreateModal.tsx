@@ -19,6 +19,8 @@ const statusOptions = [
   { value: 'active', label: 'ใช้งานอยู่' },
   { value: 'closed', label: 'ปิดสัญญา' },
   { value: 'default', label: 'รอดำเนินการ' },
+  { value: 'repossessed', label: 'ยึดคืน' },
+  { value: 'returned', label: 'คืนสินค้า' },
 ];
 
 const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSuccess }) => {
@@ -68,7 +70,23 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    if (name === 'category' && value === 'cash_purchase') {
+      setForm(prev => ({
+        ...prev,
+        [name]: value,
+        status: 'closed',
+        total_with_interest: '',
+        installment_months: '',
+        monthly_payment: '',
+        start_date: '',
+        end_date: '',
+        pdpa_consent_file: null
+      }));
+    } else if (name === 'category') {
+      setForm(prev => ({ ...prev, [name]: value, status: 'active' }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,6 +177,25 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
                 ))}
               </div>
             )}
+            {form.user_id && (
+              <a
+                href={`/admin/customers/${form.user_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-block',
+                  marginTop: 8,
+                  color: '#0ea5e9',
+                  fontWeight: 600,
+                  fontSize: 15,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0
+                }}
+              >ดูรายละเอียดลูกค้า</a>
+            )}
           </div>
           <div style={{ position: 'relative' }}>
             <label>สินค้า <span className={styles.required}>*</span></label>
@@ -225,44 +262,78 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             </select>
           </div>
           <div>
-            <label>ราคาสินค้า <span className={styles.required}>*</span></label>
-            <input name="total_price" type="number" value={form.total_price} onChange={handleChange} required min={0} className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ราคาสินค้า <span className={styles.required}>*</span></label>
+            <input name="total_price" type="number" value={form.total_price} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
-            <label>ราคารวมดอกเบี้ย <span className={styles.required}>*</span></label>
-            <input name="total_with_interest" type="number" value={form.total_with_interest} onChange={handleChange} required min={0} className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ราคารวมดอกเบี้ย <span className={styles.required}>*</span></label>
+            <input name="total_with_interest" type="number" value={form.total_with_interest} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
-            <label>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
-            <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange} required min={1} className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
+            <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} min={1} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
-            <label>ยอดผ่อนต่อเดือน <span className={styles.required}>*</span></label>
-            <input name="monthly_payment" type="number" value={form.monthly_payment} onChange={handleChange} required min={0} className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ยอดผ่อนต่อเดือน <span className={styles.required}>*</span></label>
+            <input name="monthly_payment" type="number" value={form.monthly_payment} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
             <label>สถานะ <span className={styles.required}>*</span></label>
-            <select name="status" value={form.status} onChange={handleChange} required className={styles.inputBox}>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              required
+              className={styles.inputBox}
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            >
               {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
           <div>
-            <label>วันที่เริ่ม <span className={styles.required}>*</span></label>
-            <input name="start_date" type="date" value={form.start_date} onChange={handleChange} required className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>วันที่เริ่ม <span className={styles.required}>*</span></label>
+            <input name="start_date" type="date" value={form.start_date} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
-            <label>วันที่สิ้นสุด <span className={styles.required}>*</span></label>
-            <input name="end_date" type="date" value={form.end_date} onChange={handleChange} required className={styles.inputBox} />
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>วันที่สิ้นสุด <span className={styles.required}>*</span></label>
+            <input name="end_date" type="date" value={form.end_date} onChange={handleChange} 
+              required={form.category !== 'cash_purchase'} className={styles.inputBox} 
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+            />
           </div>
           <div>
-            <label>ไฟล์ใบยินยอม PDPA (PDF) <span className={styles.required}>*</span></label>
+            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ไฟล์ใบยินยอม PDPA (PDF) <span className={styles.required}>*</span></label>
             <input
               type="file"
               accept="application/pdf"
               onChange={handleFileChange}
               className={styles.inputBox}
               ref={fileInputRef}
-              required
+              required={form.category !== 'cash_purchase'}
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
             />
             {form.pdpa_consent_file && (
               <div style={{ marginTop: 6, color: '#0ea5e9', fontSize: 14 }}>

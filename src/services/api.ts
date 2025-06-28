@@ -46,8 +46,14 @@ api.interceptors.response.use(
       showBackendErrorModal();
     }
     // จัดการเฉพาะการลบ token เมื่อหมดอายุ
+    // ไม่แสดง session expired ถ้าอยู่ที่หน้า login (เพราะเป็น login credentials ผิด)
     if (error.response?.status === 401) {
-      window.dispatchEvent(new Event('session-expired'));
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath.includes('/login');
+      
+      if (!isLoginPage) {
+        window.dispatchEvent(new Event('session-expired'));
+      }
     }
     return Promise.reject(error.response?.data || error);
   }
