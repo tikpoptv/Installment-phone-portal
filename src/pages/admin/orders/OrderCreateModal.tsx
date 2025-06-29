@@ -4,6 +4,7 @@ import { getCustomers } from '../../../services/customer/customer.service';
 import type { Customer } from '../../../services/customer/customer.service';
 import { getProducts } from '../../../services/products.service';
 import type { Product } from '../../../services/products.service';
+import { createContract } from '../../../services/contract.service';
 
 interface OrderCreateModalProps {
   open: boolean;
@@ -12,8 +13,8 @@ interface OrderCreateModalProps {
 }
 
 const categoryOptions = [
-  { value: 'rent', label: 'เช่า' },
-  { value: 'cash_purchase', label: 'ซื้อขาด' },
+  { value: 'rent', label: 'ผ่อน' },
+  { value: 'cash_purchase', label: 'ซื้อเงินสด' },
 ];
 const statusOptions = [
   { value: 'active', label: 'ใช้งานอยู่' },
@@ -95,21 +96,86 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
     // validate
-    if (!form.user_id || !form.product_id || !form.category || !form.total_price || !form.total_with_interest || !form.installment_months || !form.monthly_payment || !form.status || !form.start_date || !form.end_date || !form.pdpa_consent_file) {
+    const isCashPurchase = form.category === 'cash_purchase';
+    const isRent = form.category === 'rent';
+    // validate
+    let requiredFields: (string | File | null)[] = [];
+    if (isRent) {
+      requiredFields = [
+        form.user_id,
+        form.product_id,
+        form.category,
+        form.total_price,
+        form.total_with_interest,
+        form.installment_months,
+        form.monthly_payment,
+        form.status,
+        form.start_date,
+        form.end_date,
+        form.pdpa_consent_file
+      ];
+    } else if (isCashPurchase) {
+      requiredFields = [
+        form.user_id,
+        form.product_id,
+        form.category,
+        form.total_price
+      ];
+    }
+    if (requiredFields.some(field => !field)) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
-    setSuccess('สร้างคำสั่งซื้อ (mock) สำเร็จ!');
-    if (onSuccess) onSuccess();
-    setTimeout(() => {
-      setSuccess(null);
-      onClose();
-    }, 1200);
+    // เตรียม payload
+    const payload: Record<string, unknown> = { ...form };
+    if (isCashPurchase) {
+      // กรอกค่าปลอดภัยให้ช่องที่เหลือ (workaround: ใช้ 1 แทน 0)
+      payload.total_with_interest = 1;
+      payload.installment_months = 1;
+      payload.monthly_payment = 1;
+      payload.status = 'closed';
+      // วันที่เริ่ม/สิ้นสุด ใส่วันปัจจุบันเสมอ
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      payload.start_date = todayStr;
+      payload.end_date = todayStr;
+      // ไม่ต้องแนบไฟล์ pdpa_consent_file
+      delete payload.pdpa_consent_file;
+    } else if (isRent) {
+      // ช่องอื่นๆ ไม่ต้อง validate/แนบไฟล์/กรอก
+      // ลบออกจาก payload ถ้าไม่กรอก
+      const optionalFields: (keyof typeof form)[] = [
+        'total_with_interest',
+        'installment_months',
+        'monthly_payment',
+        'status',
+        'start_date',
+        'end_date',
+        'pdpa_consent_file'
+      ];
+      optionalFields.forEach(field => {
+        if (!form[field]) delete payload[field];
+      });
+    }
+    try {
+      await createContract(payload);
+      setSuccess('สร้างคำสั่งซื้อสำเร็จ!');
+      if (onSuccess) onSuccess();
+      setTimeout(() => {
+        setSuccess(null);
+        onClose();
+      }, 1200);
+    } catch {
+      setError('เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ');
+    }
   };
 
   const filteredUsers = customerList
@@ -262,35 +328,28 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             </select>
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ราคาสินค้า <span className={styles.required}>*</span></label>
+            <label>ราคาสินค้า <span className={styles.required}>*</span></label>
             <input name="total_price" type="number" value={form.total_price} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required min={0} className={styles.inputBox} 
             />
           </div>
+          {form.category === 'rent' && <>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ราคารวมดอกเบี้ย <span className={styles.required}>*</span></label>
+            <label>ราคารวมดอกเบี้ย <span className={styles.required}>*</span></label>
             <input name="total_with_interest" type="number" value={form.total_with_interest} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required min={0} className={styles.inputBox} 
             />
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
+            <label>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
             <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} min={1} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required min={1} className={styles.inputBox} 
             />
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ยอดผ่อนต่อเดือน <span className={styles.required}>*</span></label>
+            <label>ยอดผ่อนต่อเดือน <span className={styles.required}>*</span></label>
             <input name="monthly_payment" type="number" value={form.monthly_payment} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} min={0} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required min={0} className={styles.inputBox} 
             />
           </div>
           <div>
@@ -301,39 +360,31 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
               onChange={handleChange}
               required
               className={styles.inputBox}
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
             >
               {statusOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>วันที่เริ่ม <span className={styles.required}>*</span></label>
+            <label>วันที่เริ่ม <span className={styles.required}>*</span></label>
             <input name="start_date" type="date" value={form.start_date} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required className={styles.inputBox} 
             />
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>วันที่สิ้นสุด <span className={styles.required}>*</span></label>
+            <label>วันที่สิ้นสุด <span className={styles.required}>*</span></label>
             <input name="end_date" type="date" value={form.end_date} onChange={handleChange} 
-              required={form.category !== 'cash_purchase'} className={styles.inputBox} 
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required className={styles.inputBox} 
             />
           </div>
           <div>
-            <label style={form.category === 'cash_purchase' ? { color: '#94a3b8' } : {}}>ไฟล์ใบยินยอม PDPA (PDF) <span className={styles.required}>*</span></label>
+            <label>ไฟล์ใบยินยอม PDPA (PDF) <span className={styles.required}>*</span></label>
             <input
               type="file"
               accept="application/pdf"
               onChange={handleFileChange}
               className={styles.inputBox}
               ref={fileInputRef}
-              required={form.category !== 'cash_purchase'}
-              disabled={form.category === 'cash_purchase'}
-              style={form.category === 'cash_purchase' ? { background: '#f1f5f9', color: '#94a3b8', borderColor: '#e2e8f0', cursor: 'not-allowed' } : {}}
+              required
             />
             {form.pdpa_consent_file && (
               <div style={{ marginTop: 6, color: '#0ea5e9', fontSize: 14 }}>
@@ -341,6 +392,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
               </div>
             )}
           </div>
+          </>}
           {error && <div className={styles.error}>{error}</div>}
           {success && <div className={styles.success}>{success}</div>}
           <div className={styles.buttonRow}>
