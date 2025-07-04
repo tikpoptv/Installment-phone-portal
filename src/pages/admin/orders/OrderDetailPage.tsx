@@ -24,8 +24,9 @@ const statusMap: Record<string, { label: string; className: string; emoji: strin
 };
 
 const categoryMap: Record<string, { label: string; emoji: string }> = {
-  rent: { label: 'เช่า', emoji: '📱' },
+  rent: { label: 'ผ่อน', emoji: '📱' },
   buy: { label: 'ซื้อ', emoji: '💸' },
+  cash_purchase: { label: 'ซื้อเงินสด', emoji: '💵' },
 };
 
 const OrderDetailPage: React.FC = () => {

@@ -5,6 +5,8 @@ import type { Customer } from '../../../services/customer/customer.service';
 import { getProducts } from '../../../services/products.service';
 import type { Product } from '../../../services/products.service';
 import { createContract } from '../../../services/contract.service';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 interface OrderCreateModalProps {
   open: boolean;
@@ -39,8 +41,6 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     pdpa_consent_file: null as File | null,
     user_name: '',
   });
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [userQuery, setUserQuery] = useState('');
   const [showUserList, setShowUserList] = useState(false);
@@ -52,6 +52,10 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
   const [productQuery, setProductQuery] = useState('');
   const [showProductList, setShowProductList] = useState(false);
   const productInputRef = useRef<HTMLInputElement | null>(null);
+  const [showPdpaPreview, setShowPdpaPreview] = useState(false);
+  const [pdpaPreviewUrl, setPdpaPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return;
@@ -65,9 +69,47 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       .then(data => setProductList((data ?? []).filter(p => p.status === 'available')))
       .catch(() => setProductList([]))
       .finally(() => setProductLoading(false));
+
+    // รีเซ็ตค่าทุก field เมื่อเปิด modal
+    setForm({
+      user_id: '',
+      product_id: '',
+      category: 'rent',
+      total_price: '',
+      total_with_interest: '',
+      installment_months: '',
+      monthly_payment: '',
+      status: 'active',
+      start_date: '',
+      end_date: '',
+      pdpa_consent_file: null,
+      user_name: '',
+    });
+    setUserQuery('');
+    setProductQuery('');
+    setShowUserList(false);
+    setShowProductList(false);
   }, [open]);
 
+  useEffect(() => {
+    if (form.category === 'cash_purchase') {
+      setForm(prev => ({ ...prev, user_id: '', user_name: '' }));
+      setUserQuery('');
+    }
+  }, [form.category]);
+
   if (!open) return null;
+
+  // ฟังก์ชันช่วยคำนวณวันที่สิ้นสุด
+  function calcEndDate(start: string, months: string) {
+    if (!start || !months) return '';
+    const d = new Date(start);
+    const m = parseInt(months, 10);
+    if (isNaN(m)) return '';
+    d.setMonth(d.getMonth() + m);
+    // คืนค่า yyyy-MM-dd
+    return d.toISOString().slice(0, 10);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -85,6 +127,39 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       }));
     } else if (name === 'category') {
       setForm(prev => ({ ...prev, [name]: value, status: 'active' }));
+    } else if (name === 'installment_months') {
+      if (parseInt(value, 10) > 24) {
+        setForm(prev => ({ ...prev, [name]: '' }));
+        toast.error('จำนวนงวดผ่อนสูงสุด 24 งวด');
+        return;
+      }
+      setForm(prev => {
+        const newForm = { ...prev, [name]: value };
+        const totalWithInterest = parseFloat(newForm.total_with_interest);
+        const installmentMonths = parseInt(value, 10);
+        if (!isNaN(totalWithInterest) && !isNaN(installmentMonths) && installmentMonths > 0) {
+          newForm.monthly_payment = (totalWithInterest / installmentMonths).toFixed(2);
+        }
+        // auto คำนวณ end_date
+        newForm.end_date = calcEndDate(newForm.start_date, value);
+        return newForm;
+      });
+    } else if (name === 'start_date') {
+      setForm(prev => {
+        const newForm = { ...prev, [name]: value };
+        newForm.end_date = calcEndDate(value, newForm.installment_months);
+        return newForm;
+      });
+    } else if (name === 'total_with_interest') {
+      setForm(prev => {
+        const newForm = { ...prev, [name]: value };
+        const totalWithInterest = parseFloat(value);
+        const installmentMonths = parseInt(newForm.installment_months, 10);
+        if (!isNaN(totalWithInterest) && !isNaN(installmentMonths) && installmentMonths > 0) {
+          newForm.monthly_payment = (totalWithInterest / installmentMonths).toFixed(2);
+        }
+        return newForm;
+      });
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
     }
@@ -93,13 +168,17 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setForm(prev => ({ ...prev, pdpa_consent_file: e.target.files![0] }));
+      // เตรียม url สำหรับ preview
+      const file = e.target.files[0];
+      const url = URL.createObjectURL(file);
+      setPdpaPreviewUrl(url);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     // validate
     const isCashPurchase = form.category === 'cash_purchase';
     const isRent = form.category === 'rent';
@@ -121,14 +200,14 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       ];
     } else if (isCashPurchase) {
       requiredFields = [
-        form.user_id,
         form.product_id,
         form.category,
         form.total_price
       ];
     }
     if (requiredFields.some(field => !field)) {
-      setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
+      setIsSubmitting(false);
       return;
     }
     // เตรียม payload
@@ -149,6 +228,10 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       payload.end_date = todayStr;
       // ไม่ต้องแนบไฟล์ pdpa_consent_file
       delete payload.pdpa_consent_file;
+      // ถ้า user_id เป็น string ว่าง ให้ลบ property ออก (ไม่ต้องส่งไป backend)
+      if (payload.user_id === '' || payload.user_id === null) delete payload.user_id;
+      // ถ้าเป็นซื้อสด ให้ user_name เป็น null เสมอ
+      payload.user_name = null;
     } else if (isRent) {
       // ช่องอื่นๆ ไม่ต้อง validate/แนบไฟล์/กรอก
       // ลบออกจาก payload ถ้าไม่กรอก
@@ -166,15 +249,25 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       });
     }
     try {
-      await createContract(payload);
-      setSuccess('สร้างคำสั่งซื้อสำเร็จ!');
-      if (onSuccess) onSuccess();
+      const res = await createContract(payload);
+      // ปลอดภัย ไม่ใช้ any
+      let id: string | undefined;
+      if (res && typeof res.data === 'object' && res.data !== null && 'id' in res.data && typeof (res.data as Record<string, unknown>).id === 'string') {
+        id = (res.data as Record<string, unknown>).id as string;
+      }
+      toast.success('สร้างคำสั่งซื้อสำเร็จ!');
       setTimeout(() => {
-        setSuccess(null);
-        onClose();
-      }, 1200);
+        if (id) {
+          navigate(`/admin/orders/${id}`);
+        } else {
+          onClose();
+        }
+        setIsSubmitting(false);
+      }, 800);
+      if (onSuccess) onSuccess();
     } catch {
-      setError('เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ');
+      toast.error('เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ');
+      setIsSubmitting(false);
     }
   };
 
@@ -194,7 +287,19 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     (p.id + ' ' + p.model_name).toLowerCase().includes(productQuery.toLowerCase())
   );
   const handleProductSelect = (product: Product) => {
-    setForm(prev => ({ ...prev, product_id: product.id }));
+    const todayStr = new Date().toISOString().slice(0, 10);
+    setForm(prev => {
+      const newStart = prev.start_date || todayStr;
+      const newEnd = calcEndDate(newStart, prev.installment_months || '');
+      return {
+        ...prev,
+        product_id: product.id,
+        total_price: product.price.toString(),
+        total_with_interest: product.price.toString(),
+        start_date: newStart,
+        end_date: newEnd
+      };
+    });
     setProductQuery(product.id + ' - ' + product.model_name);
     setShowProductList(false);
   };
@@ -223,6 +328,8 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
               placeholder="พิมพ์ชื่อลูกค้า..."
               autoComplete="off"
               required
+              disabled={form.category === 'cash_purchase'}
+              style={form.category === 'cash_purchase' ? { background: '#e5e7eb', color: '#64748b', cursor: 'not-allowed' } : {}}
             />
             {showUserList && filteredUsers.length > 0 && (
               <div style={{
@@ -342,14 +449,14 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
           </div>
           <div>
             <label>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
-            <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange} 
-              required min={1} className={styles.inputBox} 
+            <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange}
+              required min={1} max={24} className={styles.inputBox}
             />
           </div>
           <div>
             <label>ยอดผ่อนต่อเดือน <span className={styles.required}>*</span></label>
             <input name="monthly_payment" type="number" value={form.monthly_payment} onChange={handleChange} 
-              required min={0} className={styles.inputBox} 
+              required min={0} step="0.01" className={styles.inputBox} 
             />
           </div>
           <div>
@@ -389,18 +496,58 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             {form.pdpa_consent_file && (
               <div style={{ marginTop: 6, color: '#0ea5e9', fontSize: 14 }}>
                 ไฟล์: {form.pdpa_consent_file.name}
+                <button
+                  type="button"
+                  onClick={() => setShowPdpaPreview(true)}
+                  style={{
+                    marginLeft: 10,
+                    background: '#0ea5e9',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '2px 10px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 4px #bae6fd',
+                    verticalAlign: 'middle',
+                    lineHeight: 1.5
+                  }}
+                >ดูไฟล์</button>
               </div>
             )}
           </div>
           </>}
-          {error && <div className={styles.error}>{error}</div>}
-          {success && <div className={styles.success}>{success}</div>}
           <div className={styles.buttonRow}>
-            <button type="submit" className={styles.submitBtn}>บันทึก</button>
+            <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+              {isSubmitting ? 'กำลังบันทึก...' : 'บันทึก'}
+            </button>
             <button type="button" className={styles.cancelBtn} onClick={onClose}>ยกเลิก</button>
           </div>
         </form>
       </div>
+      {showPdpaPreview && pdpaPreviewUrl && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: '#fff', borderRadius: 12, maxWidth: 600, width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', background: '#f1f5f9' }}>
+              <span>แสดงไฟล์ใบยินยอม PDPA</span>
+              <button onClick={() => { setShowPdpaPreview(false); if (pdpaPreviewUrl) { URL.revokeObjectURL(pdpaPreviewUrl); setPdpaPreviewUrl(null); } }} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#64748b', cursor: 'pointer', padding: '4px 8px' }}>&times;</button>
+            </div>
+            <div style={{ padding: 0, flex: 1, overflow: 'auto', background: '#f9fafb', minHeight: 400 }}>
+              <iframe
+                src={pdpaPreviewUrl}
+                title="PDPA Consent File Preview"
+                width="100%"
+                height="500px"
+                style={{ border: 'none', display: 'block' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
