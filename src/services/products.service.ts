@@ -34,6 +34,11 @@ export interface Product {
   created_at: string;
 }
 
+export interface ProductLatestContract {
+  contract_id: string;
+  status: string;
+}
+
 export async function createProduct(payload: CreateProductPayload): Promise<ProductResponse> {
   const formData = new FormData();
   formData.append('phone_model_id', payload.phone_model_id);
@@ -68,4 +73,14 @@ export async function getProductImageBlob(productId: string, filename: string): 
     responseType: 'blob',
   });
   return res.data as Blob;
+}
+
+export async function getLatestContractByProductId(productId: string): Promise<ProductLatestContract | null> {
+  try {
+    const res = await apiClient.get<ProductLatestContract>(`/api/products/${productId}/contract`);
+    return res.data;
+  } catch (e: unknown) {
+    if (e && typeof e === 'object' && 'status' in e && (e as { status?: unknown }).status === 404) return null;
+    throw e;
+  }
 } 

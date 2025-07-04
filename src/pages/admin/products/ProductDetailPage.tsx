@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styles from './ProductDetailPage.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProductDetail, getProductImageBlob } from '../../../services/products.service';
+import { getProductDetail, getProductImageBlob, getLatestContractByProductId } from '../../../services/products.service';
+import type { ProductLatestContract } from '../../../services/products.service';
 
 export interface ProductDetail {
   id: string;
@@ -42,6 +43,7 @@ const ProductDetailPage: React.FC = () => {
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
   const navigate = useNavigate();
   const imageUrlsRef = useRef<(string | null)[]>([]);
+  const [latestContract, setLatestContract] = useState<ProductLatestContract | null>(null);
 
   const productImageFilenames = useMemo(() => product?.product_image_filenames || [], [product]);
 
@@ -53,10 +55,14 @@ const ProductDetailPage: React.FC = () => {
       .then((data) => {
         setProduct(data as ProductDetail);
         setLoading(false);
+        getLatestContractByProductId(id)
+          .then(setLatestContract)
+          .catch(() => setLatestContract(null));
       })
       .catch(() => {
         setError('ไม่พบข้อมูลสินค้า');
         setLoading(false);
+        setLatestContract(null);
       });
   }, [id]);
 
@@ -113,15 +119,6 @@ const ProductDetailPage: React.FC = () => {
   if (loading) return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
   if (error) return <div className={styles.container}>{error}</div>;
   if (!product) return <div className={styles.container}>ไม่พบข้อมูลสินค้า</div>;
-
-  // mock order info (ถ้าต้องการเชื่อมกับ order จริง ให้แก้ไขภายหลัง)
-  const order = product.status === 'leased' || product.status === 'sold'
-    ? {
-        id: 'ORDER12345',
-        status: product.status === 'leased' ? 'ติดสัญญา' : 'ขายแล้ว',
-        detailUrl: `/admin/orders/ORDER12345`,
-      }
-    : null;
 
   return (
     <div className={styles.container}>
@@ -211,15 +208,22 @@ const ProductDetailPage: React.FC = () => {
             </button>
           )}
         </div>
-        {order && (
-          <div className={styles.orderBox}>
-            <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
-            <div className={styles.detailRow}><span className={styles.label}>รหัสคำสั่งซื้อ:</span> <span className={styles.value}>{order.id}</span></div>
-            <div className={styles.detailRow}><span className={styles.label}>สถานะคำสั่งซื้อ:</span> <span className={styles.value}>{order.status}</span></div>
-            <button className={styles.orderBoxBtn} onClick={()=>navigate(order.detailUrl)}>
-              ดูข้อมูลคำสั่งซื้อเพิ่มเติม
-            </button>
-          </div>
+        {product && (
+          latestContract ? (
+            <div className={styles.orderBox}>
+              <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
+              <div className={styles.detailRow}><span className={styles.label}>รหัสคำสั่งซื้อ:</span> <span className={styles.value}>{latestContract.contract_id}</span></div>
+              <div className={styles.detailRow}><span className={styles.label}>สถานะคำสั่งซื้อ:</span> <span className={styles.value}>{latestContract.status}</span></div>
+              <button className={styles.orderBoxBtn} onClick={()=>navigate(`/admin/orders/${latestContract.contract_id}`)}>
+                ดูข้อมูลคำสั่งซื้อเพิ่มเติม
+              </button>
+            </div>
+          ) : (
+            <div className={styles.orderBox}>
+              <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
+              <div className={styles.detailRow} style={{color:'#64748b'}}>ไม่พบคำสั่งซื้อที่เชื่อมโยงกับสินค้านี้</div>
+            </div>
+          )
         )}
         {product.icloud_status === 'locked' && (
           <div className={styles.orderBox}>
