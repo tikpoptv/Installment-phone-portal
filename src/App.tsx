@@ -19,6 +19,8 @@ import ProductDetailPage from './pages/admin/products/ProductDetailPage';
 import SessionExpiredModal from './components/SessionExpiredModal';
 import OrderListPage from './pages/admin/orders/OrderListPage';
 import ErrorBackendModal from './components/ErrorBackendModal';
+import Settings from './pages/admin/settings/Settings';
+import OrderDetailPage from './pages/admin/orders/OrderDetailPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -244,6 +246,8 @@ function AppContent() {
                     <Route path="products" element={<ProductListPage />} />
                     <Route path="products/:id" element={<ProductDetailPage />} />
                     <Route path="orders" element={<OrderListPage />} />
+                    <Route path="orders/:id" element={<OrderDetailPage />} />
+                    <Route path="settings" element={<Settings />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>
