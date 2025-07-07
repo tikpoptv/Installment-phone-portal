@@ -40,8 +40,16 @@ export interface ProductLatestContract {
 }
 
 export interface BindIcloudCredentialPayload {
+  mode?: 'single' | 'both';
+  // single
+  type?: 'store' | 'customer';
   icloud_credential_id?: string;
-  icloud_status: 'lock' | 'unlock';
+  icloud_status?: 'lock' | 'unlock';
+  // both
+  store_icloud_credential_id?: string | null;
+  store_icloud_status?: 'lock' | 'unlock';
+  customer_icloud_credential_id?: string | null;
+  customer_icloud_status?: 'lock' | 'unlock';
 }
 
 export interface ProductDetailWithIcloud extends Product {

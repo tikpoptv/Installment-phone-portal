@@ -299,38 +299,18 @@ const ProductDetailPage: React.FC = () => {
 
       <IcloudLockModal
         open={showLockModal}
+        productId={product.id}
         productImei={product.imei}
         icloudList={icloudList}
         onClose={() => setShowLockModal(false)}
-        onConfirm={async (icloudId) => {
+        onConfirm={() => {
           setShowLockModal(false);
-          try {
-            await bindIcloudCredentialToProduct(product.id, {
-              icloud_credential_id: icloudId,
-              icloud_status: 'lock',
-            });
-            toast.success('เชื่อมโยงบัญชี iCloud สำเร็จ!');
-            // refresh ข้อมูล product
-            setLoading(true);
-            getProductDetail(product.id)
-              .then((data) => setProduct(data as ProductDetail))
-              .catch(() => setError('ไม่พบข้อมูลสินค้า'))
-              .finally(() => setLoading(false));
-          } catch (err) {
-            let msg = 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี iCloud';
-            if (typeof err === 'object' && err !== null) {
-              if ('message' in err && typeof (err as Record<string, unknown>).message === 'string') {
-                msg = (err as Record<string, unknown>).message as string;
-              } else if ('error' in err && typeof (err as Record<string, unknown>).error === 'string') {
-                msg = (err as Record<string, unknown>).error as string;
-              }
-            }
-            toast.error(msg);
-          }
+          toast.success('เชื่อมโยงบัญชี iCloud สำเร็จ!');
+          // refresh ข้อมูล product ถ้าต้องการ
         }}
-        onCreate={() => {
-          setShowLockModal(false);
-          navigate('/admin/icloud?create=1');
+        onReloadIcloudList={async () => {
+          const list = await getIcloudCredentials();
+          setIcloudList(list);
         }}
       />
 
