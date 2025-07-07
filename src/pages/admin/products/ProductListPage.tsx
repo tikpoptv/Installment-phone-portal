@@ -142,6 +142,14 @@ export default function ProductListPage() {
     return num.toLocaleString('th-TH');
   };
 
+  const handleMobileCancel = () => {
+    if (window.innerWidth <= 640) {
+      navigate(-1);
+    } else {
+      setShowMobileWarning(false);
+    }
+  };
+
   if (loading) {
     return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
   }
@@ -152,7 +160,12 @@ export default function ProductListPage() {
 
   return (
     <>
-      <MobileAccessModal open={showMobileWarning} mode="warn" onContinue={() => setShowMobileWarning(false)} onCancel={() => setShowMobileWarning(false)} />
+      <MobileAccessModal
+        open={showMobileWarning}
+        mode="warn"
+        onContinue={() => setShowMobileWarning(false)}
+        onCancel={handleMobileCancel}
+      />
       <ProductCreateModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
       <div className={styles.container}>
         <div className={styles.header}>

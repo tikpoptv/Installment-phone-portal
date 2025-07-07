@@ -138,6 +138,14 @@ export default function CustomerListPage() {
     setCurrentPage(1);
   }, [rowsPerPage, search, filter]);
 
+  const handleMobileCancel = () => {
+    if (window.innerWidth <= 640) {
+      navigate(-1);
+    } else {
+      setMobileWarningOpen(false);
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 18 }}>กำลังโหลดข้อมูล...</div>;
   }
@@ -253,10 +261,7 @@ export default function CustomerListPage() {
           setMobileWarningOpen(false);
           if (pendingDetailId) navigate(`/admin/customers/${pendingDetailId}`);
         }}
-        onCancel={() => {
-          setMobileWarningOpen(false);
-          setPendingDetailId(null);
-        }}
+        onCancel={handleMobileCancel}
       />
       {showQrModal && (
         <div style={{

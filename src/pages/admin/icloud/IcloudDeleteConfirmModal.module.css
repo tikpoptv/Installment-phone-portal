@@ -1,0 +1,95 @@
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 10010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalBox {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 32px 24px 20px 24px;
+  min-width: 320px;
+  max-width: 95vw;
+  width: 400px;
+  text-align: center;
+  position: relative;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #ef4444;
+}
+
+.msg {
+  font-size: 1rem;
+  margin-bottom: 24px;
+  color: #222;
+  line-height: 1.7;
+}
+
+.idRow {
+  color: #0ea5e9;
+  font-weight: 500;
+}
+
+.btnRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.btnCancel {
+  flex: 1;
+  background: #f3f4f6;
+  color: #222;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btnCancel:hover {
+  background: #e5e7eb;
+}
+
+.btnDelete {
+  flex: 1;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btnDelete:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 600px) {
+  .modalBox {
+    min-width: 0;
+    width: 95vw;
+    padding: 20px 8px 16px 8px;
+  }
+  .title {
+    font-size: 1.1rem;
+  }
+  .msg {
+    font-size: 0.95rem;
+  }
+  .btnRow {
+    gap: 8px;
+  }
+} 

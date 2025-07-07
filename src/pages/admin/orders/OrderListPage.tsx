@@ -9,7 +9,7 @@ import { formatDateThai } from '../../../utils/date';
 
 const statusLabel = (status: string) => {
   if (status === 'active') return <span className={styles.statusActive}>ใช้งานอยู่</span>;
-  if (status === 'completed') return <span className={styles.statusCompleted}>เสร็จสิ้น</span>;
+  if (status === 'completed' || status === 'closed') return <span className={styles.statusCompleted}>เสร็จสิ้น</span>;
   if (status === 'cancelled') return <span className={styles.statusCancelled}>ยกเลิก</span>;
   return <span className={styles.statusDefault}>{status}</span>;
 };
@@ -155,6 +155,14 @@ export default function OrderListPage() {
     checkMobile();
   }, []);
 
+  const handleMobileCancel = () => {
+    if (window.innerWidth <= 640) {
+      navigate(-1);
+    } else {
+      setShowMobileWarn(false);
+    }
+  };
+
   if (loading) {
     return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
   }
@@ -171,7 +179,7 @@ export default function OrderListPage() {
         open={showMobileWarn}
         mode="warn"
         onContinue={() => setShowMobileWarn(false)}
-        onCancel={() => navigate(-1)}
+        onCancel={handleMobileCancel}
       />
       <OrderCreateModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
       <div className={styles.container}>

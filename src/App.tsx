@@ -21,6 +21,7 @@ import OrderListPage from './pages/admin/orders/OrderListPage';
 import ErrorBackendModal from './components/ErrorBackendModal';
 import Settings from './pages/admin/settings/Settings';
 import OrderDetailPage from './pages/admin/orders/OrderDetailPage';
+import IcloudListPage from './pages/admin/icloud/IcloudListPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -248,6 +249,7 @@ function AppContent() {
                     <Route path="orders" element={<OrderListPage />} />
                     <Route path="orders/:id" element={<OrderDetailPage />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="icloud" element={<IcloudListPage />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>

@@ -1,0 +1,153 @@
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(30,41,59,0.32);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  backdrop-filter: blur(3px);
+}
+
+.modalContent {
+  background: linear-gradient(135deg, #fff 80%, #e0f2fe 100%);
+  border-radius: 18px;
+  box-shadow: 0 8px 40px 0 rgba(14,165,233,0.18), 0 1.5px 8px #bae6fd;
+  padding: 36px 28px 28px 28px;
+  max-width: 420px;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  border: 1.5px solid #bae6fd;
+  transition: box-shadow 0.2s;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 1rem;
+  color: #0369a1;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.labelText {
+  display: inline-block;
+}
+
+.input {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #bae6fd;
+  font-size: 1rem;
+  background: #f8fafc;
+  color: #0f172a;
+  transition: border 0.18s;
+}
+.input:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton {
+  background: #e0e7ef;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.cancelButton:hover {
+  background: #bae6fd;
+}
+.submitButton {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.submitButton:hover {
+  background: #0369a1;
+}
+.error {
+  color: #ef4444;
+  background: #fee2e2;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.98rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: #64748b;
+  transition: background 0.18s;
+  z-index: 2;
+}
+.closeButton:hover {
+  background: #f1f5f9;
+  color: #ef4444;
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    padding: 18px 6px 12px 6px;
+    max-width: 98vw;
+  }
+  .title {
+    font-size: 1.05rem;
+  }
+  .input {
+    font-size: 0.97rem;
+    padding: 0.6rem 0.7rem;
+  }
+  .buttonGroup {
+    flex-direction: column;
+    gap: 8px;
+  }
+} 
