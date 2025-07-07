@@ -14,11 +14,6 @@ interface ProductCreateModalProps {
   onSuccess?: () => void;
 }
 
-const icloudOptions = [
-  { value: 'unlocked', label: 'ปลดล็อกแล้ว' },
-  { value: 'locked', label: 'ล็อก' },
-];
-
 const statusOptions = [
   { value: 'available', label: 'ว่าง' },
   { value: 'leased', label: 'เช่าอยู่' },
@@ -33,7 +28,7 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
     cost_price: '',
     available_stock: 1,
     status: 'available',
-    icloud_status: '',
+    icloud_status: 'unlocked',
     owner_id: '',
     remark: '',
     images: [] as File[],
@@ -209,9 +204,8 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
             </div>
             <div>
               <label>สถานะ iCloud <span className={styles.required}>*</span></label>
-              <select name="icloud_status" value={form.icloud_status} onChange={handleChange} required className={styles.inputBox}>
-                <option value="">-- เลือกสถานะ --</option>
-                {icloudOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              <select name="icloud_status" value={form.icloud_status} disabled className={styles.inputBox}>
+                <option value="unlocked">ปลดล็อกแล้ว</option>
               </select>
             </div>
             <div>

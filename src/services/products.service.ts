@@ -39,6 +39,19 @@ export interface ProductLatestContract {
   status: string;
 }
 
+export interface BindIcloudCredentialPayload {
+  icloud_credential_id?: string;
+  icloud_status: 'lock' | 'unlock';
+}
+
+export interface ProductDetailWithIcloud extends Product {
+  icloud_credential_id?: string | null;
+}
+
+export interface ProductDetailFull extends ProductDetailWithIcloud {
+  owner_username?: string;
+}
+
 export async function createProduct(payload: CreateProductPayload): Promise<ProductResponse> {
   const formData = new FormData();
   formData.append('phone_model_id', payload.phone_model_id);
@@ -63,8 +76,8 @@ export async function getProducts(): Promise<Product[]> {
   return res.data;
 }
 
-export async function getProductDetail(productId: string) {
-  const res = await apiClient.get(`/api/products/${productId}/detail`);
+export async function getProductDetail(productId: string): Promise<ProductDetailFull> {
+  const res = await apiClient.get<ProductDetailFull>(`/api/products/${productId}/detail`);
   return res.data;
 }
 
@@ -83,4 +96,9 @@ export async function getLatestContractByProductId(productId: string): Promise<P
     if (e && typeof e === 'object' && 'status' in e && (e as { status?: unknown }).status === 404) return null;
     throw e;
   }
+}
+
+export async function bindIcloudCredentialToProduct(productId: string, payload: BindIcloudCredentialPayload) {
+  const res = await apiClient.post(`/api/products/${productId}/icloud-credential`, payload);
+  return res.data;
 } 

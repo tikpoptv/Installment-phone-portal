@@ -219,6 +219,10 @@
   box-shadow: 0 2px 12px #bae6fd99;
 }
 
+.orderBoxBtnSpacing {
+  margin-top: 18px;
+}
+
 .imageModalOverlay {
   position: fixed;
   z-index: 9999;

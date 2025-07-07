@@ -8,9 +8,11 @@ import OrderCreateModal from './OrderCreateModal';
 import { formatDateThai } from '../../../utils/date';
 
 const statusLabel = (status: string) => {
-  if (status === 'active') return <span className={styles.statusActive}>ใช้งานอยู่</span>;
-  if (status === 'completed' || status === 'closed') return <span className={styles.statusCompleted}>เสร็จสิ้น</span>;
-  if (status === 'cancelled') return <span className={styles.statusCancelled}>ยกเลิก</span>;
+  if (status === 'active') return <span className={styles.statusActive}>กำลังใช้งาน</span>;
+  if (status === 'closed') return <span className={styles.statusCompleted}>เสร็จสิ้น</span>;
+  if (status === 'pending') return <span className={styles.statusDefault}>รอดำเนินการ</span>;
+  if (status === 'repossessed') return <span className={styles.statusCancelled}>ยึดคืน</span>;
+  if (status === 'returned') return <span className={styles.statusCancelled}>คืนสินค้า</span>;
   return <span className={styles.statusDefault}>{status}</span>;
 };
 
@@ -22,15 +24,16 @@ const categoryLabel = (cat: string) => {
 
 const statusOptions = [
   { value: 'all', label: 'ทุกสถานะ' },
-  { value: 'active', label: 'ใช้งานอยู่' },
-  { value: 'completed', label: 'เสร็จสิ้น' },
-  { value: 'cancelled', label: 'ยกเลิก' },
+  { value: 'active', label: 'กำลังใช้งาน' },
+  { value: 'closed', label: 'เสร็จสิ้น' },
+  { value: 'pending', label: 'รอดำเนินการ' },
+  { value: 'repossessed', label: 'ยึดคืน' },
+  { value: 'returned', label: 'คืนสินค้า' },
 ];
 const categoryOptions = [
   { value: 'all', label: 'ทุกประเภท' },
-  { value: 'rent', label: 'เช่า' },
-  { value: 'installment', label: 'ผ่อน' },
-  { value: 'full', label: 'ซื้อขาด' },
+  { value: 'rent', label: 'ผ่อน' },
+  { value: 'cash_purchase', label: 'ซื้อเงินสด' },
 ];
 
 function exportOrdersToCSV(orders: Contract[]) {

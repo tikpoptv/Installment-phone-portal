@@ -1,8 +1,14 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styles from './ProductDetailPage.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProductDetail, getProductImageBlob, getLatestContractByProductId } from '../../../services/products.service';
+import { getProductDetail, getProductImageBlob, getLatestContractByProductId, bindIcloudCredentialToProduct } from '../../../services/products.service';
 import type { ProductLatestContract } from '../../../services/products.service';
+import { getIcloudCredentials } from '../../../services/icloud.service';
+import type { IcloudCredential } from '../../../services/icloud.service';
+import IcloudLockModal from './IcloudLockModal';
+import { toast } from 'react-toastify';
+import IcloudUnlockModal from './IcloudUnlockModal';
+import IcloudDetailModal from '../icloud/IcloudDetailModal';
 
 export interface ProductDetail {
   id: string;
@@ -18,6 +24,8 @@ export interface ProductDetail {
   remark: string;
   created_at: string;
   updated_at: string;
+  icloud_credential_id?: string;
+  owner_username?: string;
 }
 
 const statusLabel = (status: string) => {
@@ -44,6 +52,10 @@ const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const imageUrlsRef = useRef<(string | null)[]>([]);
   const [latestContract, setLatestContract] = useState<ProductLatestContract | null>(null);
+  const [showLockModal, setShowLockModal] = useState(false);
+  const [icloudList, setIcloudList] = useState<IcloudCredential[]>([]);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [showIcloudDetailModal, setShowIcloudDetailModal] = useState(false);
 
   const productImageFilenames = useMemo(() => product?.product_image_filenames || [], [product]);
 
@@ -115,6 +127,12 @@ const ProductDetailPage: React.FC = () => {
       imageUrlsRef.current.forEach(url => { if (url) URL.revokeObjectURL(url); });
     };
   }, [product, productImageFilenames]);
+
+  useEffect(() => {
+    if (showLockModal) {
+      getIcloudCredentials().then(setIcloudList).catch(() => setIcloudList([]));
+    }
+  }, [showLockModal]);
 
   if (loading) return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
   if (error) return <div className={styles.container}>{error}</div>;
@@ -203,7 +221,7 @@ const ProductDetailPage: React.FC = () => {
         <div className={styles.detailRow}>
           <span className={styles.label}>iCloud:</span> <span className={styles.value}>{icloudLabel(product.icloud_status)}</span>
           {product.icloud_status === 'unlocked' && (
-            <button className={styles.orderBoxBtn} style={{marginLeft:16,marginTop:0}}>
+            <button className={styles.orderBoxBtn} style={{marginLeft:16,marginTop:0}} onClick={() => setShowLockModal(true)}>
               แจ้งสถานะล็อก iCloud
             </button>
           )}
@@ -229,9 +247,44 @@ const ProductDetailPage: React.FC = () => {
           <div className={styles.orderBox}>
             <div className={styles.orderBoxTitle}>แจ้งเตือน: เครื่องนี้ถูกล็อก iCloud</div>
             <div className={styles.detailRow}><span className={styles.label}>สถานะ iCloud:</span> <span className={styles.value}>Locked</span></div>
-            <button className={styles.orderBoxBtn} style={{marginTop:10}}>
-              ดูรายละเอียด
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <button className={styles.orderBoxBtn} onClick={() => setShowIcloudDetailModal(true)}>
+                ดูรายละเอียด
+              </button>
+              <button
+                className={styles.orderBoxBtn}
+                style={{ background:'#0ea5e9', color:'#fff'}}
+                onClick={() => setShowUnlockModal(true)}
+              >
+                ปลดล็อก iCloud
+              </button>
+            </div>
+            <IcloudUnlockModal
+              open={showUnlockModal}
+              onClose={() => setShowUnlockModal(false)}
+              onConfirm={async () => {
+                setShowUnlockModal(false);
+                try {
+                  await bindIcloudCredentialToProduct(product.id, { icloud_status: 'unlock' });
+                  toast.success('ปลดล็อก iCloud สำเร็จ!');
+                  setLoading(true);
+                  getProductDetail(product.id)
+                    .then((data) => setProduct(data as ProductDetail))
+                    .catch(() => setError('ไม่พบข้อมูลสินค้า'))
+                    .finally(() => setLoading(false));
+                } catch (err) {
+                  let msg = 'เกิดข้อผิดพลาดในการปลดล็อก iCloud';
+                  if (typeof err === 'object' && err !== null) {
+                    if ('message' in err && typeof (err as Record<string, unknown>).message === 'string') {
+                      msg = (err as Record<string, unknown>).message as string;
+                    } else if ('error' in err && typeof (err as Record<string, unknown>).error === 'string') {
+                      msg = (err as Record<string, unknown>).error as string;
+                    }
+                  }
+                  toast.error(msg);
+                }
+              }}
+            />
           </div>
         )}
       </section>
@@ -241,8 +294,51 @@ const ProductDetailPage: React.FC = () => {
         <div className={styles.sectionTitle}>ข้อมูลอื่น ๆ</div>
         <div className={styles.detailRow}><span className={styles.label}>วันที่เพิ่ม:</span> <span className={styles.value}>{new Date(product.created_at).toLocaleString('th-TH')}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>อัปเดตล่าสุด:</span> <span className={styles.value}>{new Date(product.updated_at).toLocaleString('th-TH')}</span></div>
-        <div className={styles.detailRow}><span className={styles.label}>ผู้ลงทะเบียนสินค้า:</span> <span className={styles.value}>{product.owner_id || '-'}</span></div>
+        <div className={styles.detailRow}><span className={styles.label}>ผู้ลงทะเบียนสินค้า:</span> <span className={styles.value}>{product.owner_username ? `${product.owner_username} (${product.owner_id})` : (product.owner_id || '-')}</span></div>
       </section>
+
+      <IcloudLockModal
+        open={showLockModal}
+        productImei={product.imei}
+        icloudList={icloudList}
+        onClose={() => setShowLockModal(false)}
+        onConfirm={async (icloudId) => {
+          setShowLockModal(false);
+          try {
+            await bindIcloudCredentialToProduct(product.id, {
+              icloud_credential_id: icloudId,
+              icloud_status: 'lock',
+            });
+            toast.success('เชื่อมโยงบัญชี iCloud สำเร็จ!');
+            // refresh ข้อมูล product
+            setLoading(true);
+            getProductDetail(product.id)
+              .then((data) => setProduct(data as ProductDetail))
+              .catch(() => setError('ไม่พบข้อมูลสินค้า'))
+              .finally(() => setLoading(false));
+          } catch (err) {
+            let msg = 'เกิดข้อผิดพลาดในการเชื่อมโยงบัญชี iCloud';
+            if (typeof err === 'object' && err !== null) {
+              if ('message' in err && typeof (err as Record<string, unknown>).message === 'string') {
+                msg = (err as Record<string, unknown>).message as string;
+              } else if ('error' in err && typeof (err as Record<string, unknown>).error === 'string') {
+                msg = (err as Record<string, unknown>).error as string;
+              }
+            }
+            toast.error(msg);
+          }
+        }}
+        onCreate={() => {
+          setShowLockModal(false);
+          navigate('/admin/icloud?create=1');
+        }}
+      />
+
+      <IcloudDetailModal
+        open={showIcloudDetailModal}
+        onClose={() => setShowIcloudDetailModal(false)}
+        icloudId={product.icloud_credential_id || null}
+      />
     </div>
   );
 };
