@@ -64,29 +64,6 @@ const IcloudListPage: React.FC = () => {
   const endIdx = startIdx + rowsPerPage;
   const paginated = filtered.slice(startIdx, endIdx);
 
-  // mock action สำหรับปุ่มสร้าง
-  const handleCreate = () => {
-    setShowCreateModal(true);
-  };
-
-  const handleCreateSuccess = () => {
-    toast.success('สร้างบัญชี iCloud สำเร็จ!');
-    setLoading(true);
-    getIcloudCredentials()
-      .then(data => {
-        setIclouds(data ?? []);
-        setError(null);
-      })
-      .catch(() => {
-        setError('เกิดข้อผิดพลาดในการโหลดข้อมูล iCloud');
-        setIclouds([]);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  // reset page เมื่อ filter เปลี่ยน
-  useEffect(() => { setCurrentPage(1); }, [search, ownerType, rowsPerPage]);
-
   // ตรวจสอบขนาดหน้าจอเมื่อ mount
   useEffect(() => {
     const checkMobile = () => {
@@ -129,7 +106,7 @@ const IcloudListPage: React.FC = () => {
       <IcloudCreateModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={handleCreateSuccess}
+        onSuccess={() => {}}
       />
       <IcloudDeleteConfirmModal
         open={!!deleteTargetId}
@@ -178,7 +155,7 @@ const IcloudListPage: React.FC = () => {
         <div className={styles.header}>
           <h2 className={styles.title}>รายการ iCloud</h2>
           <div className={styles.actionGroup}>
-            <button className={styles.addButton} onClick={handleCreate} title="สร้าง iCloud ใหม่">
+            <button className={styles.addButtonDisabled} disabled title="สร้าง iCloud ใหม่ (ปิดใช้งาน)">
               <FaPlus style={{ marginRight: 6, marginBottom: -2 }} /> สร้าง iCloud
             </button>
           </div>

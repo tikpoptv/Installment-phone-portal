@@ -33,6 +33,17 @@
 .addButton:hover {
   background: #0369a1;
 }
+.addButtonDisabled {
+  background: #e5e7eb;
+  color: #b0b8c1;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: not-allowed;
+  pointer-events: none;
+  transition: none;
+}
 .filterRow {
   display: flex;
   gap: 16px;

@@ -1,0 +1,311 @@
+.container {
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 2.5rem 2vw;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0ea5e9;
+  margin: 0;
+}
+.actionGroup {
+  display: flex;
+  gap: 8px;
+}
+.addButton {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.addButton:hover {
+  background: #0369a1;
+}
+.exportButton {
+  background: #e0e7ef;
+  color: #0ea5e9;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.exportButton:hover {
+  background: #bae6fd;
+}
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0;
+}
+.filterTopRow {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.filterRightRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+.filterLeftGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filterRightGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  font-size: 1rem;
+  background: #fff;
+  color: #22223b;
+  transition: border 0.18s;
+}
+.searchInput:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+.select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #bae6fd;
+  font-size: 1rem;
+  background: #f8fafc;
+  color: #0f172a;
+  transition: border 0.18s;
+  min-width: 120px;
+}
+.select:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+.tableWrapper {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 1.05rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(14,165,233,0.08);
+}
+.table th {
+  padding: 10px 8px;
+  text-align: left;
+  color: #0ea5e9;
+  font-weight: 700;
+  background: #f1f5f9;
+}
+.table th, .table td {
+  padding: 12px 8px;
+}
+.table tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+.table tr:hover {
+  background: #f0f9ff;
+  transition: background 0.18s;
+}
+.centerText {
+  text-align: center;
+}
+.centerTextEmpty {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+}
+.statusPending {
+  color: #f59e42;
+  font-weight: 600;
+}
+.statusApproved {
+  color: #22c55e;
+  font-weight: 600;
+}
+.statusRejected {
+  color: #ef4444;
+  font-weight: 600;
+}
+.detailButton {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.detailButton:hover {
+  background: #0ea5e9;
+  color: #fff;
+}
+.paginationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 6px rgba(14,165,233,0.07);
+  font-size: 1.02rem;
+}
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.paginationButton {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 4px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.paginationButton:disabled {
+  background: #f1f5f9;
+  color: #b0b8c1;
+  border: 1.5px solid #e5e7eb;
+  cursor: not-allowed;
+}
+.paginationButton:not(:disabled):hover {
+  background: #0ea5e9;
+  color: #fff;
+}
+.loadingMessage {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  font-size: 18px;
+}
+@media (max-width: 1200px) {
+  .container {
+    max-width: 100vw;
+    padding: 1.5rem 1vw;
+  }
+  .table {
+    min-width: 700px;
+  }
+}
+@media (max-width: 800px) {
+  .filterTopRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .filterRightRow {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .filterLeftGroup, .filterRightGroup {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .searchInput, .select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+}
+@media (max-width: 600px) {
+  .container {
+    padding: 0.5rem 0.1rem;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .actionGroup {
+    width: 100%;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .addButton, .exportButton {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 1.08rem;
+  }
+  .filterRow {
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+  }
+  .filterTopRow, .filterRightRow, .filterLeftGroup, .filterRightGroup {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+  }
+  .searchInput, .select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+  .tableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(14,165,233,0.07);
+  }
+  .table {
+    min-width: 420px;
+    font-size: 0.93rem;
+  }
+  .table th, .table td {
+    padding: 7px 4px;
+    font-size: 0.93rem;
+  }
+  .paginationBar {
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 2px;
+    font-size: 0.95rem;
+    align-items: stretch;
+  }
+  .paginationControls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .paginationButton {
+    width: 100%;
+    min-width: 0;
+    font-size: 1.05rem;
+    padding: 9px 0;
+  }
+} 
