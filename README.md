@@ -1,26 +1,36 @@
-# Online Mobile Installment System
+# Online Mobile Installment System (Installment Phone Portal)
 
-> **Note:** This project is currently under development. There is no backend or API integration yet—all API logic is bypassed. The current version is for UI prototyping and demonstration purposes only.
+A comprehensive management platform for online mobile phone installment purchases, designed for retailers, admins, and customers. This system enables seamless product management, installment sales, and secure iCloud account binding for both store and customer sides. Built with modern web technologies and a robust backend API, it is suitable for real-world deployment in retail or service businesses.
 
-A management system for online mobile phone installment purchases, allowing customers to conveniently select and buy mobile phones with installment payment options.
+## Project Overview
+
+The Installment Phone Portal is a full-featured web application for managing the lifecycle of mobile phone sales and installment contracts. It streamlines the process of adding and managing products, handling installment plans, and securely associating iCloud accounts with each device. The platform is designed for both administrative and operational efficiency, supporting multiple user roles and advanced product tracking.
+
+## Key Features
+
+- **Product Management**: Add, edit, delete, and view detailed information for each mobile phone in inventory, including images, IMEI, pricing, and stock levels.
+- **Installment & Leasing System**: Create and manage installment contracts, track payment status, and link products to customer orders.
+- **iCloud Account Binding**: Securely bind iCloud accounts to products for both store and customer, with support for locking/unlocking and status notifications.
+- **Advanced Search & Filtering**: Quickly locate products or contracts using powerful search and filter tools.
+- **Admin & Store Tools**: Role-based access, order management, and notification features for efficient business operations.
+- **Real Backend API**: Fully integrated with a backend API for data persistence, authentication, and business logic.
 
 ## Tech Stack
 
-- React 19
-- TypeScript
-- Vite
-- ESLint
+- **Frontend**: React 19, TypeScript, Vite, CSS Modules
+- **Linting/Quality**: ESLint
+- **Backend**: (Integrated API, not included in this repo)
 
-## Installation
+## Installation & Usage
 
 ```bash
 # Install dependencies
 npm install
 
-# Run the development server
+# Start the development server
 npm run dev
 
-# Build the project
+# Build for production
 npm run build
 
 # Preview the production build
@@ -31,19 +41,22 @@ npm run preview
 
 ```
 src/
-  ├── assets/        # Images and other assets
-  ├── components/    # React components
-  ├── styles/        # CSS modules
+  ├── assets/        # Images and static assets
+  ├── components/    # Shared React components
+  ├── pages/         # Application pages (admin, products, icloud, etc.)
+  ├── services/      # API and backend service calls
+  ├── styles/        # CSS modules and global styles
   ├── App.tsx        # Main App component
-  └── main.tsx       # Entry point
+  └── main.tsx       # Application entry point
 ```
 
-## Development
+## Development Workflow
 
-1. Clone the repository
+1. Clone this repository
 2. Install dependencies with `npm install`
-3. Start the development server with `npm run dev`
-4. Start building your features!
+3. Start the development server using `npm run dev`
+4. Build and test features as needed
+5. For production, use `npm run build` and `npm run preview` to verify the build
 
 ## License
 
