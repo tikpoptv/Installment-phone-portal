@@ -1,0 +1,228 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  backdrop-filter: blur(2.5px);
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px 28px 28px;
+  min-width: 340px;
+  max-width: 95vw;
+  box-shadow: 0 8px 32px rgba(14,165,233,0.10), 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  position: relative;
+  z-index: 4001;
+}
+
+h2 {
+  margin: 0 0 12px 0;
+  font-size: 1.35rem;
+  color: #0ea5e9;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: #222;
+  gap: 4px;
+}
+
+label span {
+  font-weight: 500;
+  color: #0ea5e9;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+input[type="number"],
+select {
+  padding: 8px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 1rem;
+  background: #f3f4f6;
+  transition: border 0.2s;
+}
+
+input[type="number"]:focus,
+select:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+
+input[type="file"] {
+  margin-top: 4px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+button[type="submit"] {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 22px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.08);
+}
+
+button[type="submit"]:hover {
+  background: #0369a1;
+}
+
+button[type="button"] {
+  background: #f3f4f6;
+  color: #222;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 7px;
+  padding: 8px 22px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+
+button[type="button"]:hover {
+  background: #e5e7eb;
+  border: 1.5px solid #0ea5e9;
+}
+
+/* ตารางประวัติการชำระเงิน */
+.paymentHistory {
+  margin-top: 24px;
+}
+
+.paymentHistory h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.08rem;
+  color: #0ea5e9;
+  font-weight: 600;
+}
+
+.paymentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.97rem;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(100,116,139,0.07);
+}
+
+.paymentTable th {
+  background: #f3f4f6;
+  color: #64748b;
+  font-weight: 600;
+  padding: 8px 6px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.paymentTable td {
+  padding: 8px 6px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  background: #fff;
+}
+
+.paymentTable td:last-child {
+  font-weight: 500;
+}
+
+.status-approved {
+  color: #22c55e;
+  font-weight: 600;
+}
+.status-pending {
+  color: #f59e42;
+  font-weight: 600;
+}
+.status-rejected {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.paymentTable a {
+  color: #0ea5e9;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.summaryBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 32px;
+  margin-bottom: 24px;
+  background: #f6fafd;
+  border-radius: 7px;
+  padding: 10px 14px;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(14,165,233,0.03);
+  font-size: 1.01rem;
+}
+.summaryBox > div {
+  min-width: 150px;
+  font-weight: 400;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.summaryBox strong {
+  color: #0369a1;
+  font-weight: 600;
+  margin-right: 3px;
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    min-width: 95vw;
+    padding: 18px 4vw 18px 4vw;
+  }
+  .paymentTable th, .paymentTable td {
+    font-size: 0.92rem;
+    padding: 6px 2px;
+  }
+  h2 {
+    font-size: 1.1rem;
+  }
+  .summaryBox {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 4vw;
+    font-size: 0.98rem;
+  }
+  .summaryBox > div {
+    min-width: unset;
+  }
+} 

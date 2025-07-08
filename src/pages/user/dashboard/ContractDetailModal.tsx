@@ -41,6 +41,7 @@ interface Props {
   openDetail: ContractDetailType | null;
   onClose: () => void;
   formatDate: (dateStr: string) => string;
+  onOpenPayment: (contractId: string) => void;
 }
 
 const verifyStatusLabel: Record<string, string> = {
@@ -49,7 +50,7 @@ const verifyStatusLabel: Record<string, string> = {
   rejected: 'ไม่อนุมัติ',
 };
 
-export default function ContractDetailModal({ openDetail, onClose, formatDate }: Props) {
+export default function ContractDetailModal({ openDetail, onClose, formatDate, onOpenPayment }: Props) {
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
@@ -267,10 +268,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
           }}
           onMouseOver={e => (e.currentTarget.style.background = '#16a34a')}
           onMouseOut={e => (e.currentTarget.style.background = '#22c55e')}
-          onClick={() => {
-            // TODO: เปิด modal แจ้งชำระเงิน
-            alert('ฟีเจอร์แจ้งชำระเงิน (demo)');
-          }}
+          onClick={() => onOpenPayment(openDetail.id)}
         >
           แจ้งชำระเงิน
         </button>

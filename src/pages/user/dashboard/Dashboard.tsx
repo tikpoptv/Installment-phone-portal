@@ -6,6 +6,7 @@ import type { ContractDetailType } from './ContractDetailModal';
 import { getUserContracts } from '../../../services/user/contract.service';
 import type { UserContract } from '../../../services/user/contract.service';
 import { getUserContractDetail } from '../../../services/user/contract.service';
+import PaymentModal from './PaymentModal';
 
 type UserInfo = {
   id: string;
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [openDetail, setOpenDetail] = useState<ContractDetailType | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [openPayment, setOpenPayment] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -130,12 +133,38 @@ export default function Dashboard() {
               <span>วันชำระล่าสุด: {formatDate(contract.last_payment_date)}</span>
             </div>
             <button className={styles.detailBtn} onClick={() => handleShowDetail(contract.id)}>ดูรายละเอียด</button>
+            <button
+              className={styles.detailBtn}
+              style={{ marginTop: 8, background: '#0ea5e9', color: '#fff' }}
+              onClick={() => {
+                setSelectedContractId(contract.id);
+                setOpenPayment(true);
+              }}
+            >
+              แจ้งชำระเงิน
+            </button>
           </div>
         ))}
       </section>
       {openDetail && (
-        <ContractDetailModal openDetail={openDetail} onClose={() => setOpenDetail(null)} formatDate={formatDate} />
+        <ContractDetailModal 
+          openDetail={openDetail} 
+          onClose={() => setOpenDetail(null)} 
+          formatDate={formatDate}
+          onOpenPayment={(contractId) => {
+            setSelectedContractId(contractId);
+            setOpenPayment(true);
+          }}
+        />
       )}
+      <PaymentModal
+        contractId={selectedContractId || ''}
+        open={openPayment}
+        onClose={() => setOpenPayment(false)}
+        onSubmit={() => {
+          setOpenPayment(false);
+        }}
+      />
     </div>
   );
 }
