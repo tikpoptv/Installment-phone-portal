@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import styles from './PaymentListPage.module.css';
 import { getAllPayments } from '../../../services/payment.service';
 import type { Payment } from '../../../services/payment.service';
+import PaymentCreateModal from './PaymentCreateModal';
+import PaymentDetailModal from './PaymentDetailModal';
 
 const statusOptions = [
   { value: 'all', label: 'ทุกสถานะ' },
@@ -39,6 +41,9 @@ export default function PaymentListPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -78,7 +83,7 @@ export default function PaymentListPage() {
             <div className={styles.header}>
               <h2 className={styles.title}>รายการชำระเงิน</h2>
               <div className={styles.actionGroup}>
-                <button className={styles.addButton}>+ เพิ่มรายการชำระเงิน</button>
+                <button className={styles.addButton} onClick={() => setShowCreateModal(true)}>+ เพิ่มรายการชำระเงิน</button>
               </div>
             </div>
             <div className={styles.filterRow}>
@@ -158,7 +163,13 @@ export default function PaymentListPage() {
                       <td>{methodLabel(p.method)}</td>
                       <td>{verifyStatusLabel(p.verify_status)}</td>
                       <td style={{ textAlign: 'center' }}>
-                        <button className={styles.detailButton}>
+                        <button
+                          className={styles.detailButton}
+                          onClick={() => {
+                            setSelectedPaymentId(p.id);
+                            setShowDetailModal(true);
+                          }}
+                        >
                           ดูรายละเอียด
                         </button>
                       </td>
@@ -183,6 +194,30 @@ export default function PaymentListPage() {
                 >ถัดไป</button>
               </div>
             </div>
+            <PaymentCreateModal
+              open={showCreateModal}
+              onClose={() => setShowCreateModal(false)}
+              onSuccess={() => {
+                setShowCreateModal(false);
+                setLoading(true);
+                getAllPayments()
+                  .then(data => setPayments(data ?? []))
+                  .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
+                  .finally(() => setLoading(false));
+              }}
+            />
+            <PaymentDetailModal
+              open={showDetailModal}
+              paymentId={selectedPaymentId}
+              onClose={() => setShowDetailModal(false)}
+              onActionSuccess={async () => {
+                setLoading(true);
+                getAllPayments()
+                  .then(data => setPayments(data ?? []))
+                  .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
+                  .finally(() => setLoading(false));
+              }}
+            />
           </>
         )}
       </div>

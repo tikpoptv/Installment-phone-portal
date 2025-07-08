@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './OrderDetailPage.module.css';
 import { getContractDetail, getContractPayments, getPdpaConsentFile } from '../../../services/contract.service';
 import type { ContractDetail, Payment } from '../../../services/contract.service';
+import PaymentDetailModal from '../payments/PaymentDetailModal';
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '-';
@@ -11,9 +12,6 @@ function formatDate(dateStr: string) {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
   });
 }
 
@@ -42,6 +40,8 @@ const OrderDetailPage: React.FC = () => {
   const [pdpaBlobUrl, setPdpaBlobUrl] = useState<string | null>(null);
   const [pdpaLoading, setPdpaLoading] = useState(false);
   const [pdpaError, setPdpaError] = useState<string | null>(null);
+  const [showPaymentDetailModal, setShowPaymentDetailModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -203,6 +203,9 @@ const OrderDetailPage: React.FC = () => {
         )}
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>💰 ประวัติการชำระเงิน</div>
+          {!paymentLoading && !paymentError && (
+            <PaymentAlerts contract={o} payments={payments} />
+          )}
           {paymentLoading ? (
             <div style={{ padding: 16, color: '#64748b' }}>กำลังโหลดข้อมูล...</div>
           ) : paymentError ? (
@@ -232,7 +235,7 @@ const OrderDetailPage: React.FC = () => {
                       <td>{pm.method === 'bank_transfer' ? 'โอนธนาคาร' : pm.method === 'cash' ? 'เงินสด' : pm.method}</td>
                       <td>
                         {pm.proof_url
-                          ? <a href={pm.proof_url} target="_blank" rel="noopener noreferrer" className={styles.linkBtn}>ดูหลักฐาน</a>
+                          ? <button type="button" className={styles.linkBtn} onClick={() => { setSelectedPaymentId(pm.id); setShowPaymentDetailModal(true); }}>ดูหลักฐาน</button>
                           : '-'}
                       </td>
                     </tr>
@@ -242,6 +245,21 @@ const OrderDetailPage: React.FC = () => {
             </div>
           )}
         </div>
+        <PaymentDetailModal
+          open={showPaymentDetailModal}
+          paymentId={selectedPaymentId}
+          onClose={() => setShowPaymentDetailModal(false)}
+          onActionSuccess={() => {
+            if (id) {
+              setPaymentLoading(true);
+              setPaymentError(null);
+              getContractPayments(id)
+                .then(data => setPayments(data ?? []))
+                .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
+                .finally(() => setPaymentLoading(false));
+            }
+          }}
+        />
         <div className={styles.meta}>
           <div>สร้างเมื่อ: {formatDate(o.created_at)}</div>
           <div>อัปเดตล่าสุด: {formatDate(o.updated_at)}</div>
@@ -250,5 +268,66 @@ const OrderDetailPage: React.FC = () => {
     </div>
   );
 };
+
+function PaymentAlerts({ contract, payments }: { contract: ContractDetail, payments: Payment[] }) {
+  if (!contract) return null;
+  const alerts: string[] = [];
+  const now = new Date();
+  const thisMonth = now.getMonth() + 1;
+  const thisYear = now.getFullYear();
+  // เงินดาวน์
+  if (typeof contract.down_payment_amount === 'number' && contract.down_payment_amount > 0) {
+    const downPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    if (downPaid < contract.down_payment_amount) {
+      alerts.push(`⚠️ เงินดาวน์ที่ต้องชำระ ${contract.down_payment_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} ชำระแล้ว ${downPaid.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} คงเหลือ ${ (contract.down_payment_amount - downPaid).toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) }`);
+    }
+  }
+  // ตรวจสอบการจ่ายเดือนนี้ (ข้ามถ้าเป็นเดือนแรกของสัญญา)
+  let paidThisMonth = 0;
+  // เช็คว่าเดือนนี้เป็นเดือนแรกของสัญญา
+  let isFirstMonth = false;
+  if (contract.start_date) {
+    const start = new Date(contract.start_date);
+    isFirstMonth = (start.getFullYear() === thisYear && start.getMonth() + 1 === thisMonth);
+  }
+  payments.forEach(p => {
+    const d = new Date(p.payment_date);
+    if (d.getMonth() + 1 === thisMonth && d.getFullYear() === thisYear) {
+      paidThisMonth += p.amount || 0;
+    }
+  });
+  if (!isFirstMonth && typeof contract.monthly_payment === 'number' && contract.monthly_payment > 0) {
+    if (paidThisMonth < contract.monthly_payment) {
+      alerts.push(`⚠️ เดือนนี้ควรชำระ ${contract.monthly_payment.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} ชำระแล้ว ${paidThisMonth.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} คงเหลือ ${ (contract.monthly_payment - paidThisMonth).toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) }`);
+    } else {
+      alerts.push(`✅ เดือนนี้ชำระครบแล้ว (${contract.monthly_payment.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })})`);
+    }
+  }
+  // ตรวจสอบค้างชำระย้อนหลัง
+  let lastPaidDate: Date | null = null;
+  if (payments.length > 0) {
+    lastPaidDate = payments
+      .map(p => new Date(p.payment_date))
+      .reduce((latest, d) => (!latest || d > latest ? d : latest), null as Date | null);
+  }
+  if (lastPaidDate) {
+    const lastMonth = lastPaidDate.getMonth() + 1;
+    const lastYear = lastPaidDate.getFullYear();
+    if (lastYear < thisYear || (lastYear === thisYear && lastMonth < thisMonth)) {
+      const monthsLate = (thisYear - lastYear) * 12 + (thisMonth - lastMonth);
+      if (monthsLate > 0) {
+        alerts.push(`⚠️ ค้างชำระ ${monthsLate} เดือน (ชำระล่าสุด: ${lastPaidDate.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })})`);
+      }
+    }
+  }
+  if (alerts.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {alerts.map((msg, idx) => (
+        <div key={idx} style={{ color: msg.startsWith('✅') ? '#22c55e' : '#ef4444', fontWeight: 600, fontSize: 15, marginBottom: 2 }}>{msg}</div>
+      ))}
+    </div>
+  );
+}
 
 export default OrderDetailPage; 
