@@ -26,6 +26,8 @@ export interface ProductDetail {
   updated_at: string;
   icloud_credential_id?: string;
   owner_username?: string;
+  store_icloud_credential_id?: string;
+  customer_icloud_credential_id?: string;
 }
 
 const statusLabel = (status: string) => {
@@ -55,7 +57,7 @@ const ProductDetailPage: React.FC = () => {
   const [showLockModal, setShowLockModal] = useState(false);
   const [icloudList, setIcloudList] = useState<IcloudCredential[]>([]);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [showIcloudDetailModal, setShowIcloudDetailModal] = useState(false);
+  const [showIcloudDetailModal, setShowIcloudDetailModal] = useState<string | null>(null);
 
   const productImageFilenames = useMemo(() => product?.product_image_filenames || [], [product]);
 
@@ -247,13 +249,29 @@ const ProductDetailPage: React.FC = () => {
           <div className={styles.orderBox}>
             <div className={styles.orderBoxTitle}>แจ้งเตือน: เครื่องนี้ถูกล็อก iCloud</div>
             <div className={styles.detailRow}><span className={styles.label}>สถานะ iCloud:</span> <span className={styles.value}>Locked</span></div>
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <button className={styles.orderBoxBtn} onClick={() => setShowIcloudDetailModal(true)}>
-                ดูรายละเอียด
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <button className={styles.orderBoxBtn} style={{ minWidth: 140, padding: '8px 18px', fontSize: '1.01rem', marginTop: 0 }} onClick={() => setShowIcloudDetailModal('store')}>
+                ดูรายละเอียด (ร้านค้า)
               </button>
+              <button className={styles.orderBoxBtn} style={{ minWidth: 140, padding: '8px 18px', fontSize: '1.01rem', marginTop: 0 }} onClick={() => setShowIcloudDetailModal('customer')}>
+                ดูรายละเอียด (ลูกค้า)
+              </button>
+            </div>
+            <div style={{ marginTop: 12 }}>
               <button
                 className={styles.orderBoxBtn}
-                style={{ background:'#0ea5e9', color:'#fff'}}
+                style={{
+                  background: 'linear-gradient(90deg, #22c55e 0%, #4ade80 100%)',
+                  color: '#fff',
+                  minWidth: 140,
+                  padding: '8px 18px',
+                  fontSize: '1.01rem',
+                  fontWeight: 700,
+                  boxShadow: '0 1px 8px #bbf7d0',
+                  border: 'none',
+                  transition: 'background 0.18s, color 0.18s, box-shadow 0.18s',
+                  marginTop: 0
+                }}
                 onClick={() => setShowUnlockModal(true)}
               >
                 ปลดล็อก iCloud
@@ -265,7 +283,12 @@ const ProductDetailPage: React.FC = () => {
               onConfirm={async () => {
                 setShowUnlockModal(false);
                 try {
-                  await bindIcloudCredentialToProduct(product.id, { icloud_status: 'unlock' });
+                  await bindIcloudCredentialToProduct(product.id, {
+                    mode: 'single',
+                    type: 'store',
+                    icloud_credential_id: product.store_icloud_credential_id,
+                    icloud_status: 'unlock',
+                  });
                   toast.success('ปลดล็อก iCloud สำเร็จ!');
                   setLoading(true);
                   getProductDetail(product.id)
@@ -312,12 +335,20 @@ const ProductDetailPage: React.FC = () => {
           const list = await getIcloudCredentials();
           setIcloudList(list);
         }}
+        customer_icloud_credential_id={product.customer_icloud_credential_id}
+        store_icloud_credential_id={product.store_icloud_credential_id}
       />
 
       <IcloudDetailModal
-        open={showIcloudDetailModal}
-        onClose={() => setShowIcloudDetailModal(false)}
-        icloudId={product.icloud_credential_id || null}
+        open={!!showIcloudDetailModal}
+        onClose={() => setShowIcloudDetailModal(null)}
+        icloudId={
+          showIcloudDetailModal === 'store'
+            ? product.store_icloud_credential_id || null
+            : showIcloudDetailModal === 'customer'
+              ? product.customer_icloud_credential_id || null
+              : null
+        }
       />
     </div>
   );

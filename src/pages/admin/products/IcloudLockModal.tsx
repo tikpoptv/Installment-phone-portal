@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './IcloudLockModal.module.css';
 import type { IcloudCredential } from '../../../services/icloud.service';
 import IcloudCreateModal from '../icloud/IcloudCreateModal';
@@ -14,9 +14,11 @@ interface Props {
   onClose: () => void;
   onConfirm: (icloudId: string) => void;
   onReloadIcloudList?: () => void;
+  customer_icloud_credential_id?: string | null;
+  store_icloud_credential_id?: string | null;
 }
 
-const IcloudLockModal: React.FC<Props> = ({ open, productId, productImei, icloudList, onClose, onConfirm, onReloadIcloudList }) => {
+const IcloudLockModal: React.FC<Props> = ({ open, productId, productImei, icloudList, onClose, onConfirm, onReloadIcloudList, customer_icloud_credential_id, store_icloud_credential_id }) => {
   const customerIclouds = icloudList.filter(i => i.owner_type === 'customer');
   const storeIclouds = icloudList.filter(i => i.owner_type === 'store');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -41,6 +43,28 @@ const IcloudLockModal: React.FC<Props> = ({ open, productId, productImei, icloud
   const storeId = extractId(storeQuery);
   const isValidCustomer = customerIclouds.some(i => i.id === customerId);
   const isValidStore = storeIclouds.some(i => i.id === storeId);
+
+  // Auto fill ช่องลูกค้า/ร้านค้าตาม prop ที่ส่งมา (ครั้งแรกที่ modal เปิด)
+  useEffect(() => {
+    if (!open) return;
+    // ลูกค้า
+    if (customer_icloud_credential_id && icloudList.length > 0) {
+      const customer = icloudList.find(i => i.id === customer_icloud_credential_id && i.owner_type === 'customer');
+      if (customer) {
+        setCustomerQuery(`${customer.icloud_username} (ID: ${customer.id})`);
+      }
+    }
+    // ร้านค้า
+    if (store_icloud_credential_id && icloudList.length > 0) {
+      const store = icloudList.find(i => i.id === store_icloud_credential_id && i.owner_type === 'store');
+      if (store) {
+        setStoreQuery(`${store.icloud_username} (ID: ${store.id})`);
+      }
+    }
+    // ถ้าไม่มีค่า ให้ล้างช่อง
+    if (!customer_icloud_credential_id) setCustomerQuery('');
+    if (!store_icloud_credential_id) setStoreQuery('');
+  }, [open, icloudList, customer_icloud_credential_id, store_icloud_credential_id]);
 
   if (!open) return null;
   return (
