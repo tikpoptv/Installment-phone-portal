@@ -42,6 +42,8 @@ export interface ContractDetail {
   updated_at: string;
   user: ContractUser | null;
   product: ContractProduct | null;
+  down_payment_amount?: number;
+  rental_cost?: number;
 }
 
 export interface Payment {

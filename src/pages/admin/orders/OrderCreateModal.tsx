@@ -40,6 +40,8 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     end_date: '',
     pdpa_consent_file: null as File | null,
     user_name: '',
+    down_payment_amount: '',
+    rental_cost: '',
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [userQuery, setUserQuery] = useState('');
@@ -71,6 +73,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       .finally(() => setProductLoading(false));
 
     // รีเซ็ตค่าทุก field เมื่อเปิด modal
+    const todayStr = new Date().toISOString().slice(0, 10);
     setForm({
       user_id: '',
       product_id: '',
@@ -80,10 +83,12 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       installment_months: '',
       monthly_payment: '',
       status: 'active',
-      start_date: '',
+      start_date: todayStr,
       end_date: '',
       pdpa_consent_file: null,
       user_name: '',
+      down_payment_amount: '',
+      rental_cost: '',
     });
     setUserQuery('');
     setProductQuery('');
@@ -97,6 +102,17 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       setUserQuery('');
     }
   }, [form.category]);
+
+  // ให้ end_date auto update ทุกครั้งที่ start_date หรือ installment_months เปลี่ยน
+  useEffect(() => {
+    if (!open) return;
+    if (form.start_date && form.installment_months) {
+      setForm(prev => ({
+        ...prev,
+        end_date: calcEndDate(form.start_date, form.installment_months)
+      }));
+    }
+  }, [form.start_date, form.installment_months, open]);
 
   if (!open) return null;
 
@@ -113,6 +129,36 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'down_payment_amount') {
+      setForm(prev => {
+        const newForm = { ...prev, [name]: value.replace(/[^\d.]/g, '') };
+        // auto-calc rental_cost ถ้าข้อมูลครบ
+        const totalWithInterest = parseFloat(newForm.total_with_interest);
+        const downPayment = parseFloat(newForm.down_payment_amount);
+        if (!isNaN(totalWithInterest) && !isNaN(downPayment)) {
+          newForm.rental_cost = (totalWithInterest - downPayment).toFixed(2);
+        } else {
+          newForm.rental_cost = '';
+        }
+        return newForm;
+      });
+      return;
+    }
+    if (name === 'total_with_interest') {
+      setForm(prev => {
+        const newForm = { ...prev, [name]: value };
+        // auto-calc rental_cost ถ้าข้อมูลครบ
+        const totalWithInterest = parseFloat(value);
+        const downPayment = parseFloat(newForm.down_payment_amount);
+        if (!isNaN(totalWithInterest) && !isNaN(downPayment)) {
+          newForm.rental_cost = (totalWithInterest - downPayment).toFixed(2);
+        } else {
+          newForm.rental_cost = '';
+        }
+        return newForm;
+      });
+      return;
+    }
     if (name === 'category' && value === 'cash_purchase') {
       setForm(prev => ({
         ...prev,
@@ -135,29 +181,21 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       }
       setForm(prev => {
         const newForm = { ...prev, [name]: value };
-        const totalWithInterest = parseFloat(newForm.total_with_interest);
+        const rentalCost = parseFloat(newForm.rental_cost);
         const installmentMonths = parseInt(value, 10);
-        if (!isNaN(totalWithInterest) && !isNaN(installmentMonths) && installmentMonths > 0) {
-          newForm.monthly_payment = (totalWithInterest / installmentMonths).toFixed(2);
+        if (!isNaN(rentalCost) && !isNaN(installmentMonths) && installmentMonths > 0) {
+          newForm.monthly_payment = (rentalCost / installmentMonths).toFixed(2);
+        } else {
+          newForm.monthly_payment = '';
         }
         // auto คำนวณ end_date
-        newForm.end_date = calcEndDate(newForm.start_date, value);
+        newForm.end_date = calcEndDate(newForm.start_date || new Date().toISOString().slice(0, 10), value);
         return newForm;
       });
     } else if (name === 'start_date') {
       setForm(prev => {
         const newForm = { ...prev, [name]: value };
         newForm.end_date = calcEndDate(value, newForm.installment_months);
-        return newForm;
-      });
-    } else if (name === 'total_with_interest') {
-      setForm(prev => {
-        const newForm = { ...prev, [name]: value };
-        const totalWithInterest = parseFloat(value);
-        const installmentMonths = parseInt(newForm.installment_months, 10);
-        if (!isNaN(totalWithInterest) && !isNaN(installmentMonths) && installmentMonths > 0) {
-          newForm.monthly_payment = (totalWithInterest / installmentMonths).toFixed(2);
-        }
         return newForm;
       });
     } else {
@@ -248,6 +286,9 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         if (!form[field]) delete payload[field];
       });
     }
+    // แปลงค่าเป็น number ถ้ามี
+    if (form.down_payment_amount !== '') payload.down_payment_amount = Number(form.down_payment_amount);
+    if (form.rental_cost !== '') payload.rental_cost = Number(form.rental_cost);
     try {
       const res = await createContract(payload);
       // ปลอดภัย ไม่ใช้ any
@@ -289,7 +330,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
   const handleProductSelect = (product: Product) => {
     const todayStr = new Date().toISOString().slice(0, 10);
     setForm(prev => {
-      const newStart = prev.start_date || todayStr;
+      const newStart = todayStr;
       const newEnd = calcEndDate(newStart, prev.installment_months || '');
       return {
         ...prev,
@@ -448,6 +489,18 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             />
           </div>
           <div>
+            <label>เงินดาวน์ <span className={styles.required}>*</span></label>
+            <input name="down_payment_amount" type="number" value={form.down_payment_amount} onChange={handleChange}
+              min={0} className={styles.inputBox}
+              required />
+          </div>
+          <div>
+            <label>ค่าเช่า/ผ่อน (คำนวณอัตโนมัติ)</label>
+            <input name="rental_cost" type="number" value={form.rental_cost} readOnly disabled
+              min={0} className={styles.inputBox}
+              placeholder="ระบบคำนวณอัตโนมัติ" />
+          </div>
+          <div>
             <label>จำนวนงวดผ่อน <span className={styles.required}>*</span></label>
             <input name="installment_months" type="number" value={form.installment_months} onChange={handleChange}
               required min={1} max={24} className={styles.inputBox}
@@ -484,7 +537,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             />
           </div>
           <div>
-            <label>ไฟล์ใบยินยอม PDPA (PDF) <span className={styles.required}>*</span></label>
+            <label>ไฟล์สัญญาคำสั่งซื้อ (PDF) <span className={styles.required}>*</span></label>
             <input
               type="file"
               accept="application/pdf"
@@ -513,7 +566,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
                     verticalAlign: 'middle',
                     lineHeight: 1.5
                   }}
-                >ดูไฟล์</button>
+                >ดูไฟล์สัญญา</button>
               </div>
             )}
           </div>
@@ -533,13 +586,13 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         }}>
           <div style={{ background: '#fff', borderRadius: 12, maxWidth: 600, width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', background: '#f1f5f9' }}>
-              <span>แสดงไฟล์ใบยินยอม PDPA</span>
+              <span>แสดงไฟล์สัญญาคำสั่งซื้อ</span>
               <button onClick={() => { setShowPdpaPreview(false); if (pdpaPreviewUrl) { URL.revokeObjectURL(pdpaPreviewUrl); setPdpaPreviewUrl(null); } }} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#64748b', cursor: 'pointer', padding: '4px 8px' }}>&times;</button>
             </div>
             <div style={{ padding: 0, flex: 1, overflow: 'auto', background: '#f9fafb', minHeight: 400 }}>
               <iframe
                 src={pdpaPreviewUrl}
-                title="PDPA Consent File Preview"
+                title="Order Contract File Preview"
                 width="100%"
                 height="500px"
                 style={{ border: 'none', display: 'block' }}
