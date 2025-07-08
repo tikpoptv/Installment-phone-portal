@@ -6,7 +6,6 @@ export interface UserContract {
   user_name: string;
   product_name: string;
   category: string;
-  total_price: number;
   status: string;
   start_date: string;
   end_date: string;
@@ -15,8 +14,6 @@ export interface UserContract {
   due_date: string;
   month_status: string;
   last_payment_date: string;
-  total_paid: number;
-  remaining_balance: number;
 }
 
 export async function getUserContracts(userId: string): Promise<UserContract[]> {

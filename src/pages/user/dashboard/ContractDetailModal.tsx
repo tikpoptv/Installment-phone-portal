@@ -5,10 +5,6 @@ import { getUserProductImage } from '../../../services/user/contract.service';
 export interface ContractDetailType {
   id: string;
   category: string;
-  total_price: number;
-  down_payment_amount: number;
-  rental_cost: number;
-  total_with_interest: number;
   installment_months: number;
   monthly_payment: number;
   status: string;
@@ -35,6 +31,7 @@ export interface ContractDetailType {
     verify_status: string;
     created_at: string;
   }[];
+  down_payment_amount: number;
 }
 
 interface Props {
@@ -200,12 +197,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate, o
         <div className={styles.sectionTitle}>รายละเอียดสัญญา</div>
         <div className={styles.contractSection}>
           <div className={styles.group}>
-            <div className={styles.labelRow}><span className={styles.label}>ยอดรวม</span><span className={styles.value}>{openDetail.total_price.toLocaleString()} บาท</span></div>
             <div className={styles.labelRow}><span className={styles.label}>เงินดาวน์</span><span className={styles.value}>{openDetail.down_payment_amount.toLocaleString()} บาท</span></div>
-            <div className={styles.labelRow}><span className={styles.label}>ค่าเช่า</span><span className={styles.value}>{openDetail.rental_cost.toLocaleString()} บาท</span></div>
-            <div className={styles.labelRow}><span className={styles.label}>ยอดรวมพร้อมดอกเบี้ย</span><span className={styles.value}>{openDetail.total_with_interest.toLocaleString()} บาท</span></div>
-          </div>
-          <div className={styles.group}>
             <div className={styles.labelRow}><span className={styles.label}>จำนวนงวด</span><span className={styles.value}>{openDetail.installment_months} เดือน</span></div>
             <div className={styles.labelRow}><span className={styles.label}>ผ่อนต่อเดือน</span><span className={styles.value}>{openDetail.monthly_payment.toLocaleString()} บาท</span></div>
             <div className={styles.labelRow}><span className={styles.label}>สถานะ</span><span className={styles.value}><span style={{display:'inline-block',width:10,height:10,borderRadius:'50%',marginRight:6,background:openDetail.status==='approved'?'#059669':openDetail.status==='rejected'?'#ef4444':'#f59e42'}}></span>{openDetail.status}</span></div>

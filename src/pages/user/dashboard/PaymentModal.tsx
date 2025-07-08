@@ -38,7 +38,6 @@ export default function PaymentModal({ contractId, open, onClose, onSubmit }: Pa
 
   // mock ข้อมูลประวัติการชำระเงิน
   const mockResponse = {
-    remaining_balance: 14000.00,
     monthly_payment: 1833.33,
     paid_installments: 3,
     last_payment_date: '2024-08-15T00:00:00Z',
@@ -229,7 +228,6 @@ export default function PaymentModal({ contractId, open, onClose, onSubmit }: Pa
         {/* ตารางประวัติการชำระเงิน */}
         <div className={styles.paymentHistory}>
           <div className={styles.summaryBox} style={{ marginTop: 0, marginBottom: 18 }}>
-            <div><strong>ยอดคงเหลือ:</strong> {mockResponse.remaining_balance.toLocaleString()} บาท</div>
             <div><strong>จำนวนเงินที่ต้องจ่าย/เดือน:</strong> {mockResponse.monthly_payment.toLocaleString()} บาท</div>
             <div><strong>งวดที่จ่ายไปแล้ว:</strong> {mockResponse.paid_installments} งวด</div>
             <div><strong>วันที่จ่ายล่าสุด:</strong> {formatDate(mockResponse.last_payment_date)}</div>

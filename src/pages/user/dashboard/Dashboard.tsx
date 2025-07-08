@@ -121,15 +121,6 @@ export default function Dashboard() {
               <span>ครบกำหนด: {formatDate(contract.due_date)}</span>
             </div>
             <div className={styles.installmentInfoRow}>
-              <span>ยอดรวม: {contract.total_price.toLocaleString()} บาท</span>
-            </div>
-            <div className={styles.installmentInfoRow}>
-              <span>จ่ายแล้ว: {contract.total_paid.toLocaleString()} บาท</span>
-            </div>
-            <div className={styles.installmentInfoRow}>
-              <span>คงเหลือ: {contract.remaining_balance.toLocaleString()} บาท</span>
-            </div>
-            <div className={styles.installmentInfoRow}>
               <span>วันชำระล่าสุด: {formatDate(contract.last_payment_date)}</span>
             </div>
             <button className={styles.detailBtn} onClick={() => handleShowDetail(contract.id)}>ดูรายละเอียด</button>
