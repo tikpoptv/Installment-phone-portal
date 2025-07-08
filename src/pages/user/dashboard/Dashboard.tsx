@@ -1,76 +1,142 @@
 import { useNavigate } from 'react-router-dom';
-import UserSummary from './components/UserSummary';
-import InstallmentList from './components/InstallmentList';
 import styles from './Dashboard.module.css';
-import { authService } from '../../../services/auth/auth.service';
+import { useState, useEffect } from 'react';
+import ContractDetailModal from './ContractDetailModal';
+import type { ContractDetailType } from './ContractDetailModal';
+import { getUserContracts } from '../../../services/user/contract.service';
+import type { UserContract } from '../../../services/user/contract.service';
+import { getUserContractDetail } from '../../../services/user/contract.service';
 
-export interface Installment {
+type UserInfo = {
   id: string;
-  product: string;
-  period: string;
-  status: string;
-  dueDate: string;
-  amount: number;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  email?: string;
+};
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('th-TH', { year: '2-digit', month: 'short', day: 'numeric' });
 }
 
-const UserDashboard = () => {
+export default function Dashboard() {
   const navigate = useNavigate();
+  const [contracts, setContracts] = useState<UserContract[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [openDetail, setOpenDetail] = useState<ContractDetailType | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
-  // ดึงข้อมูล user จาก localStorage (key 'user')
-  let userData = null;
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      userData = JSON.parse(userStr);
-    } catch { /* ignore */ }
-  }
-  const user = userData
-    ? {
-        name: userData.first_name && userData.last_name
-          ? `${userData.first_name} ${userData.last_name}`
-          : userData.username || '-',
-        phone: userData.phone_number || '-',
-        balance: 12000 // TODO: ดึงจาก API จริงในอนาคต
-      }
-    : { name: '-', phone: '-', balance: 12000 };
-
-  const installments: Installment[] = [
-    {
-      id: '1',
-      product: 'iPhone 15',
-      period: '2/10',
-      status: 'รอชำระ',
-      dueDate: '2024-07-10',
-      amount: 2500,
-    },
-    {
-      id: '2',
-      product: 'Samsung S24',
-      period: '5/12',
-      status: 'ชำระแล้ว',
-      dueDate: '2024-06-01',
-      amount: 2200,
-    },
-  ];
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      setError('กรุณาเข้าสู่ระบบใหม่');
+      setLoading(false);
+      return;
+    }
+    const user = JSON.parse(userStr);
+    setUserInfo(user);
+    const userId = user.id;
+    if (!userId) {
+      setError('ไม่พบข้อมูลผู้ใช้');
+      setLoading(false);
+      return;
+    }
+    getUserContracts(userId)
+      .then((data: UserContract[]) => {
+        setContracts(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('เกิดข้อผิดพลาดในการโหลดข้อมูลสัญญา');
+        setLoading(false);
+      });
+  }, []);
 
   const handleLogout = () => {
-    authService.logout();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('expires_in');
     navigate('/user/login');
   };
 
+  const handleShowDetail = async (contractId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setError('กรุณาเข้าสู่ระบบใหม่');
+        return;
+      }
+      setLoading(true);
+      const detail = await getUserContractDetail(contractId, token);
+      setOpenDetail(detail);
+      setLoading(false);
+    } catch {
+      setError('เกิดข้อผิดพลาดในการโหลดรายละเอียดสัญญา');
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className={styles.dashboard}>
-      <main className={styles.main}>
-        <UserSummary user={user} />
-        <InstallmentList installments={installments} />
-        <div className={styles.notification}>
-          <span className={styles.notificationIcon} role="img" aria-label="alert">⚠️</span>
-          งวดที่ 3 ของ iPhone 15 กำลังจะครบกำหนด!
+    <div className={styles.dashboardContainer}>
+      <header className={styles.header}>
+        <div className={styles.logo}>Installment Portal</div>
+        <button className={styles.logoutBtn} title="ออกจากระบบ" onClick={handleLogout}>ออกจากระบบ</button>
+      </header>
+      <section className={styles.userCard}>
+        <div className={styles.avatar}>{userInfo ? userInfo.first_name[0] : '?'}</div>
+        <div className={styles.userInfo}>
+          {userInfo && (
+            <>
+              <div className={styles.userName}>{userInfo.first_name} {userInfo.last_name}</div>
+              <div className={styles.userDetail}><b>เบอร์โทร:</b> {userInfo.phone_number}</div>
+              <div className={styles.userDetail}><b>อีเมล:</b> {userInfo.email || '-'}</div>
+            </>
+          )}
         </div>
-        <button className={styles.logoutButton} onClick={handleLogout}>ออกจากระบบ</button>
-      </main>
+      </section>
+      <section className={styles.installmentList}>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#0ea5e9', padding: '32px 0' }}>กำลังโหลดข้อมูล...</div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', color: '#ef4444', padding: '32px 0' }}>{error}</div>
+        ) : contracts.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#64748b', padding: '32px 0' }}>ไม่พบข้อมูลสัญญา</div>
+        ) : contracts.map(contract => (
+          <div className={styles.installmentCard} key={contract.id}>
+            <div className={styles.installmentProduct}>📱 {contract.product_name}</div>
+            <div className={styles.installmentInfoRow}>
+              <span>งวดที่: {contract.current_installment}</span>
+              <span className={contract.month_status === 'pending' ? styles.badgeDue : styles.badgePaid}>
+                {contract.month_status === 'pending' ? 'รอชำระ' : 'ชำระแล้ว'}
+              </span>
+            </div>
+            <div className={styles.installmentInfoRow}>
+              <span>ครบกำหนด: {formatDate(contract.due_date)}</span>
+            </div>
+            <div className={styles.installmentInfoRow}>
+              <span>ยอดรวม: {contract.total_price.toLocaleString()} บาท</span>
+            </div>
+            <div className={styles.installmentInfoRow}>
+              <span>จ่ายแล้ว: {contract.total_paid.toLocaleString()} บาท</span>
+            </div>
+            <div className={styles.installmentInfoRow}>
+              <span>คงเหลือ: {contract.remaining_balance.toLocaleString()} บาท</span>
+            </div>
+            <div className={styles.installmentInfoRow}>
+              <span>วันชำระล่าสุด: {formatDate(contract.last_payment_date)}</span>
+            </div>
+            <button className={styles.detailBtn} onClick={() => handleShowDetail(contract.id)}>ดูรายละเอียด</button>
+          </div>
+        ))}
+      </section>
+      {openDetail && (
+        <ContractDetailModal openDetail={openDetail} onClose={() => setOpenDetail(null)} formatDate={formatDate} />
+      )}
     </div>
   );
-};
-
-export default UserDashboard; 
+}
+ 

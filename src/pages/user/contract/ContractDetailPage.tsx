@@ -1,9 +1,24 @@
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import ContractDetail from '../dashboard/components/ContractDetail';
-import type { ContractDetailProps } from '../dashboard/components/ContractDetail';
+import { useParams } from 'react-router-dom';
+// import ContractDetail from '../dashboard/components/ContractDetail';
 
-const mockContracts: Record<string, ContractDetailProps['contract']> = {
+// สร้าง type ContractDetail ในไฟล์นี้แทน
+interface ContractDetail {
+  id: string;
+  product_name?: string;
+  total_price: number;
+  total_with_interest: number;
+  installment_months: number;
+  monthly_payment: number;
+  status: string;
+  start_date?: string;
+  end_date?: string;
+  last_payment_date?: string;
+  pdpa_consent_file_url?: string;
+  created_at?: string;
+}
+
+const mockContracts: Record<string, ContractDetail> = {
   '1': {
     id: '1',
     product_name: 'iPhone 15',
@@ -36,7 +51,6 @@ const mockContracts: Record<string, ContractDetailProps['contract']> = {
 
 const ContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   // ในอนาคตให้ fetch จาก API จริง
   const contract = id ? mockContracts[id] : undefined;
@@ -47,7 +61,7 @@ const ContractDetailPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%)', padding: '2rem 0' }}>
-      <ContractDetail contract={contract} onBack={() => navigate(-1)} />
+      {/* <ContractDetail contract={contract} onBack={() => navigate(-1)} /> */}
     </div>
   );
 };
