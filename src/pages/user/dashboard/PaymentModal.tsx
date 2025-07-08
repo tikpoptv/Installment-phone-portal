@@ -31,6 +31,11 @@ export default function PaymentModal({ contractId, open, onClose, onSubmit }: Pa
       setProofFile(null);
       setProofPreview(null);
       setShowPreviewModal(false);
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
   }, [open]);
 

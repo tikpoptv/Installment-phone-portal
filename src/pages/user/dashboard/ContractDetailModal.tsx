@@ -81,6 +81,16 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate, o
     };
   }, [openDetail, uniqueFilenames]);
 
+  useEffect(() => {
+    if (openDetail) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [openDetail]);
+
   if (!openDetail) return null;
   return (
     <div className={styles.modalOverlay} onClick={onClose}>

@@ -10,6 +10,11 @@
   justify-content: center;
   z-index: 4000;
   backdrop-filter: blur(2.5px);
+  animation: overlayFadeIn 0.22s cubic-bezier(.4,2,.6,1) both;
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modalContent {
@@ -24,6 +29,12 @@
   gap: 22px;
   position: relative;
   z-index: 4001;
+  animation: modalPopIn 0.32s cubic-bezier(.4,2,.6,1) both;
+}
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(40px); }
+  60% { opacity: 1; transform: scale(1.04) translateY(-8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 h2 {
