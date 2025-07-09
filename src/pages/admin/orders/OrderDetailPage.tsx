@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './OrderDetailPage.module.css';
 import { getContractDetail, getContractPayments, getPdpaConsentFile } from '../../../services/contract.service';
-import type { ContractDetail, Payment } from '../../../services/contract.service';
+import type { ContractDetail, ContractPayment, Installment, Discount } from '../../../services/contract.service';
 import PaymentDetailModal from '../payments/PaymentDetailModal';
+import DiscountModal from './DiscountModal';
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '-';
@@ -31,7 +32,9 @@ const OrderDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [contract, setContract] = useState<ContractDetail | null>(null);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<ContractPayment[]>([]);
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(true);
@@ -42,6 +45,7 @@ const OrderDetailPage: React.FC = () => {
   const [pdpaError, setPdpaError] = useState<string | null>(null);
   const [showPaymentDetailModal, setShowPaymentDetailModal] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [showAddDiscountModal, setShowAddDiscountModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -58,7 +62,11 @@ const OrderDetailPage: React.FC = () => {
     setPaymentLoading(true);
     setPaymentError(null);
     getContractPayments(id)
-      .then(data => setPayments(data ?? []))
+      .then(data => {
+        setPayments(data.payments ?? []);
+        setInstallments(data.installments ?? []);
+        setDiscounts(data.discounts ?? []);
+      })
       .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
       .finally(() => setPaymentLoading(false));
   }, [id]);
@@ -105,6 +113,13 @@ const OrderDetailPage: React.FC = () => {
         <div className={styles.topBar}>
           <button className={styles.backBtn} onClick={() => navigate(-1)} title="ย้อนกลับ">←</button>
           <div className={styles.title}>รายละเอียดคำสั่งซื้อ</div>
+          <button
+            className={styles.addDiscountBtn}
+            style={{ marginLeft: 'auto', background: 'linear-gradient(90deg,#22c55e,#0ea5e9)', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px #bae6fd55', transition: 'background 0.18s' }}
+            onClick={() => setShowAddDiscountModal(true)}
+          >
+            + เพิ่มส่วนลด
+          </button>
         </div>
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📝 ข้อมูลคำสั่งซื้อ
@@ -206,6 +221,64 @@ const OrderDetailPage: React.FC = () => {
           {!paymentLoading && !paymentError && (
             <PaymentAlerts contract={o} payments={payments} />
           )}
+          {/* ตาราง Installments */}
+          {!paymentLoading && !paymentError && installments.length > 0 && (
+            <div style={{marginBottom: 18}}>
+              <div className={styles.sectionSubtitle}>📆 ตารางงวดผ่อน</div>
+              <table className={styles.paymentTable} style={{marginBottom: 8}}>
+                <thead>
+                  <tr>
+                    <th>งวดที่</th>
+                    <th>ครบกำหนด</th>
+                    <th>จำนวนเงิน</th>
+                    <th>สถานะ</th>
+                    <th>หมายเหตุ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installments.map(inst => (
+                    <tr key={inst.id}>
+                      <td>{inst.installment_number}</td>
+                      <td>{formatDate(inst.due_date)}</td>
+                      <td>{inst.amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                      <td>{inst.status === 'paid' ? 'ชำระแล้ว' : inst.status === 'unpaid' ? 'ยังไม่ชำระ' : inst.status === 'skipped' ? 'ข้ามงวด' : 'ปิดยอด'}</td>
+                      <td>{inst.note || (inst.is_final_payment ? 'งวดสุดท้าย' : '')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* ตาราง Discounts */}
+          {!paymentLoading && !paymentError && discounts.length > 0 && (
+            <div style={{marginBottom: 18}}>
+              <div className={styles.sectionSubtitle}>🎁 ส่วนลด/ข้อเสนอพิเศษ</div>
+              <table className={styles.paymentTable} style={{marginBottom: 8}}>
+                <thead>
+                  <tr>
+                    <th>ประเภท</th>
+                    <th>จำนวนส่วนลด</th>
+                    <th>ยอดสุทธิ</th>
+                    <th>อนุมัติโดย</th>
+                    <th>วันที่อนุมัติ</th>
+                    <th>หมายเหตุ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discounts.map(ds => (
+                    <tr key={ds.id}>
+                      <td>{ds.discount_type === 'early_closure' ? 'ปิดยอดก่อนกำหนด' : 'ข้อเสนอพิเศษ'}</td>
+                      <td>{ds.discount_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                      <td>{ds.final_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                      <td>{ds.approved_by}</td>
+                      <td>{formatDate(ds.approved_at)}</td>
+                      <td>{ds.note || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {paymentLoading ? (
             <div style={{ padding: 16, color: '#64748b' }}>กำลังโหลดข้อมูล...</div>
           ) : paymentError ? (
@@ -218,13 +291,14 @@ const OrderDetailPage: React.FC = () => {
                     <th>วันที่ชำระ</th>
                     <th>จำนวนเงิน</th>
                     <th>วิธีชำระ</th>
-                    <th>หลักฐาน</th>
+                    <th>สถานะการตรวจสอบ</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', color: '#ef4444', fontWeight: 600, fontSize: 17, padding: 16 }}>
+                      <td colSpan={5} style={{ textAlign: 'center', color: '#ef4444', fontWeight: 600, fontSize: 17, padding: 16 }}>
                         ยังไม่ได้ชำระเงินก้อนแรก{typeof o.down_payment_amount === 'number' && o.down_payment_amount > 0 ? ` (เงินดาวน์ ${o.down_payment_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })})` : ''}
                       </td>
                     </tr>
@@ -234,9 +308,19 @@ const OrderDetailPage: React.FC = () => {
                       <td>{pm.amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
                       <td>{pm.method === 'bank_transfer' ? 'โอนธนาคาร' : pm.method === 'cash' ? 'เงินสด' : pm.method}</td>
                       <td>
-                        {pm.proof_url
-                          ? <button type="button" className={styles.linkBtn} onClick={() => { setSelectedPaymentId(pm.id); setShowPaymentDetailModal(true); }}>ดูหลักฐาน</button>
-                          : '-'}
+                        {pm.verify_status === 'approved' ? '✅ อนุมัติแล้ว' : 
+                         pm.verify_status === 'rejected' ? '❌ ไม่อนุมัติ' : 
+                         '⏳ รอตรวจสอบ'}
+                      </td>
+                      <td>
+                        <button 
+                          type="button" 
+                          className={styles.linkBtn} 
+                          onClick={() => { setSelectedPaymentId(pm.id); setShowPaymentDetailModal(true); }}
+                          style={{ fontSize: 14, padding: '4px 8px' }}
+                        >
+                          ดูรายละเอียด
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -254,12 +338,40 @@ const OrderDetailPage: React.FC = () => {
               setPaymentLoading(true);
               setPaymentError(null);
               getContractPayments(id)
-                .then(data => setPayments(data ?? []))
+                .then(data => {
+                  setPayments(data.payments ?? []);
+                  setInstallments(data.installments ?? []);
+                  setDiscounts(data.discounts ?? []);
+                })
                 .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
                 .finally(() => setPaymentLoading(false));
             }
           }}
         />
+        {showAddDiscountModal && (
+          <DiscountModal
+            open={showAddDiscountModal}
+            onClose={() => setShowAddDiscountModal(false)}
+            contractId={o.id}
+            rentalCost={typeof o.rental_cost === 'number' ? o.rental_cost : 0}
+            discounts={discounts}
+            onSuccess={() => {
+              setShowAddDiscountModal(false);
+              if (id) {
+                setPaymentLoading(true);
+                setPaymentError(null);
+                getContractPayments(id)
+                  .then(data => {
+                    setPayments(data.payments ?? []);
+                    setInstallments(data.installments ?? []);
+                    setDiscounts(data.discounts ?? []);
+                  })
+                  .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
+                  .finally(() => setPaymentLoading(false));
+              }
+            }}
+          />
+        )}
         <div className={styles.meta}>
           <div>สร้างเมื่อ: {formatDate(o.created_at)}</div>
           <div>อัปเดตล่าสุด: {formatDate(o.updated_at)}</div>
@@ -269,7 +381,7 @@ const OrderDetailPage: React.FC = () => {
   );
 };
 
-function PaymentAlerts({ contract, payments }: { contract: ContractDetail, payments: Payment[] }) {
+function PaymentAlerts({ contract, payments }: { contract: ContractDetail, payments: ContractPayment[] }) {
   if (!contract) return null;
   const alerts: string[] = [];
   const now = new Date();

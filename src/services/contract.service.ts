@@ -55,6 +55,50 @@ export interface Payment {
   created_at: string;
 }
 
+export interface ContractPayment {
+  id: string;
+  payment_date: string;
+  amount: number;
+  method: string;
+  verify_status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
+
+export interface Installment {
+  id: number;
+  installment_number: number;
+  due_date: string;
+  amount: number;
+  status: 'unpaid' | 'paid' | 'skipped' | 'final_payment';
+  paid_at?: string;
+  is_final_payment: boolean;
+  note?: string;
+}
+
+export interface Discount {
+  id: number;
+  discount_type: 'early_closure' | 'custom_offer';
+  discount_amount: number;
+  final_amount: number;
+  approved_by: string;
+  approved_at: string;
+  note?: string;
+}
+
+export interface ContractPaymentsResponse {
+  payments: ContractPayment[];
+  installments: Installment[];
+  discounts: Discount[];
+}
+
+export interface CreateDiscountPayload {
+  discount_type: 'early_closure' | 'custom_offer';
+  discount_amount: number;
+  final_amount: number;
+  approved_by?: string;
+  note?: string;
+}
+
 export async function getContracts(): Promise<Contract[]> {
   const res = await apiClient.get<Contract[]>('/api/contracts');
   return res.data;
@@ -93,8 +137,8 @@ export async function getContractDetail(id: string): Promise<ContractDetail> {
   return res.data;
 }
 
-export async function getContractPayments(contractId: string): Promise<Payment[]> {
-  const res = await apiClient.get<Payment[]>(`/api/contracts/${contractId}/payments`);
+export async function getContractPayments(contractId: string): Promise<ContractPaymentsResponse> {
+  const res = await apiClient.get<ContractPaymentsResponse>(`/api/contracts/${contractId}/payments`);
   return res.data;
 }
 
@@ -104,4 +148,8 @@ export async function getPdpaConsentFile(contractId: string, filename: string): 
     { responseType: 'blob' }
   );
   return res.data;
+}
+
+export async function postDiscountToContract(contractId: string, payload: CreateDiscountPayload) {
+  return apiClient.post(`/api/contracts/${contractId}/discounts`, payload);
 } 
