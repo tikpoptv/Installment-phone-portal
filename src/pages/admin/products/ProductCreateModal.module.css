@@ -67,7 +67,7 @@
   gap: 22px;
 }
 
-label {
+.formLabel {
   font-weight: 600;
   color: #334155;
   margin-bottom: 8px;
@@ -101,7 +101,7 @@ label {
   font-weight: 700;
 }
 
-textarea {
+.formTextarea {
   min-height: 56px;
   resize: vertical;
 }
@@ -256,7 +256,7 @@ textarea {
   .form {
     gap: 5px;
   }
-  label {
+  .formLabel {
     font-size: 0.97rem;
     margin-bottom: 4px;
   }
@@ -265,7 +265,7 @@ textarea {
     padding: 10px 8px;
     border-radius: 7px;
   }
-  textarea {
+  .formTextarea {
     min-height: 38px;
   }
   .imagePreview {

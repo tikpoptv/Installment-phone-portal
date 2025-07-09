@@ -176,6 +176,11 @@
   color: #eab308;
 }
 
+.badgeProcessing {
+  background: #fef3c7;
+  color: #d97706;
+}
+
 .meta {
   font-size: 0.98rem;
   color: #94a3b8;
@@ -296,4 +301,45 @@
 }
 .downloadBtn:hover {
   background: #1d4ed8;
+} 
+
+/* ===== INSTALLMENT STATUS STYLES ===== */
+.installmentStatus {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  min-width: 80px;
+}
+
+.statusPaid {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.statusUnpaid {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.statusPartial {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.statusSkipped {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.statusFinalPayment {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
 } 

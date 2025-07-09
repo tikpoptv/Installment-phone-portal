@@ -127,6 +127,24 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     return d.toISOString().slice(0, 10);
   }
 
+  // ฟังก์ชันคำนวณยอดผ่อนต่อเดือน
+  function calculateMonthlyPayment(rentalCost: number, installmentMonths: number): string {
+    if (isNaN(rentalCost) || isNaN(installmentMonths) || installmentMonths <= 0) {
+      return '';
+    }
+    
+    // ยอดผ่อนต่อเดือน = ค่าเช่า/ผ่อน ÷ (จำนวนงวด - 1)
+    // เพราะเดือนแรกรวมกับดาวไปแล้ว ไม่ต้องจ่าย
+    const actualInstallmentMonths = installmentMonths - 1;
+    
+    if (actualInstallmentMonths > 0) {
+      return (rentalCost / actualInstallmentMonths).toFixed(2);
+    } else {
+      // กรณีเลือก 1 งวด (ดาวครบแล้ว)
+      return '0.00';
+    }
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (name === 'down_payment_amount') {
@@ -137,8 +155,13 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         const downPayment = parseFloat(newForm.down_payment_amount);
         if (!isNaN(totalWithInterest) && !isNaN(downPayment)) {
           newForm.rental_cost = (totalWithInterest - downPayment).toFixed(2);
+          // คำนวณยอดผ่อนต่อเดือนใหม่
+          const rentalCost = parseFloat(newForm.rental_cost);
+          const installmentMonths = parseInt(newForm.installment_months, 10);
+          newForm.monthly_payment = calculateMonthlyPayment(rentalCost, installmentMonths);
         } else {
           newForm.rental_cost = '';
+          newForm.monthly_payment = '';
         }
         return newForm;
       });
@@ -152,8 +175,13 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         const downPayment = parseFloat(newForm.down_payment_amount);
         if (!isNaN(totalWithInterest) && !isNaN(downPayment)) {
           newForm.rental_cost = (totalWithInterest - downPayment).toFixed(2);
+          // คำนวณยอดผ่อนต่อเดือนใหม่
+          const rentalCost = parseFloat(newForm.rental_cost);
+          const installmentMonths = parseInt(newForm.installment_months, 10);
+          newForm.monthly_payment = calculateMonthlyPayment(rentalCost, installmentMonths);
         } else {
           newForm.rental_cost = '';
+          newForm.monthly_payment = '';
         }
         return newForm;
       });
@@ -183,11 +211,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         const newForm = { ...prev, [name]: value };
         const rentalCost = parseFloat(newForm.rental_cost);
         const installmentMonths = parseInt(value, 10);
-        if (!isNaN(rentalCost) && !isNaN(installmentMonths) && installmentMonths > 0) {
-          newForm.monthly_payment = (rentalCost / installmentMonths).toFixed(2);
-        } else {
-          newForm.monthly_payment = '';
-        }
+        newForm.monthly_payment = calculateMonthlyPayment(rentalCost, installmentMonths);
         // auto คำนวณ end_date
         newForm.end_date = calcEndDate(newForm.start_date || new Date().toISOString().slice(0, 10), value);
         return newForm;
@@ -511,6 +535,14 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             <input name="monthly_payment" type="number" value={form.monthly_payment} onChange={handleChange} 
               required min={0} step="0.01" className={styles.inputBox} 
             />
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#64748b', 
+              marginTop: '4px',
+              fontStyle: 'italic'
+            }}>
+              💡 คำนวณจาก: ค่าเช่า/ผ่อน ÷ (จำนวนงวด - 1) เพราะเดือนแรกรวมกับดาวไปแล้ว
+            </div>
           </div>
           <div>
             <label>สถานะ <span className={styles.required}>*</span></label>

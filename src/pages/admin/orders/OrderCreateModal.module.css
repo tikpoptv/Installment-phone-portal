@@ -61,7 +61,7 @@
   display: grid;
   gap: 22px;
 }
-label {
+.formLabel {
   font-weight: 600;
   color: #334155;
   margin-bottom: 8px;
@@ -92,7 +92,8 @@ label {
   color: #ef4444;
   font-weight: 700;
 }
-textarea {
+
+.formTextarea {
   min-height: 56px;
   resize: vertical;
 }

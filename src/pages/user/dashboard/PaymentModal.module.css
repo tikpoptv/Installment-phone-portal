@@ -45,13 +45,13 @@ h2 {
   letter-spacing: 0.5px;
 }
 
-form {
+.formContainer {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-label {
+.formLabel {
   display: flex;
   flex-direction: column;
   font-size: 1rem;
@@ -59,7 +59,7 @@ label {
   gap: 4px;
 }
 
-label span {
+.formLabel span {
   font-weight: 500;
   color: #0ea5e9;
   display: flex;
@@ -67,14 +67,18 @@ label span {
   gap: 4px;
 }
 
-input[type="number"],
-select {
+.formSelect {
   padding: 8px 12px;
   border: 1.5px solid #e5e7eb;
   border-radius: 7px;
   font-size: 1rem;
   background: #f3f4f6;
   transition: border 0.2s;
+}
+
+.formSelect:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
 }
 
 input[type="number"]:focus,

@@ -69,7 +69,8 @@ export interface Installment {
   installment_number: number;
   due_date: string;
   amount: number;
-  status: 'unpaid' | 'paid' | 'skipped' | 'final_payment';
+  amount_paid: number;
+  status: 'unpaid' | 'paid' | 'partial' | 'skipped' | 'final_payment';
   paid_at?: string;
   is_final_payment: boolean;
   note?: string;
@@ -89,6 +90,9 @@ export interface ContractPaymentsResponse {
   payments: ContractPayment[];
   installments: Installment[];
   discounts: Discount[];
+  remaining_amount: number;
+  overdue_months: number;
+  total_due_this_month: number;
 }
 
 export interface CreateDiscountPayload {
