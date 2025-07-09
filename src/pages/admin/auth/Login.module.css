@@ -103,14 +103,13 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: block;
+  text-align: left;
+  margin-bottom: 0.25rem;
 }
 
 .label::before {
-  content: '•';
-  color: #3b82f6;
+  content: none;
 }
 
 .input {
