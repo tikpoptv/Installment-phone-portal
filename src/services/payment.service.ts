@@ -32,6 +32,14 @@ export interface PaymentDetail {
   updated_at: string;
 }
 
+export interface CreateUserPaymentPayload {
+  contract_id: string;
+  payment_date: string;
+  amount: number;
+  method: 'cash' | 'bank_transfer' | 'online';
+  proof_file?: File | null;
+}
+
 export async function getAllPayments(): Promise<Payment[]> {
   const res = await apiClient.get<Payment[]>('/api/payment');
   return res.data;
@@ -52,6 +60,21 @@ export async function createPayment(payload: CreatePaymentPayload) {
   return res.data;
 }
 
+export async function createUserPayment(payload: CreateUserPaymentPayload) {
+  const formData = new FormData();
+  formData.append('contract_id', payload.contract_id);
+  formData.append('payment_date', payload.payment_date);
+  formData.append('amount', String(payload.amount));
+  formData.append('method', payload.method);
+  if (payload.proof_file) {
+    formData.append('proof_file', payload.proof_file);
+  }
+  const res = await apiClient.post('/api/users/payment', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+}
+
 export async function getPaymentDetail(paymentId: string): Promise<PaymentDetail> {
   const res = await apiClient.get<PaymentDetail>(`/api/payment/${paymentId}`);
   return res.data;
@@ -60,6 +83,14 @@ export async function getPaymentDetail(paymentId: string): Promise<PaymentDetail
 export async function getPaymentProofFile(paymentId: string, filename: string): Promise<Blob> {
   const res = await apiClient.get<Blob>(
     `/api/payment/files/proof/${paymentId}/${filename}`,
+    { responseType: 'blob' as const }
+  );
+  return res.data;
+}
+
+export async function getUserPaymentProofFile(paymentId: string, filename: string): Promise<Blob> {
+  const res = await apiClient.get<Blob>(
+    `/api/users/files/payment_proof/${paymentId}/${filename}`,
     { responseType: 'blob' as const }
   );
   return res.data;

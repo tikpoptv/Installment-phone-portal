@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [openPayment, setOpenPayment] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+  const [selectedContractHasEarlyClosure, setSelectedContractHasEarlyClosure] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -129,6 +130,7 @@ export default function Dashboard() {
                 }}
                 onClick={() => {
                   setSelectedContractId(contract.id);
+                  setSelectedContractHasEarlyClosure(hasEarlyClosureDiscount);
                   setOpenPayment(true);
                 }}
               >
@@ -150,9 +152,7 @@ export default function Dashboard() {
         contractId={selectedContractId || ''}
         open={openPayment}
         onClose={() => setOpenPayment(false)}
-        onSubmit={() => {
-          setOpenPayment(false);
-        }}
+        hasEarlyClosureDiscount={selectedContractHasEarlyClosure}
       />
     </div>
   );

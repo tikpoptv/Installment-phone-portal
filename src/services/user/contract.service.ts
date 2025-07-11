@@ -67,6 +67,33 @@ export interface ContractDetailType {
   }[];
 }
 
+export interface UserContractPaymentsResponse {
+  remaining_balance: number;
+  monthly_payment: number;
+  paid_installments: number;
+  last_payment_date: string | null;
+  payments: {
+    id: string;
+    payment_date: string;
+    amount: number;
+    method: string;
+    proof_file_filename: string | null;
+    verify_status: string;
+    created_at: string;
+  }[];
+  installments: {
+    id: number;
+    installment_number: number;
+    due_date: string;
+    amount: number;
+    amount_paid: number;
+    status: string;
+    paid_at?: string;
+    is_final_payment: boolean;
+    note?: string;
+  }[];
+}
+
 export async function getUserContracts(userId: string): Promise<UserContract[]> {
   const res = await apiClient.get<UserContract[]>(`/api/users/${userId}/contracts`);
   return res.data;
@@ -84,5 +111,10 @@ export async function getUserProductImage(productId: string, filename: string): 
     `/api/users/files/product_image/${productId}/${filename}`,
     { responseType: 'blob' as const }
   );
+  return res.data;
+}
+
+export async function getUserContractPayments(contractId: string): Promise<UserContractPaymentsResponse> {
+  const res = await apiClient.get<UserContractPaymentsResponse>(`/api/users/contracts/${contractId}/payments`);
   return res.data;
 } 

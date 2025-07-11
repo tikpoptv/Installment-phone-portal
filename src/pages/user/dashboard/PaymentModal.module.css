@@ -55,50 +55,60 @@ h2 {
   display: flex;
   flex-direction: column;
   font-size: 1rem;
-  color: #222;
-  gap: 4px;
+  color: #374151;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .formLabel span {
-  font-weight: 500;
+  font-weight: 600;
   color: #0ea5e9;
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 0.95rem;
 }
 
 .formInput {
-  padding: 8px 12px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 7px;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 1rem;
-  background: #f3f4f6;
-  transition: border 0.2s;
+  background: #fff;
+  transition: all 0.2s ease;
   width: 100%;
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .formInput:focus {
-  border: 1.5px solid #0ea5e9;
+  border: 2px solid #0ea5e9;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
 .formSelect {
-  padding: 8px 12px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 7px;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 1rem;
-  background: #f3f4f6;
-  transition: border 0.2s;
+  background: #fff;
+  transition: all 0.2s ease;
   width: 100%;
   display: block;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .formSelect:focus {
-  border: 1.5px solid #0ea5e9;
+  border: 2px solid #0ea5e9;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.formSelect:disabled {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .formFileInput {
@@ -173,11 +183,15 @@ button[type="submit"]:hover {
   border-radius: 8px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.08);
   cursor: pointer;
-  transition: filter 0.2s;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .proofImage:hover {
-  filter: brightness(0.85);
+  filter: brightness(0.9);
+  border: 2px solid #0ea5e9;
+  box-shadow: 0 4px 12px rgba(14,165,233,0.2);
+  transform: scale(1.02);
 }
 
 .proofOverlay {
@@ -199,6 +213,19 @@ button[type="submit"]:hover {
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 
+.proofHint {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #64748b;
+  font-style: italic;
+  transition: color 0.2s ease;
+}
+
+.proofPreview:hover .proofHint {
+  color: #0ea5e9;
+}
+
 .previewModal {
   position: fixed;
   top: 0;
@@ -206,7 +233,7 @@ button[type="submit"]:hover {
   width: 100vw;
   height: 100vh;
   background: rgba(0,0,0,0.7);
-  z-index: 2000;
+  z-index: 5000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +260,7 @@ button[type="submit"]:hover {
   height: 36px;
   font-size: 22px;
   cursor: pointer;
-  z-index: 2100;
+  z-index: 5100;
 }
 
 /* ตารางประวัติการชำระเงิน */
@@ -242,59 +269,180 @@ button[type="submit"]:hover {
 }
 
 .paymentHistory h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.08rem;
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
   color: #0ea5e9;
   font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0f2fe;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(100,116,139,0.08);
+  border: 1px solid #e5e7eb;
+  background: #fff;
 }
 
 .paymentTable {
+  min-width: 800px;
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.97rem;
+  font-size: 0.95rem;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(100,116,139,0.07);
 }
 
 .paymentTable th {
-  background: #f3f4f6;
-  color: #64748b;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #374151;
   font-weight: 600;
-  padding: 8px 6px;
-  border: 1px solid #e5e7eb;
+  padding: 16px 12px;
+  border: none;
   text-align: center;
+  white-space: nowrap;
+  min-width: 100px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .paymentTable td {
-  padding: 8px 6px;
-  border: 1px solid #e5e7eb;
+  padding: 14px 12px;
+  border: none;
   text-align: center;
   background: #fff;
+  white-space: nowrap;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s ease;
+}
+
+.paymentTable tr:hover td {
+  background: #f8fafc;
 }
 
 .paymentTable td:last-child {
   font-weight: 500;
 }
 
-.status-approved {
-  color: #22c55e;
-  font-weight: 600;
-}
-.status-pending {
-  color: #f59e42;
-  font-weight: 600;
-}
-.status-rejected {
-  color: #ef4444;
-  font-weight: 600;
+/* คอลัมน์พิเศษ */
+.paymentTable th:nth-child(1), .paymentTable td:nth-child(1) { /* งวดที่ */
+  min-width: 80px;
+  max-width: 80px;
 }
 
-.paymentTable a {
+.paymentTable th:nth-child(2), .paymentTable td:nth-child(2) { /* ครบกำหนด */
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.paymentTable th:nth-child(3), .paymentTable td:nth-child(3) { /* จำนวนเงิน */
+  min-width: 140px;
+  max-width: 160px;
+  text-align: center;
+}
+
+.paymentTable th:nth-child(4), .paymentTable td:nth-child(4) { /* ชำระแล้ว */
+  min-width: 140px;
+  max-width: 160px;
+  text-align: center;
+}
+
+.paymentTable th:nth-child(5), .paymentTable td:nth-child(5) { /* สถานะ */
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.paymentTable th:nth-child(6), .paymentTable td:nth-child(6) { /* หมายเหตุ */
+  min-width: 200px;
+  max-width: 300px;
+  white-space: normal;
+  text-align: left;
+}
+
+/* สำหรับตารางประวัติการชำระเงิน */
+.paymentTable th:nth-child(1), .paymentTable td:nth-child(1) { /* วันที่ชำระ */
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.paymentTable th:nth-child(2), .paymentTable td:nth-child(2) { /* จำนวนเงิน */
+  min-width: 120px;
+  max-width: 120px;
+}
+
+.paymentTable th:nth-child(3), .paymentTable td:nth-child(3) { /* วิธี */
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.paymentTable th:nth-child(4), .paymentTable td:nth-child(4) { /* หลักฐาน */
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.paymentTable th:nth-child(5), .paymentTable td:nth-child(5) { /* สถานะ */
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.status-approved {
+  color: #059669;
+  font-weight: 600;
+  background: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.status-pending {
+  color: #d97706;
+  font-weight: 600;
+  background: #fef3c7;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.status-rejected {
+  color: #dc2626;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.status-partial {
+  color: #7c3aed;
+  font-weight: 600;
+  background: #ede9fe;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.paymentTable button {
+  background: none;
+  border: none;
   color: #0ea5e9;
   text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9em;
   font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.paymentTable button:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+  text-decoration: none;
 }
 
 .summaryBox {
@@ -302,46 +450,127 @@ button[type="submit"]:hover {
   flex-wrap: wrap;
   gap: 18px 32px;
   margin-bottom: 24px;
-  background: #f6fafd;
-  border-radius: 7px;
-  padding: 10px 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  padding: 20px 18px;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(14,165,233,0.03);
-  font-size: 1.01rem;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.06);
+  border: 1px solid #e0f2fe;
+  font-size: 1.02rem;
 }
+
 .summaryBox > div {
   min-width: 150px;
   font-weight: 400;
-  color: #3b82f6;
+  color: #374151;
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-.summaryBox strong {
-  color: #0369a1;
-  font-weight: 600;
-  margin-right: 3px;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(14, 165, 233, 0.1);
 }
 
-@media (max-width: 600px) {
+.summaryBox strong {
+  color: #0ea5e9;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* --- จำนวนเงิน --- */
+.paymentTable th.amountCol,
+.paymentTable td.amountCol {
+  min-width: 130px;
+  max-width: 170px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-right: 12px;
+}
+
+/* --- ชำระแล้ว --- */
+.paymentTable th.paidCol,
+.paymentTable td.paidCol {
+  min-width: 130px;
+  max-width: 170px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-right: 12px;
+}
+
+@media (max-width: 768px) {
   .modalContent {
     min-width: 95vw;
     padding: 18px 4vw 18px 4vw;
   }
-  .paymentTable th, .paymentTable td {
-    font-size: 0.92rem;
-    padding: 6px 2px;
+  
+  .paymentTable {
+    min-width: 600px;
+    font-size: 0.9rem;
   }
+  
+  .paymentTable th, .paymentTable td {
+    padding: 8px 6px;
+  }
+  
   h2 {
     font-size: 1.1rem;
   }
+  
   .summaryBox {
     flex-direction: column;
     gap: 10px;
     padding: 12px 4vw;
     font-size: 0.98rem;
   }
+  
   .summaryBox > div {
     min-width: unset;
+  }
+}
+
+@media (max-width: 600px) {
+  .modalContent {
+    min-width: 98vw;
+    padding: 16px 2vw 16px 2vw;
+  }
+  
+  .paymentTable {
+    min-width: 500px;
+    font-size: 0.85rem;
+  }
+  
+  .paymentTable th, .paymentTable td {
+    padding: 6px 4px;
+  }
+  
+  h2 {
+    font-size: 1rem;
+  }
+  
+  .summaryBox {
+    padding: 10px 2vw;
+    font-size: 0.95rem;
+  }
+
+  .paymentTable th.amountCol,
+  .paymentTable td.amountCol,
+  .paymentTable th.paidCol,
+  .paymentTable td.paidCol {
+    min-width: 90px;
+    max-width: 120px;
+    font-size: 0.85em;
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .paymentTable {
+    min-width: 450px;
+    font-size: 0.8rem;
+  }
+  
+  .paymentTable th, .paymentTable td {
+    padding: 4px 2px;
   }
 } 
