@@ -67,6 +67,23 @@ h2 {
   gap: 4px;
 }
 
+.formInput {
+  padding: 8px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 1rem;
+  background: #f3f4f6;
+  transition: border 0.2s;
+  width: 100%;
+  display: block;
+  margin-top: 6px;
+}
+
+.formInput:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+
 .formSelect {
   padding: 8px 12px;
   border: 1.5px solid #e5e7eb;
@@ -74,11 +91,20 @@ h2 {
   font-size: 1rem;
   background: #f3f4f6;
   transition: border 0.2s;
+  width: 100%;
+  display: block;
+  margin-top: 6px;
 }
 
 .formSelect:focus {
   border: 1.5px solid #0ea5e9;
   outline: none;
+}
+
+.formFileInput {
+  margin-top: 6px;
+  width: 100%;
+  display: block;
 }
 
 input[type="number"]:focus,
@@ -130,6 +156,84 @@ button[type="button"] {
 button[type="button"]:hover {
   background: #e5e7eb;
   border: 1.5px solid #0ea5e9;
+}
+
+.proofPreview {
+  position: relative;
+  display: inline-block;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.proofImage {
+  width: 100%;
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.proofImage:hover {
+  filter: brightness(0.85);
+}
+
+.proofOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  opacity: 0.85;
+  pointer-events: none;
+  font-size: 18px;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.previewModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewImage {
+  max-width: 90vw;
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+  background: #fff;
+  padding: 8px;
+}
+
+.closePreviewBtn {
+  position: fixed;
+  top: 24px;
+  right: 32px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 2100;
 }
 
 /* ตารางประวัติการชำระเงิน */

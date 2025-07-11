@@ -1,5 +1,4 @@
 import { apiClient } from '../api';
-import type { ContractDetailType } from '../../pages/user/dashboard/ContractDetailModal';
 
 export interface UserContract {
   id: string;
@@ -14,6 +13,58 @@ export interface UserContract {
   due_date: string;
   month_status: string;
   last_payment_date: string;
+  discounts: {
+    id: number;
+    discount_type: string;
+    discount_amount: number;
+    final_amount: number;
+    approved_by: string;
+    approved_at: string;
+    note?: string;
+  }[];
+}
+
+export interface ContractDetailType {
+  id: string;
+  category: string;
+  installment_months: number;
+  monthly_payment: number;
+  status: string;
+  start_date: string;
+  end_date: string;
+  last_payment_date: string;
+  created_at: string;
+  updated_at: string;
+  product: {
+    id: string;
+    model_name: string;
+    imei: string;
+    price: number;
+    available_stock: number;
+    product_image_filenames: string[];
+  };
+  payments: {
+    id: string;
+    payment_date: string;
+    amount: number;
+    method: string;
+    proof_file_filename: string | null;
+    verify_status: string;
+    created_at: string;
+  }[];
+  down_payment_amount: number;
+  remaining_amount?: number;
+  overdue_months?: number;
+  total_due_this_month?: number;
+  discounts?: {
+    id: number;
+    discount_type: string;
+    discount_amount: number;
+    final_amount: number;
+    approved_by: string;
+    approved_at: string;
+    note?: string;
+  }[];
 }
 
 export async function getUserContracts(userId: string): Promise<UserContract[]> {
@@ -21,10 +72,9 @@ export async function getUserContracts(userId: string): Promise<UserContract[]> 
   return res.data;
 }
 
-export async function getUserContractDetail(contractId: string, token: string): Promise<ContractDetailType> {
+export async function getUserContractDetail(contractId: string): Promise<ContractDetailType> {
   const res = await apiClient.get<ContractDetailType>(
-    `/api/users/contracts/${contractId}/detail`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    `/api/users/contracts/${contractId}/detail`
   );
   return res.data;
 }

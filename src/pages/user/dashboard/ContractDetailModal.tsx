@@ -1,44 +1,11 @@
 import styles from './ContractDetailModal.module.css';
 import { useEffect, useState, useMemo } from 'react';
-import { getUserProductImage } from '../../../services/user/contract.service';
-
-export interface ContractDetailType {
-  id: string;
-  category: string;
-  installment_months: number;
-  monthly_payment: number;
-  status: string;
-  start_date: string;
-  end_date: string;
-  last_payment_date: string;
-  created_at: string;
-  updated_at: string;
-  product: {
-    id: string;
-    model_name: string;
-    imei: string;
-    price: number;
-    available_stock: number;
-    icloud_status: string;
-    product_image_filenames: string[];
-  };
-  payments: {
-    id: string;
-    payment_date: string;
-    amount: number;
-    method: string;
-    proof_file_filename: string | null;
-    verify_status: string;
-    created_at: string;
-  }[];
-  down_payment_amount: number;
-}
+import { getUserProductImage, type ContractDetailType } from '../../../services/user/contract.service';
 
 interface Props {
   openDetail: ContractDetailType | null;
   onClose: () => void;
   formatDate: (dateStr: string) => string;
-  onOpenPayment: (contractId: string) => void;
 }
 
 const verifyStatusLabel: Record<string, string> = {
@@ -47,7 +14,7 @@ const verifyStatusLabel: Record<string, string> = {
   rejected: 'ไม่อนุมัติ',
 };
 
-export default function ContractDetailModal({ openDetail, onClose, formatDate, onOpenPayment }: Props) {
+export default function ContractDetailModal({ openDetail, onClose, formatDate }: Props) {
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
@@ -202,7 +169,6 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate, o
         <div className={styles.productSection}>
           <div className={styles.labelRow}><span className={styles.label}>สินค้า</span><span className={styles.value}>{openDetail.product.model_name}</span></div>
           <div className={styles.labelRow}><span className={styles.label}>IMEI</span><span className={styles.value}>{openDetail.product.imei}</span></div>
-          <div className={styles.labelRow}><span className={styles.label}>iCloud</span><span className={styles.value}>{openDetail.product.icloud_status}</span></div>
         </div>
         <div className={styles.sectionTitle}>รายละเอียดสัญญา</div>
         <div className={styles.contractSection}>
@@ -252,28 +218,6 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate, o
             </tbody>
           </table>
         </div>
-        <button
-          className={styles.paymentButton}
-          style={{
-            marginTop: 24,
-            width: '100%',
-            background: '#22c55e',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: '1.08em',
-            border: 'none',
-            borderRadius: 8,
-            padding: '13px 0',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px #bbf7d0',
-            transition: 'background 0.18s'
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#16a34a')}
-          onMouseOut={e => (e.currentTarget.style.background = '#22c55e')}
-          onClick={() => onOpenPayment(openDetail.id)}
-        >
-          แจ้งชำระเงิน
-        </button>
       </div>
     </div>
   );

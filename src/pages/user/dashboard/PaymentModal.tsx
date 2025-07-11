@@ -113,109 +113,61 @@ export default function PaymentModal({ contractId, open, onClose, onSubmit }: Pa
       <div className={styles.modalContent} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <h2>แจ้งชำระเงิน</h2>
         <form onSubmit={handleSubmit}>
-          {/* ไม่ต้องมี input วันที่ชำระ */}
-          <label>
+          <label className={styles.formLabel}>
             <span>จำนวนเงินที่ชำระ <span style={{ color: 'red' }}>*</span></span>
-            <input type="number" min={1} value={amount} onChange={e => setAmount(e.target.value)} required style={{ width: '100%', display: 'block', marginTop: 6 }} />
+            <input 
+              type="number" 
+              min={1} 
+              value={amount} 
+              onChange={e => setAmount(e.target.value)} 
+              required 
+              className={styles.formInput}
+            />
           </label>
-          <label>
+          <label className={styles.formLabel}>
             <span>วิธีชำระเงิน <span style={{ color: 'red' }}>*</span></span>
-            <select value={method} onChange={e => setMethod(e.target.value)} required style={{ width: '100%', display: 'block', marginTop: 6 }}>
+            <select 
+              value={method} 
+              onChange={e => setMethod(e.target.value)} 
+              required 
+              className={styles.formSelect}
+            >
               <option value="cash">เงินสด</option>
               <option value="bank_transfer">โอนธนาคาร</option>
               <option value="online">ออนไลน์</option>
             </select>
           </label>
-          <label>
+          <label className={styles.formLabel}>
             <span>อัปโหลดหลักฐาน <span style={{ color: 'red' }}>*</span></span>
-            <input type="file" accept="image/*" onChange={handleProofChange} required style={{ width: '100%', display: 'block', marginTop: 6 }} />
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleProofChange} 
+              required 
+              className={styles.formFileInput}
+            />
           </label>
           {proofPreview && (
-            <div style={{ position: 'relative', display: 'inline-block', marginTop: 8, maxWidth: '100%' }}>
+            <div className={styles.proofPreview}>
               <img
                 src={proofPreview}
                 alt="ตัวอย่างหลักฐาน"
-                style={{
-                  width: '100%',
-                  maxWidth: '100%',
-                  maxHeight: 180,
-                  objectFit: 'contain',
-                  borderRadius: 8,
-                  boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
-                  cursor: 'pointer',
-                  filter: showPreviewModal ? 'brightness(0.7)' : 'none',
-                  transition: 'filter 0.2s',
-                }}
+                className={styles.proofImage}
                 onClick={() => setShowPreviewModal(true)}
-                onMouseOver={e => (e.currentTarget.style.filter = 'brightness(0.85)')}
-                onMouseOut={e => (e.currentTarget.style.filter = showPreviewModal ? 'brightness(0.7)' : 'none')}
               />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  background: 'rgba(0,0,0,0.25)',
-                  borderRadius: 8,
-                  opacity: 0.85,
-                  pointerEvents: 'none',
-                  fontSize: 18,
-                  fontWeight: 500,
-                  textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-                }}
-              >
+              <div className={styles.proofOverlay}>
                 คลิกเพื่อขยาย
               </div>
               {showPreviewModal && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    background: 'rgba(0,0,0,0.7)',
-                    zIndex: 2000,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  onClick={() => setShowPreviewModal(false)}
-                >
+                <div className={styles.previewModal} onClick={() => setShowPreviewModal(false)}>
                   <img
                     src={proofPreview}
                     alt="ขยายหลักฐาน"
-                    style={{
-                      maxWidth: '90vw',
-                      maxHeight: '80vh',
-                      borderRadius: 12,
-                      boxShadow: '0 2px 16px rgba(0,0,0,0.18)',
-                      background: '#fff',
-                      padding: 8,
-                    }}
+                    className={styles.previewImage}
                     onClick={e => e.stopPropagation()}
                   />
                   <button
-                    style={{
-                      position: 'fixed',
-                      top: 24,
-                      right: 32,
-                      background: 'rgba(0,0,0,0.5)',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: 36,
-                      height: 36,
-                      fontSize: 22,
-                      cursor: 'pointer',
-                      zIndex: 2100,
-                    }}
+                    className={styles.closePreviewBtn}
                     onClick={() => setShowPreviewModal(false)}
                     aria-label="ปิดภาพ"
                   >
