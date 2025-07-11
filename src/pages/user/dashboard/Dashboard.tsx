@@ -121,21 +121,23 @@ export default function Dashboard() {
                 <span>วันชำระล่าสุด: {formatDate(contract.last_payment_date)}</span>
               </div>
               <button className={styles.detailBtn} onClick={() => handleShowDetail(contract.id)}>ดูรายละเอียด</button>
-              <button
-                className={styles.detailBtn}
-                style={{ 
-                  marginTop: 8, 
-                  background: hasEarlyClosureDiscount ? '#f59e0b' : '#22c55e', 
-                  color: '#fff' 
-                }}
-                onClick={() => {
-                  setSelectedContractId(contract.id);
-                  setSelectedContractHasEarlyClosure(hasEarlyClosureDiscount);
-                  setOpenPayment(true);
-                }}
-              >
-                {hasEarlyClosureDiscount ? 'แจ้งชำระเงิน (ปิดยอด)' : 'แจ้งชำระเงิน'}
-              </button>
+              {contract.status === 'active' && (
+                <button
+                  className={styles.detailBtn}
+                  style={{ 
+                    marginTop: 8, 
+                    background: hasEarlyClosureDiscount ? '#f59e0b' : '#22c55e', 
+                    color: '#fff' 
+                  }}
+                  onClick={() => {
+                    setSelectedContractId(contract.id);
+                    setSelectedContractHasEarlyClosure(hasEarlyClosureDiscount);
+                    setOpenPayment(true);
+                  }}
+                >
+                  {hasEarlyClosureDiscount ? 'แจ้งชำระเงิน (ปิดยอด)' : 'แจ้งชำระเงิน'}
+                </button>
+              )}
             </div>
           );
         })
