@@ -141,7 +141,7 @@ button[type="submit"]:hover {
   background: #0369a1;
 }
 
-button[type="button"] {
+.modalContent button[type="button"] {
   background: #f3f4f6;
   color: #222;
   border: 1.5px solid #e5e7eb;
@@ -153,7 +153,7 @@ button[type="button"] {
   transition: background 0.2s, border 0.2s;
 }
 
-button[type="button"]:hover {
+.modalContent button[type="button"]:hover {
   background: #e5e7eb;
   border: 1.5px solid #0ea5e9;
 }

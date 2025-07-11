@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
+import PendingApprovalModal from '../../../components/PendingApprovalModal';
 import { authService } from '../../../services/auth/auth.service';
 
 function UserLogin() {
@@ -12,6 +13,7 @@ function UserLogin() {
   });
   const [error, setError] = useState('');
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,14 +36,19 @@ function UserLogin() {
       localStorage.setItem('expires_in', data.expires_in.toString());
       navigate('/user');
     } catch (err: unknown) {
-      // แสดง error message ที่ backend ส่งมาเลย
       let msg = 'เกิดข้อผิดพลาด';
       if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
         msg = (err as { message: string }).message;
+      } else if (err && typeof err === 'object' && 'error' in err && typeof (err as { error?: unknown }).error === 'string') {
+        msg = (err as { error: string }).error;
       } else {
         msg = JSON.stringify(err);
       }
-      setError(msg);
+      if (msg === 'คุณต้องรอยืนยันตัวตน') {
+        setShowPendingModal(true);
+      } else {
+        setError(msg);
+      }
     }
   };
 
@@ -94,6 +101,9 @@ function UserLogin() {
           </div>
         </form>
       </div>
+
+      {/* Modal แจ้งเตือนรอแอดมินยืนยันตัวตน */}
+      <PendingApprovalModal isOpen={showPendingModal} onClose={() => setShowPendingModal(false)} />
 
       <PrivacyPolicyModal
         isOpen={showPrivacyPolicy}

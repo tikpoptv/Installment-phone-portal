@@ -140,6 +140,9 @@ function UserRegister() {
   });
 
   const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [citizenIdImageFile, setCitizenIdImageFile] = useState<File | null>(null);
   const stepCount = 5;
   const [stepErrors, setStepErrors] = useState<Array<{ [key: string]: string }>>(
@@ -457,14 +460,39 @@ function UserRegister() {
     return `${dateStr}T00:00:00Z`;
   }
 
+  const validateAllFieldsInStep = () => {
+    let fields: string[] = [];
+    if (currentStep === 1) {
+      fields = ['first_name','last_name','gender','birth_date','citizen_id','citizen_id_image','id_card_issued_date','id_card_expired_date'];
+    } else if (currentStep === 2) {
+      fields = ['address','address_province','address_district','address_subdistrict','address_postal_code','address_pin_location'];
+    } else if (currentStep === 3) {
+      fields = ['occupation','monthly_income','work_address','work_province','work_district','work_subdistrict','work_postal_code','work_pin_location'];
+    } else if (currentStep === 4) {
+      fields = [];
+      formData.reference_contacts.forEach((_, idx) => {
+        fields.push(`reference_full_name_${idx}`);
+        fields.push(`reference_phone_${idx}`);
+        fields.push(`reference_relationship_${idx}`);
+      });
+    } else if (currentStep === 5) {
+      fields = ['email','phone_number','password','confirm_password'];
+    }
+    fields.forEach(f => validateField(f));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
+    
     const allErrors = [getStep1Errors(), getStep2Errors(), getStep3Errors(), getStep4Errors(), {}];
     setStepErrors(allErrors);
     const hasError = allErrors.some(err => Object.keys(err).length > 0);
     if (hasError) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      if (currentStep >= 1 && currentStep <= 5) validateAllFieldsInStep();
+      setIsLoading(false);
       return;
     }
 
@@ -519,6 +547,8 @@ function UserRegister() {
         backendMsg = (typeof e.error === 'string' && e.error) || (typeof e.message === 'string' && e.message) || JSON.stringify(err);
       }
       setError(`เกิดข้อผิดพลาดในการสมัครสมาชิก: ${backendMsg}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -542,20 +572,37 @@ function UserRegister() {
     if (!formData.address_district) errors.address_district = 'กรุณาเลือกอำเภอ/เขต';
     if (!formData.address_subdistrict) errors.address_subdistrict = 'กรุณาเลือกตำบล/แขวง';
     if (!formData.address_postal_code) errors.address_postal_code = 'กรุณากรอกรหัสไปรษณีย์';
-    if (!formData.address_pin_location) errors.address_pin_location = 'กรุณากรอกพิกัดที่อยู่';
+    if (!formData.address_pin_location) {
+      errors.address_pin_location = 'กรุณากรอกพิกัดที่อยู่';
+    } else if (!isValidUrl(formData.address_pin_location)) {
+      errors.address_pin_location = 'กรุณากรอกลิงก์แผนที่ (URL) ที่ถูกต้อง';
+    }
     return errors;
   };
 
   const getStep3Errors = () => {
     const errors: { [key: string]: string } = {};
     if (!formData.occupation.trim()) errors.occupation = 'กรุณากรอกอาชีพ';
-    if (!formData.monthly_income) errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือน';
+    if (!formData.monthly_income) {
+      errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือน';
+    } else {
+      const income = Number(formData.monthly_income.replace(/,/g, ''));
+      if (isNaN(income) || income <= 0) {
+        errors.monthly_income = 'กรุณากรอกรายได้ต่อเดือนเป็นตัวเลข';
+      } else if (income > 10000000) {
+        errors.monthly_income = 'รายได้ต่อเดือนไม่ควรเกิน 10,000,000 บาท';
+      }
+    }
     if (!formData.work_address.trim()) errors.work_address = 'กรุณากรอกที่อยู่ที่ทำงาน';
     if (!formData.work_province) errors.work_province = 'กรุณาเลือกจังหวัดที่ทำงาน';
     if (!formData.work_district) errors.work_district = 'กรุณาเลือกอำเภอ/เขตที่ทำงาน';
     if (!formData.work_subdistrict) errors.work_subdistrict = 'กรุณาเลือกตำบล/แขวงที่ทำงาน';
     if (!formData.work_postal_code) errors.work_postal_code = 'กรุณากรอกรหัสไปรษณีย์ที่ทำงาน';
-    if (!formData.work_pin_location) errors.work_pin_location = 'กรุณากรอกพิกัดที่ทำงาน';
+    if (!formData.work_pin_location) {
+      errors.work_pin_location = 'กรุณากรอกพิกัดที่ทำงาน';
+    } else if (!isValidUrl(formData.work_pin_location)) {
+      errors.work_pin_location = 'กรุณากรอกลิงก์แผนที่ (URL) ที่ถูกต้อง';
+    }
     return errors;
   };
 
@@ -590,6 +637,9 @@ function UserRegister() {
       valid = Object.keys(errors).length === 0;
     }
     setStepErrors(prev => prev.map((err, idx) => idx === currentStep - 1 ? errors : err));
+    if (!valid) {
+      validateAllFieldsInStep();
+    }
     if (valid && currentStep < stepCount) {
       setStepErrors(prev => prev.map((err, idx) => idx === currentStep ? {} : err)); // clear error ของ step ถัดไป
       setCurrentStep(prev => prev + 1);
@@ -643,6 +693,100 @@ function UserRegister() {
       formData.reference_contacts.length === 2 &&
       formData.reference_contacts.every(ref => ref.full_name.trim() && ref.phone_number && ref.relationship)
     );
+  };
+
+  // เพิ่มฟังก์ชัน validateField สำหรับ step 1
+  const validateField = (field: string) => {
+    let error = '';
+    if (currentStep === 1) {
+      if (field === 'first_name' && !formData.first_name.trim()) error = 'กรุณากรอกชื่อจริง';
+      if (field === 'last_name' && !formData.last_name.trim()) error = 'กรุณากรอกนามสกุล';
+      if (field === 'gender' && !formData.gender) error = 'กรุณาเลือกเพศ';
+      if (field === 'birth_date' && !formData.birth_date) error = 'กรุณาเลือกวันเกิด';
+      if (field === 'citizen_id' && formData.citizen_id.replace(/-/g, '').length !== 13) error = 'เลขบัตรประชาชนต้องมี 13 หลัก';
+      if (field === 'citizen_id_image' && !citizenIdImageFile) error = 'กรุณาอัปโหลดรูปบัตรประชาชน';
+      if (field === 'id_card_issued_date' && !formData.id_card_issued_date) error = 'กรุณาเลือกวันออกบัตร';
+      if (field === 'id_card_expired_date' && !formData.id_card_expired_date) error = 'กรุณาเลือกวันหมดอายุบัตร';
+    } else if (currentStep === 2) {
+      if (field === 'address' && !formData.address.trim()) error = 'กรุณากรอกที่อยู่';
+      if (field === 'address_province' && !formData.address_province) error = 'กรุณาเลือกจังหวัด';
+      if (field === 'address_district' && !formData.address_district) error = 'กรุณาเลือกอำเภอ/เขต';
+      if (field === 'address_subdistrict' && !formData.address_subdistrict) error = 'กรุณาเลือกตำบล/แขวง';
+      if (field === 'address_postal_code' && !formData.address_postal_code) error = 'กรุณากรอกรหัสไปรษณีย์';
+      if (field === 'address_pin_location') {
+        if (!formData.address_pin_location) {
+          error = 'กรุณากรอกพิกัดที่อยู่';
+        } else if (!isValidUrl(formData.address_pin_location)) {
+          error = 'กรุณากรอกลิงก์แผนที่ (URL) ที่ถูกต้อง';
+        }
+      }
+    } else if (currentStep === 3) {
+      if (field === 'occupation' && !formData.occupation.trim()) error = 'กรุณากรอกอาชีพ';
+      if (field === 'monthly_income') {
+        if (!formData.monthly_income) {
+          error = 'กรุณากรอกรายได้ต่อเดือน';
+        } else {
+          const income = Number(formData.monthly_income.replace(/,/g, ''));
+          if (isNaN(income) || income <= 0) {
+            error = 'กรุณากรอกรายได้ต่อเดือนเป็นตัวเลข';
+          } else if (income > 10000000) {
+            error = 'รายได้ต่อเดือนไม่ควรเกิน 10,000,000 บาท';
+          }
+        }
+      }
+      if (field === 'work_address' && !formData.work_address.trim()) error = 'กรุณากรอกที่อยู่ที่ทำงาน';
+      if (field === 'work_province' && !formData.work_province) error = 'กรุณาเลือกจังหวัดที่ทำงาน';
+      if (field === 'work_district' && !formData.work_district) error = 'กรุณาเลือกอำเภอ/เขตที่ทำงาน';
+      if (field === 'work_subdistrict' && !formData.work_subdistrict) error = 'กรุณาเลือกตำบล/แขวงที่ทำงาน';
+      if (field === 'work_postal_code' && !formData.work_postal_code) error = 'กรุณากรอกรหัสไปรษณีย์ที่ทำงาน';
+      if (field === 'work_pin_location') {
+        if (!formData.work_pin_location) {
+          error = 'กรุณากรอกพิกัดที่ทำงาน';
+        } else if (!isValidUrl(formData.work_pin_location)) {
+          error = 'กรุณากรอกลิงก์แผนที่ (URL) ที่ถูกต้อง';
+        }
+      }
+    } else if (currentStep === 4) {
+      if (field.startsWith('reference_full_name_')) {
+        const idx = parseInt(field.replace('reference_full_name_', ''));
+        if (!formData.reference_contacts[idx]?.full_name.trim()) error = 'กรุณากรอกชื่อ-นามสกุล';
+      }
+      if (field.startsWith('reference_phone_')) {
+        const idx = parseInt(field.replace('reference_phone_', ''));
+        if (!formData.reference_contacts[idx]?.phone_number) error = 'กรุณากรอกเบอร์โทรศัพท์';
+      }
+      if (field.startsWith('reference_relationship_')) {
+        const idx = parseInt(field.replace('reference_relationship_', ''));
+        if (!formData.reference_contacts[idx]?.relationship) error = 'กรุณาเลือกความสัมพันธ์';
+      }
+    } else if (currentStep === 5) {
+      if (field === 'email' && !formData.email) error = 'กรุณากรอกอีเมล';
+      if (field === 'phone_number' && !formData.phone_number) error = 'กรุณากรอกเบอร์โทรศัพท์';
+      if (field === 'password') {
+        if (!formData.password) {
+          error = 'กรุณากรอกรหัสผ่าน';
+        } else if (formData.password.length < 8) {
+          error = 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร';
+        }
+      }
+      if (field === 'confirm_password') {
+        if (!formData.confirm_password) {
+          error = 'กรุณายืนยันรหัสผ่าน';
+        } else if (formData.password !== formData.confirm_password) {
+          error = 'รหัสผ่านไม่ตรงกัน';
+        }
+      }
+    }
+    setStepErrors(prev => prev.map((err, idx) => idx === currentStep - 1 ? { ...err, [field]: error } : err));
+  };
+
+  const isValidUrl = (value: string) => {
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   // Memoize dropdown options สำหรับบ้าน
@@ -722,6 +866,7 @@ function UserRegister() {
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
+                  onBlur={() => validateField('first_name')}
                   required
                   className={fieldErrors.first_name ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -736,6 +881,7 @@ function UserRegister() {
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
+                  onBlur={() => validateField('last_name')}
                   required
                   className={fieldErrors.last_name ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -760,6 +906,7 @@ function UserRegister() {
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
+                  onBlur={() => validateField('gender')}
                   required
                   className={fieldErrors.gender ? `${styles.inputErrorBorder}` : ''}
                 >
@@ -779,6 +926,7 @@ function UserRegister() {
                   name="birth_date"
                   value={formData.birth_date}
                   onChange={handleChange}
+                  onBlur={() => validateField('birth_date')}
                   required
                   className={fieldErrors.birth_date ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -793,6 +941,7 @@ function UserRegister() {
                   name="citizen_id"
                   value={formData.citizen_id}
                   onChange={handleChange}
+                  onBlur={() => validateField('citizen_id')}
                   maxLength={17} // 1-5-5-2-1 + 4 เครื่องหมาย -
                   placeholder="X-XXXX-XXXXX-XX-X"
                   required
@@ -808,6 +957,7 @@ function UserRegister() {
                   id="citizen_id_image"
                   accept="image/*"
                   onChange={handleFileUpload}
+                  onBlur={() => validateField('citizen_id_image')}
                   required
                   className={fieldErrors.citizen_id_image ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -822,6 +972,7 @@ function UserRegister() {
                   name="id_card_issued_date"
                   value={formData.id_card_issued_date}
                   onChange={handleChange}
+                  onBlur={() => validateField('id_card_issued_date')}
                   required
                   className={fieldErrors.id_card_issued_date ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -836,6 +987,7 @@ function UserRegister() {
                   name="id_card_expired_date"
                   value={formData.id_card_expired_date}
                   onChange={handleChange}
+                  onBlur={() => validateField('id_card_expired_date')}
                   required
                   className={fieldErrors.id_card_expired_date ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -863,6 +1015,7 @@ function UserRegister() {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  onBlur={() => validateField('address')}
                   placeholder="บ้านเลขที่, หมู่, ถนน"
                   required
                 />
@@ -876,6 +1029,7 @@ function UserRegister() {
                   name="address_province"
                   value={formData.address_province}
                   onChange={handleChange}
+                  onBlur={() => validateField('address_province')}
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
@@ -891,6 +1045,7 @@ function UserRegister() {
                   name="address_district"
                   value={formData.address_district}
                   onChange={handleChange}
+                  onBlur={() => validateField('address_district')}
                   required
                   disabled={!formData.address_province}
                 >
@@ -907,6 +1062,7 @@ function UserRegister() {
                   name="address_subdistrict"
                   value={formData.address_subdistrict}
                   onChange={handleChange}
+                  onBlur={() => validateField('address_subdistrict')}
                   required
                   disabled={!formData.address_district}
                 >
@@ -925,6 +1081,7 @@ function UserRegister() {
                     name="address_postal_code"
                     value={formData.address_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('address_postal_code')}
                     placeholder="รหัสไปรษณีย์ 5 หลัก"
                     pattern="[0-9]{5}"
                     maxLength={5}
@@ -936,6 +1093,7 @@ function UserRegister() {
                     name="address_postal_code"
                     value={formData.address_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('address_postal_code')}
                     required
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
@@ -948,6 +1106,7 @@ function UserRegister() {
                     name="address_postal_code"
                     value={formData.address_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('address_postal_code')}
                     placeholder="รหัสไปรษณีย์ 5 หลัก"
                     pattern="[0-9]{5}"
                     maxLength={5}
@@ -971,6 +1130,7 @@ function UserRegister() {
                   name="address_pin_location"
                   value={formData.address_pin_location}
                   onChange={handleChange}
+                  onBlur={() => validateField('address_pin_location')}
                   placeholder="https://maps.google.com/..."
                   required
                 />
@@ -1017,6 +1177,7 @@ function UserRegister() {
                   name="occupation"
                   value={formData.occupation}
                   onChange={handleChange}
+                  onBlur={() => validateField('occupation')}
                   required
                 />
               </div>
@@ -1051,6 +1212,7 @@ function UserRegister() {
                   name="work_phone"
                   value={formData.work_phone}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_phone')}
                   pattern="[0-9]{10}"
                   maxLength={10}
                   required
@@ -1066,6 +1228,7 @@ function UserRegister() {
                   name="monthly_income"
                   value={formData.monthly_income}
                   onChange={handleChange}
+                  onBlur={() => validateField('monthly_income')}
                   inputMode="numeric"
                   pattern="[0-9,]*"
                   min="0"
@@ -1083,6 +1246,7 @@ function UserRegister() {
                   name="work_address"
                   value={formData.work_address}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_address')}
                   required
                 />
               </div>
@@ -1094,6 +1258,7 @@ function UserRegister() {
                   name="work_province"
                   value={formData.work_province}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_province')}
                   required
                 >
                   <option value="">เลือกจังหวัด</option>
@@ -1108,6 +1273,7 @@ function UserRegister() {
                   name="work_district"
                   value={formData.work_district}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_district')}
                   required
                   disabled={!formData.work_province}
                 >
@@ -1123,6 +1289,7 @@ function UserRegister() {
                   name="work_subdistrict"
                   value={formData.work_subdistrict}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_subdistrict')}
                   required
                   disabled={!formData.work_district}
                 >
@@ -1140,6 +1307,7 @@ function UserRegister() {
                     name="work_postal_code"
                     value={formData.work_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('work_postal_code')}
                     placeholder="รหัสไปรษณีย์ 5 หลัก"
                     pattern="[0-9]{5}"
                     maxLength={5}
@@ -1151,6 +1319,7 @@ function UserRegister() {
                     name="work_postal_code"
                     value={formData.work_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('work_postal_code')}
                     required
                   >
                     <option value="">เลือกรหัสไปรษณีย์</option>
@@ -1163,6 +1332,7 @@ function UserRegister() {
                     name="work_postal_code"
                     value={formData.work_postal_code}
                     onChange={handleChange}
+                    onBlur={() => validateField('work_postal_code')}
                     placeholder="รหัสไปรษณีย์ 5 หลัก"
                     pattern="[0-9]{5}"
                     maxLength={5}
@@ -1185,6 +1355,7 @@ function UserRegister() {
                   name="work_pin_location"
                   value={formData.work_pin_location}
                   onChange={handleChange}
+                  onBlur={() => validateField('work_pin_location')}
                   placeholder="https://maps.google.com/..."
                   required
                 />
@@ -1232,6 +1403,7 @@ function UserRegister() {
                       id={`reference_full_name_${index}`}
                       value={contact.full_name}
                       onChange={(e) => handleReferenceChange(index, 'full_name', e.target.value)}
+                      onBlur={() => validateField(`reference_full_name_${index}`)}
                       required
                     />
                   </div>
@@ -1254,6 +1426,7 @@ function UserRegister() {
                       id={`reference_phone_${index}`}
                       value={contact.phone_number}
                       onChange={(e) => handleReferenceChange(index, 'phone_number', e.target.value)}
+                      onBlur={() => validateField(`reference_phone_${index}`)}
                       pattern="[0-9]{10}"
                       maxLength={10}
                       required
@@ -1267,6 +1440,7 @@ function UserRegister() {
                       id={`reference_relationship_${index}`}
                       value={contact.relationship}
                       onChange={(e) => handleReferenceChange(index, 'relationship', e.target.value)}
+                      onBlur={() => validateField(`reference_relationship_${index}`)}
                       required
                     >
                       <option value="">เลือกความสัมพันธ์</option>
@@ -1303,6 +1477,7 @@ function UserRegister() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={() => validateField('email')}
                   required
                   className={fieldErrors.email ? `${styles.inputErrorBorder}` : ''}
                 />
@@ -1317,6 +1492,7 @@ function UserRegister() {
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleChange}
+                  onBlur={() => validateField('phone_number')}
                   pattern="[0-9]{10}"
                   maxLength={10}
                   required
@@ -1349,37 +1525,86 @@ function UserRegister() {
               <div className={styles.inputGroup}>
                 <label htmlFor="password" data-required>รหัสผ่าน</label>
                 {fieldErrors.password && <div className={styles.inputError}>{fieldErrors.password}</div>}
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className={fieldErrors.password ? `${styles.inputErrorBorder}` : ''}
-                />
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    onBlur={() => validateField('password')}
+                    required
+                    className={fieldErrors.password ? `${styles.inputErrorBorder}` : ''}
+                  />
+                  <button
+                    type="button"
+                    className={styles.eyeButton}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                  >
+                    {showPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className={styles.inputGroup}>
                 <label htmlFor="confirm_password" data-required>ยืนยันรหัสผ่าน</label>
                 {fieldErrors.confirm_password && <div className={styles.inputError}>{fieldErrors.confirm_password}</div>}
-                <input
-                  type="password"
-                  id="confirm_password"
-                  name="confirm_password"
-                  value={formData.confirm_password}
-                  onChange={handleChange}
-                  required
-                  className={fieldErrors.confirm_password ? `${styles.inputErrorBorder}` : ''}
-                />
+                <div className={styles.passwordWrapper}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirm_password"
+                    name="confirm_password"
+                    value={formData.confirm_password}
+                    onChange={handleChange}
+                    onBlur={() => validateField('confirm_password')}
+                    required
+                    className={fieldErrors.confirm_password ? `${styles.inputErrorBorder}` : ''}
+                  />
+                  <button
+                    type="button"
+                    className={styles.eyeButton}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                  >
+                    {showConfirmPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className={styles.buttonGroup}>
                 <button type="button" className={styles.prevButton} onClick={prevStep}>
                   ย้อนกลับ
                 </button>
-                <button type="submit" className={styles.submitButton}>
-                  สมัครสมาชิก
+                <button type="submit" className={styles.submitButton} disabled={isLoading}>
+                  {isLoading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <div className={styles.loadingSpinner}></div>
+                      กำลังส่งข้อมูล...
+                    </div>
+                  ) : (
+                    'สมัครสมาชิก'
+                  )}
                 </button>
               </div>
             </div>
