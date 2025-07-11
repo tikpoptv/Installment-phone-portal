@@ -92,7 +92,25 @@ const DiscountModal: React.FC<DiscountModalProps> = ({ open, onClose, onSuccess,
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>
             <span style={{ fontWeight: 500, color: '#0ea5e9' }}>ยอดสุทธิหลังหักส่วนลด <span style={{ color: 'red' }}>*</span></span>
-            <input type="number" min={0} step={0.01} value={finalAmount} onChange={e => setFinalAmount(e.target.value)} style={{ width: '100%', marginTop: 4, padding: 8, borderRadius: 7, border: '1.5px solid #e5e7eb' }} required />
+            <input 
+              type="number" 
+              min={0} 
+              step={0.01} 
+              value={finalAmount} 
+              onChange={e => setFinalAmount(e.target.value)} 
+              style={{ 
+                width: '100%', 
+                marginTop: 4, 
+                padding: 8, 
+                borderRadius: 7, 
+                border: '1.5px solid #e5e7eb',
+                backgroundColor: '#6b7280',
+                color: '#ffffff',
+                cursor: 'not-allowed'
+              }} 
+              disabled
+              required 
+            />
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>
             <span style={{ fontWeight: 500, color: '#0ea5e9' }}>หมายเหตุ</span>

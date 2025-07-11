@@ -4,12 +4,6 @@ import styles from './Login.module.css';
 import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
 import { authService } from '../../../services/auth/auth.service';
 
-// เพิ่ม type สำหรับ error response
-interface ApiError {
-  status?: number;
-  message?: string;
-}
-
 function UserLogin() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -40,14 +34,14 @@ function UserLogin() {
       localStorage.setItem('expires_in', data.expires_in.toString());
       navigate('/user');
     } catch (err: unknown) {
-      const error = err as ApiError;
-      if (error?.status === 400) {
-        setError('ข้อมูลไม่ถูกต้อง');
-      } else if (error?.status === 401) {
-        setError('เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง');
+      // แสดง error message ที่ backend ส่งมาเลย
+      let msg = 'เกิดข้อผิดพลาด';
+      if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+        msg = (err as { message: string }).message;
       } else {
-        setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        msg = JSON.stringify(err);
       }
+      setError(msg);
     }
   };
 

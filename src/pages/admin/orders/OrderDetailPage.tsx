@@ -5,6 +5,7 @@ import { getContractDetail, getContractPayments, getPdpaConsentFile } from '../.
 import type { ContractDetail, ContractPayment, Installment, Discount } from '../../../services/contract.service';
 import PaymentDetailModal from '../payments/PaymentDetailModal';
 import DiscountModal from './DiscountModal';
+import { MdCheckCircle, MdRadioButtonUnchecked, MdPending, MdAutorenew, MdCancel } from 'react-icons/md';
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '-';
@@ -40,11 +41,11 @@ function getInstallmentStatusClass(status: string): string {
   }
 }
 
-const statusMap: Record<string, { label: string; className: string; emoji: string }> = {
-  active: { label: 'กำลังใช้งาน', className: styles.badgeActive, emoji: '🟢' },
-  closed: { label: 'ปิดแล้ว', className: styles.badgeClosed, emoji: '⚪️' },
-  pending: { label: 'รอดำเนินการ', className: styles.badgePending, emoji: '🟡' },
-  processing: { label: 'กำลังดำเนินการ', className: styles.badgeProcessing, emoji: '🔄' },
+const statusMap: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
+  active: { label: 'กำลังใช้งาน', className: styles.badgeActive, icon: <MdCheckCircle color="#22c55e" size={18} style={{verticalAlign:'middle'}} /> },
+  closed: { label: 'ปิดแล้ว', className: styles.badgeClosed, icon: <MdRadioButtonUnchecked color="#64748b" size={18} style={{verticalAlign:'middle'}} /> },
+  pending: { label: 'รอดำเนินการ', className: styles.badgePending, icon: <MdPending color="#eab308" size={18} style={{verticalAlign:'middle'}} /> },
+  processing: { label: 'กำลังดำเนินการ', className: styles.badgeProcessing, icon: <MdAutorenew color="#d97706" size={18} style={{verticalAlign:'middle'}} /> },
 };
 
 const categoryMap: Record<string, { label: string; emoji: string }> = {
@@ -139,7 +140,7 @@ const OrderDetailPage: React.FC = () => {
   if (error || !contract) return <div className={styles.container}><div className={styles.contentBox}>{error || 'ไม่พบข้อมูลคำสั่งซื้อ'}</div></div>;
 
   const o = contract;
-  const status = statusMap[o.status] || { label: o.status, className: '', emoji: '' };
+  const status = statusMap[o.status] || { label: o.status, className: '', icon: null };
   const category = categoryMap[o.category] || { label: o.category, emoji: '' };
 
   return (
@@ -158,7 +159,7 @@ const OrderDetailPage: React.FC = () => {
         </div>
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📝 ข้อมูลคำสั่งซื้อ
-            <span className={`${styles.badge} ${status.className}`}>{status.emoji} {status.label}</span>
+            <span className={`${styles.badge} ${status.className}`}>{status.icon} {status.label}</span>
           </div>
           <div className={styles.section}><div className={styles.label}>รหัสคำสั่งซื้อ:</div><div className={styles.value}>{o.id}</div></div>
           <div className={styles.section}><div className={styles.label}>หมวดหมู่:</div><div className={styles.value}>{category.emoji} {category.label} ({o.category})</div></div>
@@ -325,27 +326,31 @@ const OrderDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {discounts.map(ds => (
-                      <tr key={ds.id}>
-                        <td>{ds.discount_type === 'early_closure' ? 'ปิดยอดก่อนกำหนด' : 'ข้อเสนอพิเศษ'}</td>
-                        <td>{ds.discount_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
-                        <td>{ds.final_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
-                        <td>{formatDate(ds.approved_at)}</td>
-                        <td>
-                          <button 
-                            type="button" 
-                            className={styles.linkBtn} 
-                            onClick={() => { 
-                              setSelectedDiscount(ds); 
-                              setShowDiscountDetailModal(true); 
-                            }}
-                            style={{ fontSize: 12, padding: '3px 8px' }}
-                          >
-                            ดูรายละเอียด
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {discounts.map(ds => {
+                      return (
+                        <tr key={ds.id}>
+                          <td>{ds.discount_type === 'early_closure' ? 'ปิดยอดก่อนกำหนด' : 'ข้อเสนอพิเศษ'}</td>
+                          <td>{ds.discount_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                          <td>
+                            {ds.final_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}
+                          </td>
+                          <td>{formatDate(ds.approved_at)}</td>
+                          <td>
+                            <button 
+                              type="button" 
+                              className={styles.linkBtn} 
+                              onClick={() => { 
+                                setSelectedDiscount(ds); 
+                                setShowDiscountDetailModal(true); 
+                              }}
+                              style={{ fontSize: 12, padding: '3px 8px' }}
+                            >
+                              ดูรายละเอียด
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -363,7 +368,7 @@ const OrderDetailPage: React.FC = () => {
                     <th>วันที่ชำระ</th>
                     <th>จำนวนเงิน</th>
                     <th>วิธีชำระ</th>
-                    <th>สถานะการตรวจสอบ</th>
+                    <th className={styles.statusCell}>สถานะการตรวจสอบ</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -379,10 +384,20 @@ const OrderDetailPage: React.FC = () => {
                       <td>{formatDate(pm.payment_date)}</td>
                       <td>{pm.amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
                       <td>{pm.method === 'bank_transfer' ? 'โอนธนาคาร' : pm.method === 'cash' ? 'เงินสด' : pm.method}</td>
-                      <td>
-                        {pm.verify_status === 'approved' ? '✅ อนุมัติแล้ว' : 
-                         pm.verify_status === 'rejected' ? '❌ ไม่อนุมัติ' : 
-                         '⏳ รอตรวจสอบ'}
+                      <td className={styles.statusCell}>
+                        {pm.verify_status === 'approved' ? (
+                          <>
+                            <MdCheckCircle color="#22c55e" size={18} style={{verticalAlign:'middle', marginRight:4}} /> อนุมัติแล้ว
+                          </>
+                        ) : pm.verify_status === 'rejected' ? (
+                          <>
+                            <MdCancel color="#ef4444" size={18} style={{verticalAlign:'middle', marginRight:4}} /> ไม่อนุมัติ
+                          </>
+                        ) : (
+                          <>
+                            <MdPending color="#eab308" size={18} style={{verticalAlign:'middle', marginRight:4}} /> รอตรวจสอบ
+                          </>
+                        )}
                       </td>
                       <td>
                         <button 
