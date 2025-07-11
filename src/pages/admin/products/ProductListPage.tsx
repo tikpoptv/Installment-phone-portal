@@ -8,6 +8,7 @@ import { getProducts } from '../../../services/products.service';
 import type { Product } from '../../../services/products.service';
 
 const statusLabel = (status: string) => {
+  if (!status) return <span style={{ color: '#64748b', fontWeight: 600 }}>ไม่ระบุ</span>;
   if (status === 'available') return <span style={{ color: '#22c55e', fontWeight: 600 }}>ว่าง</span>;
   if (status === 'leased') return <span style={{ color: '#f59e42', fontWeight: 600 }}>ติดสัญญา</span>;
   if (status === 'sold') return <span style={{ color: '#ef4444', fontWeight: 600 }}>ขายแล้ว</span>;
@@ -18,14 +19,14 @@ function exportProductsToCSV(products: Product[]) {
   const header = ['ลำดับ', 'รหัสสินค้า', 'ชื่อรุ่น', 'IMEI', 'ราคา', 'iCloud', 'หมายเหตุ', 'สถานะ', 'วันที่เพิ่ม'];
   const rows = products.map((p, idx) => [
     idx + 1,
-    p.id,
-    p.model_name,
-    p.imei,
-    p.price,
-    p.icloud_status === 'unlocked' ? 'ปลดล็อก' : p.icloud_status,
-    p.remark,
-    p.status === 'available' ? 'ว่าง' : p.status === 'sold' ? 'ขายแล้ว' : p.status,
-    formatDateThai(p.created_at),
+    p.id || '',
+    p.model_name || '',
+    p.imei || '',
+    p.price || 0,
+    p.icloud_status === 'unlocked' ? 'ปลดล็อก' : p.icloud_status || '',
+    p.remark || '',
+    p.status === 'available' ? 'ว่าง' : p.status === 'sold' ? 'ขายแล้ว' : p.status || 'ไม่ระบุ',
+    p.created_at ? formatDateThai(p.created_at) : '',
   ]);
   const csvContent = [header, ...rows]
     .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
@@ -108,10 +109,10 @@ export default function ProductListPage() {
 
   const filtered = products.filter((p) => {
     const match =
-      p.model_name.includes(search) ||
-      p.imei.includes(search) ||
-      p.remark.includes(search) ||
-      p.id.includes(search);
+      (p.model_name?.includes(search) || false) ||
+      (p.imei?.includes(search) || false) ||
+      (p.remark?.includes(search) || false) ||
+      (p.id?.includes(search) || false);
     let priceOk = true;
     if (minPrice && !isNaN(Number(minPrice))) priceOk = priceOk && p.price >= Number(minPrice);
     if (maxPrice && !isNaN(Number(maxPrice))) priceOk = priceOk && p.price <= Number(maxPrice);
@@ -272,14 +273,14 @@ export default function ProductListPage() {
               ) : paginated.map((p, idx) => (
                 <tr key={p.id}>
                   <td style={{ textAlign: 'center' }}>{startIdx + idx + 1}</td>
-                  <td>{p.id}</td>
-                  <td>{p.model_name}</td>
-                  <td>{p.imei}</td>
-                  <td>{p.price.toLocaleString('th-TH')} บาท</td>
-                  <td>{p.icloud_status === 'unlocked' ? 'ปลดล็อก' : p.icloud_status}</td>
-                  <td>{statusLabel(p.status)}</td>
-                  <td>{formatDateThai(p.created_at)}</td>
-                  <td>{p.remark}</td>
+                  <td>{p.id || '-'}</td>
+                  <td>{p.model_name || '-'}</td>
+                  <td>{p.imei || '-'}</td>
+                  <td>{p.price?.toLocaleString('th-TH') || '0'} บาท</td>
+                  <td>{p.icloud_status === 'unlocked' ? 'ปลดล็อก' : p.icloud_status || '-'}</td>
+                  <td>{statusLabel(p.status || 'unknown')}</td>
+                  <td>{p.created_at ? formatDateThai(p.created_at) : '-'}</td>
+                  <td>{p.remark || '-'}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button className={styles.detailButton} onClick={() => navigate(`/admin/products/${p.id}`)}>ดูรายละเอียด</button>
                   </td>
