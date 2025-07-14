@@ -1,6 +1,8 @@
 import styles from './ContractDetailModal.module.css';
 import { useEffect, useState, useMemo } from 'react';
 import { getUserProductImage, type ContractDetailType } from '../../../services/user/contract.service';
+import { getUserPaymentProofFile } from '../../../services/payment.service';
+import { toast } from 'react-toastify';
 
 interface Props {
   openDetail: ContractDetailType | null;
@@ -19,6 +21,8 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [selectedPaymentImage, setSelectedPaymentImage] = useState<string | null>(null);
+  const [showPaymentImageModal, setShowPaymentImageModal] = useState(false);
 
   const uniqueFilenames = useMemo(() => (
     openDetail ? Array.from(new Set(openDetail.product.product_image_filenames)) : []
@@ -57,6 +61,27 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
       };
     }
   }, [openDetail]);
+
+  const handleViewPaymentImage = async (paymentId: string, filename: string) => {
+    try {
+      const blob = await getUserPaymentProofFile(paymentId, filename);
+      const url = URL.createObjectURL(blob);
+      setSelectedPaymentImage(url);
+      setShowPaymentImageModal(true);
+    } catch (error) {
+      console.error('View image error:', error);
+      toast.error('ไม่สามารถดูภาพได้');
+    }
+  };
+
+  // Cleanup payment image URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (selectedPaymentImage) {
+        URL.revokeObjectURL(selectedPaymentImage);
+      }
+    };
+  }, [selectedPaymentImage]);
 
   if (!openDetail) return null;
   return (
@@ -192,6 +217,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
                 <th>จำนวนเงิน</th>
                 <th>วิธี</th>
                 <th>สถานะ</th>
+                <th>หลักฐาน</th>
               </tr>
             </thead>
             <tbody>
@@ -213,12 +239,38 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
                       {verifyStatusLabel[pm.verify_status] || pm.verify_status}
                     </span>
                   </td>
+                  <td>
+                    {pm.proof_file_filename ? (
+                      <button
+                        type="button"
+                        onClick={() => handleViewPaymentImage(pm.id, pm.proof_file_filename!)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#0ea5e9',
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          fontSize: '0.9em'
+                        }}
+                      >
+                        ดูภาพ
+                      </button>
+                    ) : '-'}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+      {showPaymentImageModal && selectedPaymentImage && (
+        <div className={styles.paymentImageModalOverlay} onClick={() => setShowPaymentImageModal(false)}>
+          <div className={styles.paymentImageModalContent} onClick={e => e.stopPropagation()}>
+            <button className={styles.paymentImageModalClose} onClick={() => setShowPaymentImageModal(false)} aria-label="ปิด">×</button>
+            <img src={selectedPaymentImage} alt="Payment Proof" className={styles.paymentImageModalImage} />
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
