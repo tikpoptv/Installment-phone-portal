@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styles from './ProductDetailPage.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProductDetail, getProductImageBlob, getLatestContractByProductId, bindIcloudCredentialToProduct } from '../../../services/products.service';
+import { getProductDetail, getProductImageBlob, getLatestContractByProductId, bindIcloudCredentialToProduct, setProductStoreLocked } from '../../../services/products.service';
 import type { ProductLatestContract } from '../../../services/products.service';
 import { getIcloudCredentials } from '../../../services/icloud.service';
 import type { IcloudCredential } from '../../../services/icloud.service';
@@ -9,6 +9,7 @@ import IcloudLockModal from './IcloudLockModal';
 import { toast } from 'react-toastify';
 import IcloudUnlockModal from './IcloudUnlockModal';
 import IcloudDetailModal from '../icloud/IcloudDetailModal';
+import ProductEditModal from './ProductEditModal';
 
 export interface ProductDetail {
   id: string;
@@ -21,13 +22,14 @@ export interface ProductDetail {
   icloud_status: string;
   owner_id: string | null;
   product_image_filenames: string[];
-  remark: string;
+  remark?: string; // ปรับเป็น optional string
   created_at: string;
   updated_at: string;
   icloud_credential_id?: string;
   owner_username?: string;
   store_icloud_credential_id?: string;
   customer_icloud_credential_id?: string;
+  store_locked?: boolean;
 }
 
 const statusLabel = (status: string) => {
@@ -58,6 +60,8 @@ const ProductDetailPage: React.FC = () => {
   const [icloudList, setIcloudList] = useState<IcloudCredential[]>([]);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showIcloudDetailModal, setShowIcloudDetailModal] = useState<string | null>(null);
+  const [confirmSoftLock, setConfirmSoftLock] = useState<null | 'lock' | 'unlock'>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const productImageFilenames = useMemo(() => product?.product_image_filenames || [], [product]);
 
@@ -200,8 +204,21 @@ const ProductDetailPage: React.FC = () => {
       </section>
 
       {/* หมวดข้อมูลหลัก */}
-      <section className={styles.section}>
-        <div className={styles.sectionTitle}>ข้อมูลสินค้า</div>
+      <section className={styles.section} style={{position:'relative'}}>
+        <div className={styles.sectionTitle}>
+          ข้อมูลสินค้า
+          {/* ปุ่มแก้ไขสินค้า */}
+          {product && (
+            <button
+              className={styles.editProductBtn}
+              style={{ position: 'absolute', top: 24, right: 32, zIndex: 10, opacity: product.status !== 'available' ? 0.5 : 1, pointerEvents: product.status !== 'available' ? 'none' : 'auto' }}
+              onClick={() => setShowEditModal(true)}
+              disabled={product.status !== 'available'}
+            >
+              แก้ไขสินค้า
+            </button>
+          )}
+        </div>
         <div className={styles.detailRow}><span className={styles.label}>รหัสสินค้า:</span> <span className={styles.value}>{product.id}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>ชื่อรุ่น:</span> <span className={styles.value}>{product.model_name}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>IMEI:</span> <span className={styles.value}>{product.imei}</span></div>
@@ -227,6 +244,12 @@ const ProductDetailPage: React.FC = () => {
               แจ้งสถานะล็อก iCloud
             </button>
           )}
+        </div>
+        <div className={styles.detailRow}>
+          <span className={styles.label}>สถานะล็อก:</span>
+          <span className={styles.value} style={{color: product.store_locked ? '#f59e42' : '#22c55e', fontWeight: 600}}>
+            {product.store_locked ? 'ล็อกโดยร้าน' : 'ไม่ล็อกโดยร้าน'}
+          </span>
         </div>
         {product && (
           latestContract ? (
@@ -257,7 +280,7 @@ const ProductDetailPage: React.FC = () => {
                 ดูรายละเอียด (ลูกค้า)
               </button>
             </div>
-            <div style={{ marginTop: 12 }}>
+            <div style={{ marginTop: 12, display: 'flex', gap: 12 }}>
               <button
                 className={styles.orderBoxBtn}
                 style={{
@@ -276,6 +299,22 @@ const ProductDetailPage: React.FC = () => {
               >
                 ปลดล็อก iCloud
               </button>
+              {/* ปุ่มล็อก/ปลดล็อกโดยร้าน */}
+              {!product.store_locked ? (
+                <button
+                  className={`${styles.orderBoxBtn} ${styles.softLockBtn}`}
+                  onClick={() => setConfirmSoftLock('lock')}
+                >
+                  ล็อกโดยร้าน
+                </button>
+              ) : (
+                <button
+                  className={`${styles.orderBoxBtn} ${styles.softUnlockBtn}`}
+                  onClick={() => setConfirmSoftLock('unlock')}
+                >
+                  ปลดล็อกโดยร้าน
+                </button>
+              )}
             </div>
             <IcloudUnlockModal
               open={showUnlockModal}
@@ -315,6 +354,7 @@ const ProductDetailPage: React.FC = () => {
       {/* หมวดอื่นๆ */}
       <section className={styles.section}>
         <div className={styles.sectionTitle}>ข้อมูลอื่น ๆ</div>
+        <div className={styles.detailRow}><span className={styles.label}>หมายเหตุ:</span> <span className={styles.value}>{product.remark || '-'}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>วันที่เพิ่ม:</span> <span className={styles.value}>{new Date(product.created_at).toLocaleString('th-TH')}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>อัปเดตล่าสุด:</span> <span className={styles.value}>{new Date(product.updated_at).toLocaleString('th-TH')}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>ผู้ลงทะเบียนสินค้า:</span> <span className={styles.value}>{product.owner_username ? `${product.owner_username} (${product.owner_id})` : (product.owner_id || '-')}</span></div>
@@ -350,6 +390,75 @@ const ProductDetailPage: React.FC = () => {
               : null
         }
       />
+
+      <ProductEditModal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        product={product}
+        onSuccess={() => {
+          setLoading(true);
+          getProductDetail(product.id)
+            .then((data) => setProduct(data as ProductDetail))
+            .catch(() => setError('ไม่พบข้อมูลสินค้า'))
+            .finally(() => setLoading(false));
+        }}
+      />
+
+      {/* Modal ยืนยันการล็อก/ปลดล็อกโดยร้าน */}
+      {confirmSoftLock && (
+        <div className={styles.confirmModalOverlay}>
+          <div className={styles.confirmModalContent}>
+            <button
+              className={styles.modalCloseBtn}
+              onClick={() => setConfirmSoftLock(null)}
+              aria-label="ปิด"
+              title="ปิด"
+            >
+              ×
+            </button>
+            <div className={styles.confirmModalTitle}>
+              {confirmSoftLock === 'lock' ? 'ยืนยันการล็อกโดยร้าน?' : 'ยืนยันการปลดล็อกโดยร้าน?'}
+            </div>
+            <div className={styles.confirmModalMessage}>
+              {confirmSoftLock === 'lock'
+                ? 'คุณแน่ใจหรือไม่ว่าต้องการล็อกเครื่องนี้โดยร้านค้า?'
+                : 'คุณแน่ใจหรือไม่ว่าต้องการปลดล็อกเครื่องนี้โดยร้านค้า?'}
+            </div>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+              <button
+                className={`${styles.confirmModalButton} ${confirmSoftLock === 'lock' ? styles.confirmModalButtonLock : styles.confirmModalButtonUnlock}`}
+                onClick={async () => {
+                  setConfirmSoftLock(null);
+                  const toSend = confirmSoftLock === 'lock';
+                  console.log('DEBUG setProductStoreLocked', {
+                    id: product.id,
+                    confirmSoftLock,
+                    toSend,
+                    typeofToSend: typeof toSend
+                  });
+                  try {
+                    await setProductStoreLocked(product.id, toSend);
+                    toast.success(
+                      toSend
+                        ? 'ล็อกโดยร้าน (soft lock) สำเร็จ!'
+                        : 'ปลดล็อกโดยร้าน (soft unlock) สำเร็จ!'
+                    );
+                    setLoading(true);
+                    getProductDetail(product.id)
+                      .then((data) => setProduct(data as ProductDetail))
+                      .catch(() => setError('ไม่พบข้อมูลสินค้า'))
+                      .finally(() => setLoading(false));
+                  } catch {
+                    toast.error('เกิดข้อผิดพลาดในการเปลี่ยนสถานะล็อกโดยร้าน');
+                  }
+                }}
+              >
+                ยืนยัน
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -32,6 +32,7 @@ export interface Product {
   icloud_status: string;
   remark: string;
   created_at: string;
+  store_locked: boolean;
 }
 
 export interface ProductLatestContract {
@@ -58,6 +59,15 @@ export interface ProductDetailWithIcloud extends Product {
 
 export interface ProductDetailFull extends ProductDetailWithIcloud {
   owner_username?: string;
+  store_locked: boolean;
+}
+
+export interface UpdateProductPayload {
+  status: string;
+  imei?: string;
+  price?: number;
+  cost_price?: number;
+  remark?: string;
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<ProductResponse> {
@@ -108,5 +118,18 @@ export async function getLatestContractByProductId(productId: string): Promise<P
 
 export async function bindIcloudCredentialToProduct(productId: string, payload: BindIcloudCredentialPayload) {
   const res = await apiClient.post(`/api/products/${productId}/icloud-credential`, payload);
+  return res.data;
+}
+
+export async function updateProduct(productId: string, payload: UpdateProductPayload) {
+  const res = await apiClient.post(`/api/products/${productId}/edit`, payload);
+  return res.data;
+}
+
+export async function setProductStoreLocked(productId: string, locked: boolean): Promise<{ id: string; store_locked: boolean }> {
+  const res = await apiClient.post<{ id: string; store_locked: boolean }>(
+    `/api/products/${productId}/store-locked`,
+    { store_locked: locked }
+  );
   return res.data;
 } 

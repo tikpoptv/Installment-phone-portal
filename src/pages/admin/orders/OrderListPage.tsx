@@ -5,7 +5,7 @@ import MobileAccessModal from '../../../components/MobileAccessModal';
 import { getContracts } from '../../../services/contract.service';
 import type { Contract } from '../../../services/contract.service';
 import OrderCreateModal from './OrderCreateModal';
-import { formatDateThai } from '../../../utils/date';
+import { formatDateShort, formatDateThai } from '../../../utils/date';
 
 const statusLabel = (status: string) => {
   if (status === 'active') return <span className={styles.statusActive}>กำลังใช้งาน</span>;
@@ -292,8 +292,8 @@ export default function OrderListPage() {
                   <td>{categoryLabel(o.category)}</td>
                   <td>{o.total_price.toLocaleString('th-TH')} บาท</td>
                   <td>{statusLabel(o.status)}</td>
-                  <td>{formatDateThai(o.start_date)}</td>
-                  <td>{formatDateThai(o.end_date)}</td>
+                  <td>{formatDateShort(o.start_date)}</td>
+                  <td>{formatDateShort(o.end_date)}</td>
                   <td>{formatDateThai(o.created_at)}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button className={styles.detailButton} onClick={() => navigate(`/admin/orders/${o.id}`)}>ดูรายละเอียด</button>

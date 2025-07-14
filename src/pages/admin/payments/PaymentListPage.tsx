@@ -4,6 +4,7 @@ import { getAllPayments } from '../../../services/payment.service';
 import type { Payment } from '../../../services/payment.service';
 import PaymentCreateModal from './PaymentCreateModal';
 import PaymentDetailModal from './PaymentDetailModal';
+import { formatDateShort } from '../../../utils/date';
 
 const statusOptions = [
   { value: 'all', label: 'ทุกสถานะ' },
@@ -158,7 +159,7 @@ export default function PaymentListPage() {
                       <td className={styles.centerText}>{startIdx + idx + 1}</td>
                       <td>{p.id}</td>
                       <td>{p.contract_id}</td>
-                      <td>{p.payment_date}</td>
+                      <td>{formatDateShort(p.payment_date)}</td>
                       <td>{p.amount.toLocaleString('th-TH', {style:'currency',currency:'THB'})}</td>
                       <td>{methodLabel(p.method)}</td>
                       <td>{verifyStatusLabel(p.verify_status)}</td>
