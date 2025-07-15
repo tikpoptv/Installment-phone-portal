@@ -68,6 +68,7 @@ const Navbar: FC = () => {
     { path: '/admin/customers', icon: '👥', label: 'ลูกค้า' },
     { path: '/admin/payments', icon: '💳', label: 'ชำระเงิน' },
     { path: '/admin/icloud', icon: '☁️', label: 'iCloud' },
+    { path: '/admin/manage-admin', icon: '🛡️', label: 'จัดการ admin' },
     { path: '/admin/settings', icon: '⚙️', label: 'ตั้งค่า' },
   ];
 

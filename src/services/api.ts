@@ -114,4 +114,5 @@ export const apiClient = {
   }
 };
 
-export default apiClient; 
+export default apiClient;
+export { API_BASE_URL }; 
