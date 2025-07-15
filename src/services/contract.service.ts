@@ -156,4 +156,12 @@ export async function getPdpaConsentFile(contractId: string, filename: string): 
 
 export async function postDiscountToContract(contractId: string, payload: CreateDiscountPayload) {
   return apiClient.post(`/api/contracts/${contractId}/discounts`, payload);
+}
+
+export async function updateContractStatus(contractId: string, status: string): Promise<{ id: string; status: string }> {
+  const res = await apiClient.put<{ id: string; status: string }>(
+    `/api/contracts/${contractId}/status`,
+    { status }
+  );
+  return res.data;
 } 

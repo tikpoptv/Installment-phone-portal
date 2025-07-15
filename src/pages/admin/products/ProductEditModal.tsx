@@ -35,6 +35,7 @@ export default function ProductEditModal({ open, onClose, product, onSuccess }: 
   const [formData, setFormData] = useState<UpdateProductPayload>({
     status: 'available',
     price: undefined,
+    cost_price: undefined,
     remark: '',
   });
   const [loading, setLoading] = useState(false);
@@ -44,6 +45,7 @@ export default function ProductEditModal({ open, onClose, product, onSuccess }: 
       setFormData({
         status: product.status,
         price: product.price,
+        cost_price: product.cost_price,
         remark: product.remark || '',
       });
     }
@@ -114,6 +116,19 @@ export default function ProductEditModal({ open, onClose, product, onSuccess }: 
               min="0"
               step="0.01"
               required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>ราคาทุน (บาท)</label>
+            <input
+              type="number"
+              className={styles.input}
+              value={formData.cost_price ?? ''}
+              onChange={(e) => handleInputChange('cost_price', e.target.value ? Number(e.target.value) : undefined)}
+              placeholder="ระบุราคาทุน"
+              min="0"
+              step="0.01"
             />
           </div>
 

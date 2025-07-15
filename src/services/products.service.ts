@@ -35,7 +35,7 @@ export interface Product {
   store_locked: boolean;
 }
 
-export interface ProductLatestContract {
+export interface ProductContract {
   contract_id: string;
   status: string;
 }
@@ -106,14 +106,10 @@ export async function getProductImageBlob(productId: string, filename: string): 
   return res.data as Blob;
 }
 
-export async function getLatestContractByProductId(productId: string): Promise<ProductLatestContract | null> {
-  try {
-    const res = await apiClient.get<ProductLatestContract>(`/api/products/${productId}/contract`);
-    return res.data;
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'status' in e && (e as { status?: unknown }).status === 404) return null;
-    throw e;
-  }
+export async function getContractsByProductId(productId: string): Promise<ProductContract[]> {
+  const res = await apiClient.get<ProductContract[]>(`/api/products/${productId}/contract`);
+  // เรียง contract_id จากใหม่ไปเก่า (สมมติ contract_id เป็น CT00012, CT00011, ...)
+  return res.data.sort((a, b) => b.contract_id.localeCompare(a.contract_id));
 }
 
 export async function bindIcloudCredentialToProduct(productId: string, payload: BindIcloudCredentialPayload) {

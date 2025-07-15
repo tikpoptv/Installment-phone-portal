@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styles from './ProductDetailPage.module.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProductDetail, getProductImageBlob, getLatestContractByProductId, bindIcloudCredentialToProduct, setProductStoreLocked } from '../../../services/products.service';
-import type { ProductLatestContract } from '../../../services/products.service';
+import { getProductDetail, getProductImageBlob, getContractsByProductId, bindIcloudCredentialToProduct, setProductStoreLocked } from '../../../services/products.service';
+import type { ProductContract } from '../../../services/products.service';
 import { getIcloudCredentials } from '../../../services/icloud.service';
 import type { IcloudCredential } from '../../../services/icloud.service';
 import IcloudLockModal from './IcloudLockModal';
@@ -45,6 +45,19 @@ const icloudLabel = (icloud: string) => {
   return icloud;
 };
 
+// ฟังก์ชันแปลงสถานะ contract เป็นภาษาไทย
+const contractStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active': return 'กำลังดำเนินการ';
+    case 'closed': return 'เสร็จสิ้น';
+    case 'default': return 'ค้างชำระ';
+    case 'repossessed': return 'ถูกยึดคืน';
+    case 'returned': return 'ส่งคืน';
+    case 'processing': return 'รอดำเนินการ';
+    default: return status;
+  }
+};
+
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -55,7 +68,7 @@ const ProductDetailPage: React.FC = () => {
   const [previewIdx, setPreviewIdx] = useState<number | null>(null);
   const navigate = useNavigate();
   const imageUrlsRef = useRef<(string | null)[]>([]);
-  const [latestContract, setLatestContract] = useState<ProductLatestContract | null>(null);
+  const [contracts, setContracts] = useState<ProductContract[]>([]);
   const [showLockModal, setShowLockModal] = useState(false);
   const [icloudList, setIcloudList] = useState<IcloudCredential[]>([]);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
@@ -73,14 +86,14 @@ const ProductDetailPage: React.FC = () => {
       .then((data) => {
         setProduct(data as ProductDetail);
         setLoading(false);
-        getLatestContractByProductId(id)
-          .then(setLatestContract)
-          .catch(() => setLatestContract(null));
+        getContractsByProductId(id)
+          .then(setContracts)
+          .catch(() => setContracts([]));
       })
       .catch(() => {
         setError('ไม่พบข้อมูลสินค้า');
         setLoading(false);
-        setLatestContract(null);
+        setContracts([]);
       });
   }, [id]);
 
@@ -143,6 +156,21 @@ const ProductDetailPage: React.FC = () => {
   if (loading) return <div className={styles.container}>กำลังโหลดข้อมูล...</div>;
   if (error) return <div className={styles.container}>{error}</div>;
   if (!product) return <div className={styles.container}>ไม่พบข้อมูลสินค้า</div>;
+
+  // เงื่อนไขสำหรับปุ่มแก้ไขสินค้า
+  const canEditProduct = (() => {
+    if (!product) return false;
+    if (contracts.length === 0) return true; // ไม่มี contract กดได้
+    const latestStatus = contracts[0]?.status;
+    if (latestStatus === 'active' || latestStatus === 'closed') return false;
+    return true;
+  })();
+  const editProductBtnTooltip = (() => {
+    if (contracts.length > 0 && (contracts[0]?.status === 'active' || contracts[0]?.status === 'closed')) {
+      return 'ไม่สามารถแก้ไขข้อมูลสินค้าได้ เนื่องจากมีคำสั่งซื้อที่กำลังดำเนินการหรือเสร็จสิ้นแล้ว';
+    }
+    return '';
+  })();
 
   return (
     <div className={styles.container}>
@@ -209,14 +237,21 @@ const ProductDetailPage: React.FC = () => {
           ข้อมูลสินค้า
           {/* ปุ่มแก้ไขสินค้า */}
           {product && (
-            <button
-              className={styles.editProductBtn}
-              style={{ position: 'absolute', top: 24, right: 32, zIndex: 10, opacity: product.status !== 'available' ? 0.5 : 1, pointerEvents: product.status !== 'available' ? 'none' : 'auto' }}
-              onClick={() => setShowEditModal(true)}
-              disabled={product.status !== 'available'}
-            >
-              แก้ไขสินค้า
-            </button>
+            <div className={styles.editProductBtnWrapper}>
+              <button
+                className={styles.editProductBtn}
+                style={{ opacity: canEditProduct ? 1 : 0.5 }}
+                onClick={() => setShowEditModal(true)}
+                disabled={!canEditProduct}
+              >
+                แก้ไขสินค้า
+              </button>
+              {!canEditProduct && editProductBtnTooltip && (
+                <div className={styles.editProductBtnTooltip}>
+                  {editProductBtnTooltip}
+                </div>
+              )}
+            </div>
           )}
         </div>
         <div className={styles.detailRow}><span className={styles.label}>รหัสสินค้า:</span> <span className={styles.value}>{product.id}</span></div>
@@ -252,21 +287,35 @@ const ProductDetailPage: React.FC = () => {
           </span>
         </div>
         {product && (
-          latestContract ? (
-            <div className={styles.orderBox}>
-              <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
-              <div className={styles.detailRow}><span className={styles.label}>รหัสคำสั่งซื้อ:</span> <span className={styles.value}>{latestContract.contract_id}</span></div>
-              <div className={styles.detailRow}><span className={styles.label}>สถานะคำสั่งซื้อ:</span> <span className={styles.value}>{latestContract.status}</span></div>
-              <button className={styles.orderBoxBtn} onClick={()=>navigate(`/admin/orders/${latestContract.contract_id}`)}>
-                ดูข้อมูลคำสั่งซื้อเพิ่มเติม
-              </button>
-            </div>
-          ) : (
-            <div className={styles.orderBox}>
-              <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
+          <div className={styles.orderBox}>
+            <div className={styles.orderBoxTitle}>เชื่อมโยงกับรายการสั่งซื้อ</div>
+            {contracts.length > 0 ? (
+              <table className={styles.contractTable} style={{width:'100%',marginBottom:8}}>
+                <thead>
+                  <tr>
+                    <th style={{textAlign:'left'}}>รหัสคำสั่งซื้อ</th>
+                    <th style={{textAlign:'center'}}>สถานะ</th>
+                    <th style={{textAlign:'right'}}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contracts.map(contract => (
+                    <tr key={contract.contract_id}>
+                      <td>{contract.contract_id}</td>
+                      <td>{contractStatusLabel(contract.status)}</td>
+                      <td style={{textAlign:'right'}}>
+                        <button className={styles.orderBoxBtn} onClick={()=>navigate(`/admin/orders/${contract.contract_id}`)}>
+                          ดูข้อมูลคำสั่งซื้อ
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
               <div className={styles.detailRow} style={{color:'#64748b'}}>ไม่พบคำสั่งซื้อที่เชื่อมโยงกับสินค้านี้</div>
-            </div>
-          )
+            )}
+          </div>
         )}
         {product.icloud_status === 'locked' && (
           <div className={styles.orderBox}>

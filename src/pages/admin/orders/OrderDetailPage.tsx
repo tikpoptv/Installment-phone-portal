@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import styles from './OrderDetailPage.module.css';
 import { getContractDetail, getContractPayments, getPdpaConsentFile } from '../../../services/contract.service';
+import { updateContractStatus } from '../../../services/contract.service';
 import type { ContractDetail, ContractPayment, Installment, Discount } from '../../../services/contract.service';
 import PaymentDetailModal from '../payments/PaymentDetailModal';
 import DiscountModal from './DiscountModal';
@@ -43,7 +44,7 @@ function getInstallmentStatusClass(status: string): string {
 
 const statusMap: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
   active: { label: 'กำลังใช้งาน', className: styles.badgeActive, icon: <MdCheckCircle color="#22c55e" size={18} style={{verticalAlign:'middle'}} /> },
-  closed: { label: 'ปิดแล้ว', className: styles.badgeClosed, icon: <MdRadioButtonUnchecked color="#64748b" size={18} style={{verticalAlign:'middle'}} /> },
+  closed: { label: 'เสร็จสิ้น', className: styles.badgeClosed, icon: <MdRadioButtonUnchecked color="#64748b" size={18} style={{verticalAlign:'middle'}} /> },
   pending: { label: 'รอดำเนินการ', className: styles.badgePending, icon: <MdPending color="#eab308" size={18} style={{verticalAlign:'middle'}} /> },
   processing: { label: 'กำลังดำเนินการ', className: styles.badgeProcessing, icon: <MdAutorenew color="#d97706" size={18} style={{verticalAlign:'middle'}} /> },
 };
@@ -52,6 +53,61 @@ const categoryMap: Record<string, { label: string; emoji: string }> = {
   rent: { label: 'ผ่อน', emoji: '📱' },
   buy: { label: 'ซื้อ', emoji: '💸' },
   cash_purchase: { label: 'ซื้อเงินสด', emoji: '💵' },
+};
+
+// Modal สำหรับแก้ไขสถานะคำสั่งซื้อ
+const statusOptions = [
+  { value: 'closed', label: 'เสร็จสิ้น' },
+  { value: 'repossessed', label: 'ยึดคืน' },
+  { value: 'returned', label: 'คืนสินค้า' },
+  { value: 'processing', label: 'กำลังดำเนินการ' },
+];
+
+interface OrderStatusEditModalProps {
+  open: boolean;
+  onClose: () => void;
+  currentStatus: string;
+  onSubmit: (status: string) => void;
+}
+
+const OrderStatusEditModal: React.FC<OrderStatusEditModalProps> = ({ open, onClose, currentStatus, onSubmit }) => {
+  const [status, setStatus] = useState(currentStatus);
+  useEffect(() => {
+    const found = statusOptions.find(opt => opt.value === currentStatus);
+    if (found) {
+      setStatus(currentStatus);
+    } else {
+      setStatus('closed'); // default เป็น "เสร็จสิ้น"
+    }
+  }, [currentStatus]);
+  if (!open) return null;
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent} style={{ maxWidth: 400, minWidth: 280 }}>
+        <div className={styles.modalHeader}>
+          <span>แก้ไขสถานะคำสั่งซื้อ</span>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="ปิด">×</button>
+        </div>
+        <div className={styles.modalBody}>
+          <label style={{ fontWeight: 600, color: '#0ea5e9', marginBottom: 10, display: 'block' }}>สถานะใหม่</label>
+          <select
+            className={styles.select}
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: '1.08rem', marginBottom: 18 }}
+          >
+            {statusOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.modalFooter}>
+          <button className={styles.downloadBtn} style={{ background: '#e0e7ef', color: '#0ea5e9' }} onClick={onClose}>ยกเลิก</button>
+          <button className={styles.downloadBtn} style={{ background: '#0ea5e9', color: '#fff' }} onClick={() => onSubmit(status)}>บันทึก</button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const OrderDetailPage: React.FC = () => {
@@ -79,6 +135,7 @@ const OrderDetailPage: React.FC = () => {
   const [selectedInstallment, setSelectedInstallment] = useState<Installment | null>(null);
   const [showDiscountDetailModal, setShowDiscountDetailModal] = useState(false);
   const [selectedDiscount, setSelectedDiscount] = useState<Discount | null>(null);
+  const [showEditStatusModal, setShowEditStatusModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -160,6 +217,21 @@ const OrderDetailPage: React.FC = () => {
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📝 ข้อมูลคำสั่งซื้อ
             <span className={`${styles.badge} ${status.className}`}>{status.icon} {status.label}</span>
+            <div className={styles.editOrderBtnWrapper}>
+              <button
+                className={styles.editOrderBtn}
+                type="button"
+                disabled={o.status === 'closed'}
+                onClick={() => setShowEditStatusModal(true)}
+              >
+                แก้ไข
+              </button>
+              {o.status === 'closed' && (
+                <div className={styles.editOrderBtnTooltip}>
+                  ไม่สามารถแก้ไขได้เมื่อสถานะเป็น "เสร็จสิ้น"
+                </div>
+              )}
+            </div>
           </div>
           <div className={styles.section}><div className={styles.label}>รหัสคำสั่งซื้อ:</div><div className={styles.value}>{o.id}</div></div>
           <div className={styles.section}><div className={styles.label}>หมวดหมู่:</div><div className={styles.value}>{category.emoji} {category.label} ({o.category})</div></div>
@@ -576,6 +648,29 @@ const OrderDetailPage: React.FC = () => {
           <div>อัปเดตล่าสุด: {formatDate(o.updated_at)}</div>
         </div>
       </div>
+      {/* Modal แก้ไขสถานะ */}
+      <OrderStatusEditModal
+        key={showEditStatusModal ? o.status : undefined}
+        open={showEditStatusModal}
+        onClose={() => setShowEditStatusModal(false)}
+        currentStatus={o.status}
+        onSubmit={async (newStatus) => {
+          if (!id) return;
+          setLoading(true);
+          try {
+            await updateContractStatus(id, newStatus);
+            // refresh contract detail
+            const data = await getContractDetail(id);
+            setContract(data);
+          } catch (error) {
+            console.error(error);
+            alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
+          } finally {
+            setLoading(false);
+            setShowEditStatusModal(false);
+          }
+        }}
+      />
     </div>
   );
 };
@@ -603,7 +698,7 @@ function PaymentAlerts({ contract, payments, remainingAmount, overdueMonths, tot
     alerts.push(`⚠️ ค้างชำระ ${overdueMonths} เดือน`);
   }
   
-  // แสดงยอดที่ต้องชำระในเดือนนี้
+  // แสดงยอดที่ต้องชำระเดือนนี้
   if (totalDueThisMonth > 0) {
     alerts.push(`📅 ยอดที่ต้องชำระเดือนนี้: ${totalDueThisMonth.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`);
   }
