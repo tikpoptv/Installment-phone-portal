@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import appStyles from '../../../App.module.css';
 import { authService } from '../../../services/auth/auth.service';
+import AccountLockedModal from '../../../components/AccountLockedModal';
 
 const AdminLogin: FC = () => {
   const navigate = useNavigate();
@@ -11,13 +12,12 @@ const AdminLogin: FC = () => {
   const [error, setError] = useState('');
   const [showValidation, setShowValidation] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [lockedModal, setLockedModal] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    // ซ่อน validation message เมื่อผู้ใช้เริ่มพิมพ์
     setShowValidation(false);
-    // ล้าง error message เมื่อผู้ใช้เริ่มพิมพ์
     setError('');
   };
 
@@ -25,21 +25,19 @@ const AdminLogin: FC = () => {
     e.preventDefault();
     setError('');
     setShowValidation(true);
-
-    // ตรวจสอบว่ากรอกข้อมูลครบหรือไม่
     if (!form.username || !form.password) {
       return;
     }
-
     setIsLoading(true);
     try {
-      console.log('Login Submit:', form); // debug log
       const response = await authService.login(form.username, form.password);
-      console.log('Login Response:', response); // debug log
-      console.log('Token:', localStorage.getItem('token')); // debug log
+      if (response.user.is_locked) {
+        setLockedModal(true);
+        authService.logout();
+        return;
+      }
       navigate('/admin', { replace: true });
     } catch (err: unknown) {
-      // robust error handling
       let msg = 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
       if (err && typeof err === 'object') {
         const errObj = err as Record<string, unknown>;
@@ -63,14 +61,12 @@ const AdminLogin: FC = () => {
           <h1 className={styles.title}>เข้าสู่ระบบผู้ดูแล</h1>
           <p className={styles.subtitle}>ยินดีต้อนรับกลับ</p>
         </div>
-
         <form onSubmit={handleSubmit} className={styles.form}>
           {error && (
             <div className={styles.error}>
               {error}
             </div>
           )}
-          
           <div className={styles.inputGroup}>
             <label htmlFor="username" className={styles.label}>ชื่อผู้ใช้</label>
             <input
@@ -99,7 +95,6 @@ const AdminLogin: FC = () => {
               </div>
             )}
           </div>
-
           <div className={styles.inputGroup}>
             <label htmlFor="password" className={styles.label}>รหัสผ่าน</label>
             <input
@@ -127,7 +122,6 @@ const AdminLogin: FC = () => {
               </div>
             )}
           </div>
-
           <button 
             type="submit" 
             className={styles.loginButton}
@@ -135,11 +129,8 @@ const AdminLogin: FC = () => {
           >
             {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
           </button>
-
-          {/* <div className={styles.registerLink}>
-            ยังไม่มีบัญชี? <a href="/register" className={styles.link}>สมัครสมาชิก</a>
-          </div> */}
         </form>
+        <AccountLockedModal open={lockedModal} onClose={() => setLockedModal(false)} />
       </div>
     </div>
   );

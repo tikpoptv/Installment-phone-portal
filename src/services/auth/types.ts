@@ -10,6 +10,7 @@ export interface LoginResponse {
     id: string;
     username: string;
     role: string;
+    is_locked?: boolean;
   };
 }
 

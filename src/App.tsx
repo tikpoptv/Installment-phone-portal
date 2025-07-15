@@ -23,6 +23,9 @@ import Settings from './pages/admin/settings/Settings';
 import OrderDetailPage from './pages/admin/orders/OrderDetailPage';
 import IcloudListPage from './pages/admin/icloud/IcloudListPage';
 import PaymentListPage from './pages/admin/payments/PaymentListPage';
+import ManageAdmin from './pages/admin/manage-admin/ManageAdmin';
+import CreateAdminSuccessPage from './pages/admin/manage-admin/CreateAdminSuccessPage';
+import NoPermissionModal from './components/NoPermissionModal';
 
 // Loading Component
 function LoadingScreen() {
@@ -252,6 +255,7 @@ function AppContent() {
                     <Route path="settings" element={<Settings />} />
                     <Route path="icloud" element={<IcloudListPage />} />
                     <Route path="payments" element={<PaymentListPage />} />
+                    <Route path="manage-admin" element={<ManageAdmin />} />
                     <Route path="*" element={<Error404 />} />
                   </Routes>
                 </main>
@@ -294,6 +298,7 @@ function AppContent() {
       )}
 
       {/* Global Error Page */}
+      <Route path="/create-admin/:token" element={<CreateAdminSuccessPage />} />
       <Route path="/error" element={<ErrorPage />} />
 
       {/* 404 Route - สำหรับ path ที่ไม่มีอยู่จริง */}
@@ -307,6 +312,7 @@ function App() {
     <Router>
       <AppContent />
       <ToastContainer position="top-right" autoClose={3000} />
+      <NoPermissionModal />
       <ErrorBackendModal />
     </Router>
   );
