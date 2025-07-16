@@ -17,6 +17,9 @@ import {
 } from 'chart.js';
 import { changeAdminPassword } from '../../../services/auth/admin-password.service';
 import { toast } from 'react-toastify';
+import { createStoreBankAccount, getStoreBankAccounts, updateStoreBankAccount } from '../../../services/store-bank-account.service';
+import type { StoreBankAccountResponse } from '../../../services/store-bank-account.service';
+import { authService } from '../../../services/auth/auth.service';
 
 ChartJS.register(
   CategoryScale,
@@ -36,15 +39,7 @@ const Settings: React.FC = () => {
   const [pingLoading, setPingLoading] = useState(true);
   const [latencyHistory, setLatencyHistory] = useState<number[]>([]);
   const [serverTime, setServerTime] = useState<string>('');
-  const [bankEditMode, setBankEditMode] = useState(false);
-  const [bankInfo, setBankInfo] = useState({
-    name: 'กสิกรไทย',
-    number: '123-4-56789-0',
-    holder: 'สมชาย ใจดี',
-    promptpay: '',
-  });
-  const [bankDraft, setBankDraft] = useState(bankInfo);
-  const [showBankConfirm, setShowBankConfirm] = useState(false);
+  // ลบ bankInfo, setBankInfo, bankDraft, setBankDraft ที่ไม่ได้ใช้แล้ว
 
   // State สำหรับฟอร์มเปลี่ยนรหัสผ่าน
   const [oldPassword, setOldPassword] = useState('');
@@ -68,25 +63,6 @@ const Settings: React.FC = () => {
       setConfirmPasswordError(null);
     }
   }, [newPassword, confirmPassword]);
-
-  const handleBankEdit = () => {
-    setBankDraft(bankInfo);
-    setBankEditMode(true);
-  };
-  const handleBankCancel = () => {
-    setBankEditMode(false);
-  };
-  const handleBankSave = () => {
-    setShowBankConfirm(true);
-  };
-  const handleBankConfirm = () => {
-    setBankInfo(bankDraft);
-    setBankEditMode(false);
-    setShowBankConfirm(false);
-  };
-  const handleBankCancelConfirm = () => {
-    setShowBankConfirm(false);
-  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +106,82 @@ const Settings: React.FC = () => {
       setPwLoading(false);
     }
   };
+
+  const [showCreateBank, setShowCreateBank] = useState(false);
+  const [createBankLoading, setCreateBankLoading] = useState(false);
+  const [createBankForm, setCreateBankForm] = useState({
+    bank_name: '',
+    account_number: '',
+    promptpay_id: '',
+    account_name: '',
+    is_default: false,
+    remark: '',
+  });
+
+  const handleCreateBank = async () => {
+    setCreateBankLoading(true);
+    try {
+      const user = authService.getUser();
+      const res = await createStoreBankAccount({
+        bank_name: createBankForm.bank_name,
+        account_number: createBankForm.account_number,
+        promptpay_id: createBankForm.promptpay_id || undefined,
+        account_name: createBankForm.account_name,
+        is_default: createBankForm.is_default,
+        remark: createBankForm.remark || undefined,
+        owner_id: user?.id,
+      });
+      toast.success('สร้างบัญชีธนาคารสำเร็จ (id: ' + res.id + ')');
+      setShowCreateBank(false);
+      setCreateBankForm({
+        bank_name: '',
+        account_number: '',
+        promptpay_id: '',
+        account_name: '',
+        is_default: false,
+        remark: '',
+      });
+    } catch (err: unknown) {
+      let msg = 'เกิดข้อผิดพลาด';
+      if (err && typeof err === 'object') {
+        if ('message' in err && typeof (err as { message?: unknown }).message === 'string') {
+          msg = (err as { message: string }).message;
+        } else if ('error' in err && typeof (err as { error?: unknown }).error === 'string') {
+          msg = (err as { error: string }).error;
+        } else {
+          msg = JSON.stringify(err);
+        }
+      }
+      toast.error(msg);
+    } finally {
+      setCreateBankLoading(false);
+    }
+  };
+
+  const [storeBankAccounts, setStoreBankAccounts] = useState<StoreBankAccountResponse[]>([]);
+  const [storeBankLoading, setStoreBankLoading] = useState(false);
+  const [editingBankId, setEditingBankId] = useState<number|null>(null);
+  const [editBankDraft, setEditBankDraft] = useState<Partial<StoreBankAccountResponse>>({});
+
+  useEffect(() => {
+    setStoreBankLoading(true);
+    getStoreBankAccounts()
+      .then(setStoreBankAccounts)
+      .catch(err => {
+        let msg = 'เกิดข้อผิดพลาด';
+        if (err && typeof err === 'object') {
+          if ('message' in err && typeof (err as { message?: unknown }).message === 'string') {
+            msg = (err as { message: string }).message;
+          } else if ('error' in err && typeof (err as { error?: unknown }).error === 'string') {
+            msg = (err as { error: string }).error;
+          } else {
+            msg = JSON.stringify(err);
+          }
+        }
+        toast.error(msg);
+      })
+      .finally(() => setStoreBankLoading(false));
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -229,6 +281,56 @@ const Settings: React.FC = () => {
     },
   };
 
+  const handleEditBank = (id: number) => {
+    if (currentUser.role !== 'superadmin') {
+      window.dispatchEvent(new CustomEvent('no-permission', {
+        detail: {
+          title: 'ไม่มีสิทธิ์เข้าถึง',
+          message: 'คุณไม่มีสิทธิ์แก้ไขบัญชีธนาคารนี้ เฉพาะผู้ใช้ที่มีสิทธิ์ Super Admin เท่านั้น'
+        }
+      }));
+      return;
+    }
+    const bank = storeBankAccounts.find(b => b.id === id);
+    if (bank) {
+      setEditingBankId(id);
+      setEditBankDraft({ ...bank });
+    }
+  };
+const handleCancelEdit = () => {
+  setEditingBankId(null);
+  setEditBankDraft({});
+};
+const handleEditBankField = (field: keyof StoreBankAccountResponse, value: unknown) => {
+  // แคสต์ type ตาม field
+  let v = value;
+  if (field === 'is_default') v = Boolean(value);
+  setEditBankDraft(draft => ({ ...draft, [field]: v }));
+};
+const handleSaveEditBank = async () => {
+  if (!editingBankId) return;
+  try {
+    await updateStoreBankAccount(editingBankId, {
+      bank_name: editBankDraft.bank_name!,
+      account_number: editBankDraft.account_number!,
+      promptpay_id: editBankDraft.promptpay_id,
+      account_name: editBankDraft.account_name!,
+      owner_id: editBankDraft.owner_id ?? undefined,
+      is_default: !!editBankDraft.is_default,
+      remark: editBankDraft.remark,
+    });
+    toast.success('บันทึกข้อมูลบัญชีสำเร็จ');
+    setEditingBankId(null);
+    setEditBankDraft({});
+    // รีเฟรชข้อมูลบัญชีธนาคาร
+    getStoreBankAccounts().then(setStoreBankAccounts);
+  } catch {
+    toast.error('บันทึกข้อมูลบัญชีไม่สำเร็จ');
+  }
+};
+
+  const currentUser = authService.getUser() as { id?: string; role?: string } || {};
+
   return (
     <div className={styles.settingsContainer}>
       <Navbar />
@@ -286,46 +388,155 @@ const Settings: React.FC = () => {
             <Line options={chartOptions} data={chartData} height={220} />
           </div>
         </section>
+        {/* แทนที่ section ข้อมูลธนาคารเดิมด้วยบัญชีธนาคารร้านค้าทั้งหมด */}
         <section className={styles.bankSection}>
-          <h2>ข้อมูลธนาคาร</h2>
-          <div className={styles.bankInfoBox}>
-            {!bankEditMode ? (
-              <>
-                <div style={{marginBottom:8}}><b>ธนาคาร:</b> {bankInfo.name}</div>
-                <div style={{marginBottom:8}}><b>เลขบัญชี:</b> {bankInfo.number}</div>
-                <div style={{marginBottom:8}}><b>เลขพร้อมเพย์:</b> {bankInfo.promptpay || '-'}</div>
-                <div><b>ชื่อบัญชี:</b> {bankInfo.holder}</div>
-                <button type="button" className={styles.bankEditBtn} onClick={handleBankEdit}>แก้ไข</button>
-              </>
-            ) : (
-              <>
-                <div style={{marginBottom:8}}>
-                  <b>ธนาคาร:</b> <input type="text" value={bankDraft.name} onChange={e=>setBankDraft(d=>({...d,name:e.target.value}))} className={styles.bankInput} />
+          <h2>บัญชีธนาคารร้านค้า</h2>
+          {storeBankLoading ? (
+            <div style={{color:'#0ea5e9',fontWeight:600}}>กำลังโหลด...</div>
+          ) : storeBankAccounts.length === 0 ? (
+            <div style={{color:'#64748b'}}>ไม่พบบัญชีธนาคารร้านค้า</div>
+          ) : (
+            <div className={styles.bankGrid}>
+              {storeBankAccounts.map(acc => (
+                <div key={acc.id} className={styles.bankCard + (acc.is_default ? ' ' + styles.default : '')}>
+                  {editingBankId === acc.id ? (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.editCloseBtn}
+                        onClick={handleCancelEdit}
+                        aria-label="ยกเลิก"
+                        style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 28, color: '#94a3b8', cursor: 'pointer', zIndex: 2 }}
+                      >
+                        &#10005;
+                      </button>
+                      <div style={{ marginBottom: 8 }}>
+                        <span className={styles.bankLabel}>ธนาคาร:</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <input
+                            type="text"
+                            className={styles.bankInput}
+                            value={editBankDraft.bank_name || ''}
+                            onChange={e => handleEditBankField('bank_name', e.target.value)}
+                            disabled={currentUser.role !== 'superadmin'}
+                          />
+                        </div>
+                      </div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>เลขบัญชี:</span> <input type="text" className={styles.bankInput} value={editBankDraft.account_number||''} onChange={e=>handleEditBankField('account_number',e.target.value)} disabled={currentUser.role !== 'superadmin'} /></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>เลขพร้อมเพย์:</span> <input type="text" className={styles.bankInput} value={editBankDraft.promptpay_id||''} onChange={e=>handleEditBankField('promptpay_id',e.target.value)} disabled={currentUser.role !== 'superadmin'} /></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>ชื่อบัญชี:</span> <input type="text" className={styles.bankInput} value={editBankDraft.account_name||''} onChange={e=>handleEditBankField('account_name',e.target.value)} disabled={currentUser.role !== 'superadmin'} /></div>
+                      <div style={{marginBottom:8}}>
+                        <span className={styles.bankLabel}>owner_id:</span>
+                        <input
+                          type="text"
+                          className={styles.bankInput}
+                          value={editBankDraft.owner_id||''}
+                          readOnly
+                          style={{ background: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' }}
+                        />
+                      </div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>หมายเหตุ:</span> <input type="text" className={styles.bankInput} value={editBankDraft.remark||''} onChange={e=>handleEditBankField('remark',e.target.value)} disabled={currentUser.role !== 'superadmin'} /></div>
+                      <div style={{marginBottom:8,display:'flex',alignItems:'center',gap:8}}>
+                        <input type="checkbox" checked={!!editBankDraft.is_default} onChange={e=>handleEditBankField('is_default',e.target.checked)} disabled={currentUser.role !== 'superadmin'} />
+                        <span className={styles.bankLabel}>บัญชีหลัก</span>
+                        {!!editBankDraft.is_default && <span className={styles.bankBadgeInline}>บัญชีหลัก</span>}
+                      </div>
+                      {currentUser.role === 'superadmin' && (
+                        <div className={styles.editActions}>
+                          <button type="button" className={styles.editSaveBtn} onClick={handleSaveEditBank}>บันทึก</button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div style={{marginBottom:8, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                        <div>
+                          <span className={styles.bankLabel}>ธนาคาร:</span>
+                          <span className={styles.bankValue}>{acc.bank_name}</span>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          {acc.is_default && <span className={styles.bankBadge}>บัญชีหลัก</span>}
+                          {currentUser.role === 'superadmin' && (
+                            editingBankId === acc.id ? (
+                              <button type="button" className={styles.editCancelBtn} onClick={handleCancelEdit}>ยกเลิก</button>
+                            ) : (
+                              <button type="button" className={styles.bankEditBtn} onClick={()=>handleEditBank(acc.id)}>
+                                แก้ไข
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>เลขบัญชี:</span> <span className={styles.bankValue}>{acc.account_number}</span></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>เลขพร้อมเพย์:</span> <span className={styles.bankValue}>{acc.promptpay_id || '-'}</span></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>ชื่อบัญชี:</span> <span className={styles.bankValue}>{acc.account_name}</span></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>owner_id:</span> <span className={styles.bankValue}>{acc.owner_id || '-'}</span></div>
+                      <div style={{marginBottom:8}}><span className={styles.bankLabel}>หมายเหตุ:</span> <span className={styles.bankValue}>{acc.remark || '-'}</span></div>
+                      <div style={{fontSize:'0.92rem',color:'#64748b'}}>สร้างเมื่อ: {new Date(acc.created_at).toLocaleString('th-TH')}</div>
+                    </>
+                  )}
                 </div>
-                <div style={{marginBottom:8}}>
-                  <b>เลขบัญชี:</b> <input type="text" value={bankDraft.number} onChange={e=>setBankDraft(d=>({...d,number:e.target.value}))} className={styles.bankInput} />
-                </div>
-                <div style={{marginBottom:8}}>
-                  <b>เลขพร้อมเพย์:</b> <input type="text" value={bankDraft.promptpay} onChange={e=>setBankDraft(d=>({...d,promptpay:e.target.value}))} className={styles.bankInput} />
-                </div>
-                <div style={{marginBottom:16}}>
-                  <b>ชื่อบัญชี:</b> <input type="text" value={bankDraft.holder} onChange={e=>setBankDraft(d=>({...d,holder:e.target.value}))} className={styles.bankInput} />
-                </div>
-                <div style={{display:'flex',gap:8}}>
-                  <button type="button" className={styles.bankSaveBtn} onClick={handleBankSave}>บันทึก</button>
-                  <button type="button" className={styles.bankCancelBtn} onClick={handleBankCancel}>ยกเลิก</button>
-                </div>
-              </>
-            )}
-          </div>
-          {showBankConfirm && (
-            <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.18)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
-              <div style={{background:'#fff',borderRadius:12,padding:'32px 28px',boxShadow:'0 2px 24px #0ea5e955',minWidth:280,maxWidth:360}}>
-                <div style={{fontSize:'1.1rem',fontWeight:600,marginBottom:18,color:'#0ea5e9'}}>ยืนยันการบันทึกข้อมูลธนาคาร</div>
-                <div style={{marginBottom:24,color:'#334155'}}>คุณต้องการบันทึกข้อมูลธนาคารนี้ใช่หรือไม่?</div>
-                <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
-                  <button type="button" className={styles.bankSaveBtn} onClick={handleBankConfirm}>ตกลง</button>
-                  <button type="button" className={styles.bankCancelBtn} onClick={handleBankCancelConfirm}>ยกเลิก</button>
+              ))}
+            </div>
+          )}
+        </section>
+        {/* ปุ่มชั่วคราวสำหรับสร้างบัญชีธนาคารร้านค้า (Superadmin) */}
+        <section className={styles.section}>
+          <h2>Dev: สร้างบัญชีธนาคารร้านค้า (Superadmin)</h2>
+          {!showCreateBank ? (
+            <button
+              type="button"
+              style={{background:'#0ea5e9',color:'#fff',borderRadius:8,padding:'8px 24px',fontWeight:700,boxShadow:'0 1px 8px #bae6fd33',marginBottom:8}}
+              onClick={() => {
+                if (currentUser.role !== 'superadmin') {
+                  window.dispatchEvent(new CustomEvent('no-permission', {
+                    detail: {
+                      title: 'ไม่มีสิทธิ์เข้าถึง',
+                      message: 'คุณไม่มีสิทธิ์สร้างบัญชีธนาคารนี้ เฉพาะผู้ใช้ที่มีสิทธิ์ Super Admin เท่านั้น'
+                    }
+                  }));
+                  return;
+                }
+                setShowCreateBank(true);
+              }}
+            >
+              + สร้างบัญชีธนาคารร้านค้า
+            </button>
+          ) : (
+            <div style={{background:'#f8fafc',borderRadius:10,padding:18,maxWidth:420,boxShadow:'0 1px 8px #bae6fd33',marginBottom:8}}>
+              <div className={`${styles.flexCol} ${styles.gap10}`}>
+                <input type="text" placeholder="ชื่อธนาคาร" value={createBankForm.bank_name} onChange={e=>setCreateBankForm(f=>({...f,bank_name:e.target.value}))} className={styles.bankCreateInput} />
+                <input type="text" placeholder="เลขที่บัญชี" value={createBankForm.account_number} onChange={e=>setCreateBankForm(f=>({...f,account_number:e.target.value}))} className={styles.bankCreateInput} />
+                <input type="text" placeholder="เลขพร้อมเพย์ (ถ้ามี)" value={createBankForm.promptpay_id} onChange={e=>setCreateBankForm(f=>({...f,promptpay_id:e.target.value}))} className={styles.bankCreateInput} />
+                <input type="text" placeholder="ชื่อบัญชี" value={createBankForm.account_name} onChange={e=>setCreateBankForm(f=>({...f,account_name:e.target.value}))} className={styles.bankCreateInput} />
+                <label className={styles.bankCreateLabel}>
+                  <input type="checkbox" checked={createBankForm.is_default} onChange={e=>setCreateBankForm(f=>({...f,is_default:e.target.checked}))} />
+                  เป็นบัญชีหลัก (is_default)
+                </label>
+                <input type="text" placeholder="หมายเหตุ (ถ้ามี)" value={createBankForm.remark} onChange={e=>setCreateBankForm(f=>({...f,remark:e.target.value}))} className={styles.bankCreateInput} />
+                <div className={`${styles.bankCreateActions}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (currentUser.role !== 'superadmin') {
+                        window.dispatchEvent(new CustomEvent('no-permission', {
+                          detail: {
+                            title: 'ไม่มีสิทธิ์เข้าถึง',
+                            message: 'คุณไม่มีสิทธิ์สร้างบัญชีธนาคารนี้ เฉพาะผู้ใช้ที่มีสิทธิ์ Super Admin เท่านั้น'
+                          }
+                        }));
+                        return;
+                      }
+                      handleCreateBank();
+                    }}
+                    disabled={createBankLoading || !createBankForm.bank_name || !createBankForm.account_number || !createBankForm.account_name}
+                    className={styles.bankCreateBtn}
+                  >
+                    {createBankLoading ? 'กำลังสร้าง...' : 'สร้าง'}
+                  </button>
+                  <button type="button" onClick={()=>setShowCreateBank(false)} className={styles.bankCreateCancelBtn}>
+                    ยกเลิก
+                  </button>
                 </div>
               </div>
             </div>
