@@ -41,6 +41,7 @@ const Settings: React.FC = () => {
     name: 'กสิกรไทย',
     number: '123-4-56789-0',
     holder: 'สมชาย ใจดี',
+    promptpay: '',
   });
   const [bankDraft, setBankDraft] = useState(bankInfo);
   const [showBankConfirm, setShowBankConfirm] = useState(false);
@@ -292,6 +293,7 @@ const Settings: React.FC = () => {
               <>
                 <div style={{marginBottom:8}}><b>ธนาคาร:</b> {bankInfo.name}</div>
                 <div style={{marginBottom:8}}><b>เลขบัญชี:</b> {bankInfo.number}</div>
+                <div style={{marginBottom:8}}><b>เลขพร้อมเพย์:</b> {bankInfo.promptpay || '-'}</div>
                 <div><b>ชื่อบัญชี:</b> {bankInfo.holder}</div>
                 <button type="button" className={styles.bankEditBtn} onClick={handleBankEdit}>แก้ไข</button>
               </>
@@ -302,6 +304,9 @@ const Settings: React.FC = () => {
                 </div>
                 <div style={{marginBottom:8}}>
                   <b>เลขบัญชี:</b> <input type="text" value={bankDraft.number} onChange={e=>setBankDraft(d=>({...d,number:e.target.value}))} className={styles.bankInput} />
+                </div>
+                <div style={{marginBottom:8}}>
+                  <b>เลขพร้อมเพย์:</b> <input type="text" value={bankDraft.promptpay} onChange={e=>setBankDraft(d=>({...d,promptpay:e.target.value}))} className={styles.bankInput} />
                 </div>
                 <div style={{marginBottom:16}}>
                   <b>ชื่อบัญชี:</b> <input type="text" value={bankDraft.holder} onChange={e=>setBankDraft(d=>({...d,holder:e.target.value}))} className={styles.bankInput} />
