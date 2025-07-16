@@ -48,4 +48,9 @@ export async function updateStoreBankAccount(
 ): Promise<{ success: boolean }> {
   const res = await apiClient.put<{ success: boolean }>(`/api/store-bank-accounts/${id}`, payload);
   return res.data;
+}
+
+export async function deleteStoreBankAccount(id: number | string): Promise<{ success: boolean }> {
+  const res = await apiClient.delete<{ success: boolean }>(`/api/store-bank-accounts/${id}`);
+  return res.data;
 } 

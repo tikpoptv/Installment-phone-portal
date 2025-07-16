@@ -17,9 +17,10 @@ import {
 } from 'chart.js';
 import { changeAdminPassword } from '../../../services/auth/admin-password.service';
 import { toast } from 'react-toastify';
-import { createStoreBankAccount, getStoreBankAccounts, updateStoreBankAccount } from '../../../services/store-bank-account.service';
+import { createStoreBankAccount, getStoreBankAccounts, updateStoreBankAccount, deleteStoreBankAccount } from '../../../services/store-bank-account.service';
 import type { StoreBankAccountResponse } from '../../../services/store-bank-account.service';
 import { authService } from '../../../services/auth/auth.service';
+import BankDeleteConfirmModal from './BankDeleteConfirmModal';
 
 ChartJS.register(
   CategoryScale,
@@ -162,6 +163,8 @@ const Settings: React.FC = () => {
   const [storeBankLoading, setStoreBankLoading] = useState(false);
   const [editingBankId, setEditingBankId] = useState<number|null>(null);
   const [editBankDraft, setEditBankDraft] = useState<Partial<StoreBankAccountResponse>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bankToDelete, setBankToDelete] = useState<StoreBankAccountResponse | null>(null);
 
   useEffect(() => {
     setStoreBankLoading(true);
@@ -444,6 +447,11 @@ const handleSaveEditBank = async () => {
                       {currentUser.role === 'superadmin' && (
                         <div className={styles.editActions}>
                           <button type="button" className={styles.editSaveBtn} onClick={handleSaveEditBank}>บันทึก</button>
+                          <button type="button" className={styles.editDeleteBtn} onClick={() => {
+                            const bank = storeBankAccounts.find(b => b.id === editingBankId);
+                            setBankToDelete(bank || null);
+                            setShowDeleteModal(true);
+                          }}>ลบ</button>
                         </div>
                       )}
                     </>
@@ -543,6 +551,25 @@ const handleSaveEditBank = async () => {
           )}
         </section>
       </div>
+      <BankDeleteConfirmModal
+        open={showDeleteModal}
+        bank={bankToDelete}
+        onClose={() => setShowDeleteModal(false)}
+        onDeleteConfirm={async () => {
+          if (!bankToDelete) return;
+          try {
+            await deleteStoreBankAccount(bankToDelete.id);
+            toast.success('ลบบัญชีธนาคารสำเร็จ');
+            setEditingBankId(null);
+            setEditBankDraft({});
+            setShowDeleteModal(false);
+            setBankToDelete(null);
+            getStoreBankAccounts().then(setStoreBankAccounts);
+          } catch {
+            toast.error('ลบบัญชีธนาคารไม่สำเร็จ');
+          }
+        }}
+      />
     </div>
   );
 };
