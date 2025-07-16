@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import styles from './PaymentModal.module.css';
 import type { UserContractPaymentsResponse } from '../../../services/user/contract.service';
 import { getUserContractPayments } from '../../../services/user/contract.service';
-import { createUserPayment, getUserPaymentProofFile, type CreateUserPaymentPayload } from '../../../services/payment.service';
+import { createUserPayment, getUserPaymentProofFile, type CreateUserPaymentPayload, getUserStoreBankAccounts, type UserStoreBankAccountsResponse } from '../../../services/payment.service';
 import { toast } from 'react-toastify';
+import QRCode from 'react-qr-code';
+import generatePayload from 'promptpay-qr';
 
 type PaymentModalProps = {
   contractId: string;
@@ -23,6 +25,13 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
   const [showProofPreviewModal, setShowProofPreviewModal] = useState(false);
   const [selectedPaymentImage, setSelectedPaymentImage] = useState<string | null>(null);
   const [showPaymentImageModal, setShowPaymentImageModal] = useState(false);
+  const [storeBankAccounts, setStoreBankAccounts] = useState<UserStoreBankAccountsResponse | null>(null);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [showBankAccounts, setShowBankAccounts] = useState(true);
+  const [showPromptpayAccounts, setShowPromptpayAccounts] = useState(false);
+  const [showPromptpayQR, setShowPromptpayQR] = useState<null | string>(null); // promptpay id
+  // เพิ่ม state
+  const [currentPromptpayIndex, setCurrentPromptpayIndex] = useState(0);
 
   useEffect(() => {
     if (open && contractId) {
@@ -47,6 +56,16 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
       return () => {
         document.body.style.overflow = originalOverflow;
       };
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      setBankLoading(true);
+      getUserStoreBankAccounts()
+        .then(data => setStoreBankAccounts(data))
+        .catch(() => setStoreBankAccounts(null))
+        .finally(() => setBankLoading(false));
     }
   }, [open]);
 
@@ -178,6 +197,11 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
     }
   };
 
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('คัดลอกเลขบัญชีแล้ว!');
+  };
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
@@ -193,6 +217,112 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
             <div style={{ color: '#7c3aed', fontWeight: 600 }}>
               <strong>โปรโมชั่นปิดยอด:</strong> แจ้งชำระปิดยอด
             </div>
+          )}
+        </div>
+        <div className={styles.bankSection} style={{ marginBottom: 24 }}>
+          <div className={styles.bankSectionTitle}>บัญชีสำหรับโอนเงิน</div>
+          {bankLoading ? (
+            <div style={{ color: '#0ea5e9', fontWeight: 600 }}>กำลังโหลดบัญชีธนาคาร...</div>
+          ) : storeBankAccounts ? (
+            <div className={styles.bankCategoryWrapper}>
+              <div className={styles.bankTabRow}>
+                {storeBankAccounts.bank_accounts.length > 0 && (
+                  <button
+                    type="button"
+                    className={showBankAccounts ? styles.bankTabActive : styles.bankTab}
+                    onClick={() => { setShowBankAccounts(true); setShowPromptpayAccounts(false); }}
+                  >
+                    โอนผ่านบัญชีธนาคาร
+                  </button>
+                )}
+                {storeBankAccounts.promptpay_accounts.length > 0 && (
+                  <button
+                    type="button"
+                    className={showPromptpayAccounts ? styles.bankTabActive : styles.bankTab}
+                    onClick={() => { setShowBankAccounts(false); setShowPromptpayAccounts(true); }}
+                  >
+                    โอนผ่านพร้อมเพย์
+                  </button>
+                )}
+              </div>
+              {showBankAccounts && storeBankAccounts.bank_accounts.length > 0 && (
+                <div className={styles.bankCategory}>
+                  <div className={styles.bankCategoryTitle}>โอนผ่านบัญชีธนาคาร</div>
+                  <div className={styles.accountList}>
+                    {storeBankAccounts.bank_accounts.map((acc, idx) => (
+                      <div key={idx} className={styles.accountCard} style={{ alignItems: 'flex-start', gap: 16 }}>
+                        {/* ลบ div จุดกลมสีเขียวออก */}
+                        <div>
+                          {/* ชื่อธนาคารสีฟ้า */}
+                          <div style={{ color: '#0ea5e9', fontWeight: 600, fontSize: '1.05rem', marginBottom: 2 }}>{acc.bank_name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                            <div style={{ fontWeight: 700, fontSize: '1.15rem', letterSpacing: 2, color: '#222' }}>{acc.account_number.replace(/(\d{3})(\d{1})(\d{6})/, '$1-$2-$3')}</div>
+                            <button
+                              type="button"
+                              style={{ background: '#e0f2fe', border: 'none', borderRadius: 6, padding: '2px 10px', marginLeft: 2, cursor: 'pointer' }}
+                              onClick={() => handleCopy(acc.account_number)}
+                              title="คัดลอกเลขบัญชี"
+                            >
+                              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="6" y="6" width="9" height="9" rx="2" stroke="#0ea5e9" strokeWidth="1.5"/>
+                                <rect x="3" y="3" width="9" height="9" rx="2" stroke="#0ea5e9" strokeWidth="1.5" fill="#e0f2fe"/>
+                              </svg>
+                            </button>
+                          </div>
+                          <div style={{ color: '#64748b', fontWeight: 500, fontSize: '1.01rem' }}>{acc.account_name}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {showPromptpayAccounts && storeBankAccounts.promptpay_accounts.length > 0 && (
+                <div className={styles.bankCategory}>
+                  <div className={styles.bankCategoryTitle}>โอนผ่านพร้อมเพย์</div>
+                  <div className={styles.promptpayCenter}>
+                    {(() => {
+                      const accounts = storeBankAccounts.promptpay_accounts;
+                      const acc = accounts[currentPromptpayIndex];
+                      let qrOptions = {};
+                      if (hasEarlyClosureDiscount && paymentData?.remaining_balance) {
+                        qrOptions = { amount: paymentData.remaining_balance };
+                      }
+                      return (
+                        <>
+                          <div className={styles.bankName} style={{ marginBottom: 12 }}>PromptPay</div>
+                          <div className={styles.promptpayQR}>
+                            <QRCode value={generatePayload(acc.promptpay_id, qrOptions)} size={200} />
+                          </div>
+                          <div className={styles.promptpayOwner}>{acc.account_name}</div>
+                          {accounts.length > 1 && (
+                            <div className={styles.promptpayNav}>
+                              <button
+                                type="button"
+                                onClick={() => setCurrentPromptpayIndex(i => (i - 1 + accounts.length) % accounts.length)}
+                                disabled={accounts.length <= 1}
+                                className={styles.promptpayNavBtn}
+                              >ย้อนกลับ</button>
+                              <span className={styles.promptpayNavIndex}>{currentPromptpayIndex + 1} / {accounts.length}</span>
+                              <button
+                                type="button"
+                                onClick={() => setCurrentPromptpayIndex(i => (i + 1) % accounts.length)}
+                                disabled={accounts.length <= 1}
+                                className={styles.promptpayNavBtn}
+                              >ถัดไป</button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+              {storeBankAccounts.bank_accounts.length === 0 && storeBankAccounts.promptpay_accounts.length === 0 && (
+                <div style={{ color: '#ef4444' }}>ไม่พบบัญชีธนาคารร้านค้า</div>
+              )}
+            </div>
+          ) : (
+            <div style={{ color: '#ef4444' }}>ไม่สามารถโหลดบัญชีธนาคารได้</div>
           )}
         </div>
         <form onSubmit={handleSubmit}>
@@ -373,6 +503,22 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
             ×
           </button>
           <img src={selectedPaymentImage} alt="Payment Proof" className={styles.previewImage} />
+        </div>
+      )}
+      {showPromptpayQR && (
+        <div className={styles.previewModal}>
+          <button 
+            onClick={() => setShowPromptpayQR(null)} 
+            className={styles.closePreviewBtn}
+            aria-label="ปิด"
+          >
+            ×
+          </button>
+          <div style={{ background: '#fff', padding: 24, borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.18)' }}>
+            <div style={{ textAlign: 'center', marginBottom: 12, fontWeight: 600, color: '#0ea5e9' }}>QR พร้อมเพย์</div>
+            <QRCode value={generatePayload(showPromptpayQR, {})} size={220} />
+            <div style={{ marginTop: 12, textAlign: 'center', color: '#64748b', fontSize: 14 }}>{showPromptpayQR}</div>
+          </div>
         </div>
       )}
     </div>

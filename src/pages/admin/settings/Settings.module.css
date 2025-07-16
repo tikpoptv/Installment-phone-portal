@@ -8,7 +8,7 @@
   backdrop-filter: blur(2.5px);
 }
 
-h1 {
+.title {
   font-size: 2rem;
   font-weight: 800;
   color: #0ea5e9;
@@ -297,7 +297,7 @@ h1 {
     max-width: 99vw;
     padding: 1.2rem 2vw;
   }
-  h1 {
+  .title {
     font-size: 1.22rem;
     text-align: center;
   }

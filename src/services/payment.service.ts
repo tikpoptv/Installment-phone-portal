@@ -40,6 +40,18 @@ export interface CreateUserPaymentPayload {
   proof_file?: File | null;
 }
 
+export interface UserStoreBankAccountsResponse {
+  bank_accounts: Array<{
+    bank_name: string;
+    account_number: string;
+    account_name: string;
+  }>;
+  promptpay_accounts: Array<{
+    promptpay_id: string;
+    account_name: string;
+  }>;
+}
+
 export async function getAllPayments(): Promise<Payment[]> {
   const res = await apiClient.get<Payment[]>('/api/payment');
   return res.data;
@@ -98,4 +110,9 @@ export async function getUserPaymentProofFile(paymentId: string, filename: strin
 
 export async function verifyPayment(paymentId: string, status: 'approved' | 'rejected', admin_id: string): Promise<void> {
   await apiClient.post(`/api/payment/${paymentId}/verify`, { status, admin_id });
+}
+
+export async function getUserStoreBankAccounts(): Promise<UserStoreBankAccountsResponse> {
+  const res = await apiClient.get<UserStoreBankAccountsResponse>('/api/user/store-bank-accounts');
+  return res.data;
 } 

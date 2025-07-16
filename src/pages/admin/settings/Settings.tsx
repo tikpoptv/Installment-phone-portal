@@ -335,7 +335,7 @@ const handleSaveEditBank = async () => {
     <div className={styles.settingsContainer}>
       <Navbar />
       <div className={styles.content}>
-        <h1>ตั้งค่าแอดมิน</h1>
+        <h1 className={styles.title}>ตั้งค่าแอดมิน</h1>
         <section className={styles.section}>
           <h2>เปลี่ยนรหัสผ่าน</h2>
           <form className={styles.form} onSubmit={handleChangePassword} autoComplete="off">
