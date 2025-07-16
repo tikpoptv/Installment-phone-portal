@@ -11,11 +11,15 @@ import PaymentStatus from './components/PaymentStatus/PaymentStatus';
 import TodoList from './components/TodoList/TodoList';
 import Notifications from './components/Notifications/Notifications';
 import VerifyCustomerModal from './components/VerifyCustomerModal/VerifyCustomerModal';
+import ProductCreateModal from '../products/ProductCreateModal';
+import OrderCreateModal from '../orders/OrderCreateModal';
 
 const Dashboard: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string>('');
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showCreateProductModal, setShowCreateProductModal] = useState(false);
+  const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
 
   useEffect(() => {
     // Simulate loading data
@@ -63,7 +67,11 @@ const Dashboard: FC = () => {
         </div>
 
         <div className={styles.topSection}>
-          <QuickActions onVerifyClick={() => setShowVerifyModal(true)} />
+          <QuickActions
+            onVerifyClick={() => setShowVerifyModal(true)}
+            onAddProductClick={() => setShowCreateProductModal(true)}
+            onCreateOrderClick={() => setShowCreateOrderModal(true)}
+          />
           <StatsCards />
         </div>
 
@@ -82,6 +90,8 @@ const Dashboard: FC = () => {
       {showVerifyModal && (
         <VerifyCustomerModal open={showVerifyModal} onClose={() => setShowVerifyModal(false)} />
       )}
+      <ProductCreateModal open={showCreateProductModal} onClose={() => setShowCreateProductModal(false)} />
+      <OrderCreateModal open={showCreateOrderModal} onClose={() => setShowCreateOrderModal(false)} />
     </div>
   );
 };

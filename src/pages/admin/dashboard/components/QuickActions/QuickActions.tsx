@@ -14,19 +14,29 @@ const quickActions: QuickAction[] = [
   { id: 4, label: 'รายงาน', icon: '📊' },
 ];
 
-const QuickActions: FC<{ onVerifyClick?: () => void }> = ({ onVerifyClick }) => {
+const QuickActions: FC<{
+  onVerifyClick?: () => void;
+  onAddProductClick?: () => void;
+  onCreateOrderClick?: () => void;
+}> = ({ onVerifyClick, onAddProductClick, onCreateOrderClick }) => {
   return (
     <div className={styles.quickActions}>
-      {quickActions.map((action) => (
-        <button
-          key={action.id}
-          className={styles.quickActionButton}
-          onClick={action.label === 'ยืนยันตัวตนลูกค้า' && onVerifyClick ? onVerifyClick : undefined}
-        >
-          <span className={styles.quickActionIcon}>{action.icon}</span>
-          <span className={styles.quickActionLabel}>{action.label}</span>
-        </button>
-      ))}
+      {quickActions.map((action) => {
+        let onClick;
+        if (action.label === 'ยืนยันตัวตนลูกค้า' && onVerifyClick) onClick = onVerifyClick;
+        else if (action.label === 'เพิ่มสินค้า' && onAddProductClick) onClick = onAddProductClick;
+        else if (action.label === 'สร้างคำสั่งซื้อ' && onCreateOrderClick) onClick = onCreateOrderClick;
+        return (
+          <button
+            key={action.id}
+            className={styles.quickActionButton}
+            onClick={onClick}
+          >
+            <span className={styles.quickActionIcon}>{action.icon}</span>
+            <span className={styles.quickActionLabel}>{action.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };
