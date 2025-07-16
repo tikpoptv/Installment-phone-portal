@@ -79,4 +79,11 @@ export async function lockAdmin(adminId: string, isLocked: boolean): Promise<{ i
     { is_locked: isLocked }
   );
   return res.data;
+}
+
+export async function deleteAdmin(adminId: string): Promise<{ success: boolean; id: string }> {
+  const res = await apiClient.post<{ success: boolean; id: string }>(
+    `/api/admins/${adminId}/delete`
+  );
+  return res.data;
 } 

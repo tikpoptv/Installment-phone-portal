@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './ManageAdmin.module.css';
-import { getAdmins, registerAdmin, type RegisterAdminResponse, updateAdmin, lockAdmin } from '../../../services/admin.service';
+import { getAdmins, registerAdmin, type RegisterAdminResponse, updateAdmin, lockAdmin, deleteAdmin } from '../../../services/admin.service';
 import type { Admin } from '../../../services/admin.service';
 import CreateAdminModal from './CreateAdminModal';
 import CreateAdminSuccessModal from './CreateAdminSuccessModal';
@@ -9,6 +9,7 @@ import { authService } from '../../../services/auth/auth.service';
 import EditAdminModal from './EditAdminModal';
 import LockAdminModal from './LockAdminModal';
 import MobileAccessModal from '../../../components/MobileAccessModal';
+import DeleteAdminModal from './DeleteAdminModal';
 
 function formatDate(dt: string) {
   return new Date(dt).toLocaleString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -49,6 +50,13 @@ const ManageAdmin: React.FC = () => {
   } | null>(null);
   const [lockSubmitting, setLockSubmitting] = useState(false);
   const [lockError, setLockError] = useState<string | undefined>(undefined);
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    adminId: string;
+    username: string;
+  } | null>(null);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | undefined>(undefined);
   // ดึง user ปัจจุบันจาก authService
   const currentUser = authService.getUser() as { id?: string; role?: string } || {};
   const [showMobileModal, setShowMobileModal] = useState(false);
@@ -176,6 +184,11 @@ const ManageAdmin: React.FC = () => {
                       <button
                         className={styles.deleteBtn}
                         disabled={admin.is_deleted || admin.is_locked}
+                        onClick={() => setDeleteModal({
+                          open: true,
+                          adminId: admin.id,
+                          username: admin.username
+                        })}
                       >ลบ</button>
                     </>
                   )}
@@ -256,6 +269,33 @@ const ManageAdmin: React.FC = () => {
             setLockError(msg);
           } finally {
             setLockSubmitting(false);
+          }
+        }}
+      />
+      <DeleteAdminModal
+        open={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        username={deleteModal?.username || ''}
+        isSubmitting={deleteSubmitting}
+        errorMessage={deleteError}
+        onConfirm={async () => {
+          if (!deleteModal) return;
+          setDeleteSubmitting(true);
+          setDeleteError(undefined);
+          try {
+            await deleteAdmin(deleteModal.adminId);
+            setDeleteModal(null);
+            const admins = await getAdmins();
+            setAdmins(admins);
+            toast.success('ลบแอดมินสำเร็จ!');
+          } catch (err: unknown) {
+            let msg = 'เกิดข้อผิดพลาด';
+            if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+              msg = (err as { message: string }).message;
+            }
+            setDeleteError(msg);
+          } finally {
+            setDeleteSubmitting(false);
           }
         }}
       />
