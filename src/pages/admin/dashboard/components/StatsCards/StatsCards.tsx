@@ -7,6 +7,17 @@ import { formatDateThai, formatDateShort } from '../../../../../utils/date';
 import MobileAccessModal from '../../../../../components/MobileAccessModal';
 import PaymentDetailModal from '../../../payments/PaymentDetailModal';
 
+// เพิ่มฟังก์ชันแปลงสถานะเป็นชื่อไทยไว้ด้านบนสุด
+function orderStatusLabel(status: string) {
+  if (status === 'active') return 'กำลังใช้งาน';
+  if (status === 'closed') return 'เสร็จสิ้น';
+  if (status === 'pending') return 'รอดำเนินการ';
+  if (status === 'repossessed') return 'ยึดคืน';
+  if (status === 'returned') return 'คืนสินค้า';
+  if (status === 'processing') return 'กำลังดำเนินการ';
+  return status;
+}
+
 const StatsCards: FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -276,7 +287,7 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
                     </td>
                     <td>{d.user_name}</td>
                     <td>{d.total_price.toLocaleString('th-TH')}</td>
-                    <td>{d.status}</td>
+                    <td>{orderStatusLabel(d.status)}</td>
                   </tr>
                 ))}
               </tbody>
