@@ -5,6 +5,7 @@ import styles from './StatsCards.module.css';
 import { getDashboardSummary, type DashboardSummary } from '../../../../../services/dashboard.service';
 import { formatDateThai, formatDateShort } from '../../../../../utils/date';
 import MobileAccessModal from '../../../../../components/MobileAccessModal';
+import PaymentDetailModal from '../../../payments/PaymentDetailModal';
 
 const StatsCards: FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -12,6 +13,7 @@ const StatsCards: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openDetail, setOpenDetail] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
   const [showMobileWarn, setShowMobileWarn] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
+  const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -160,8 +162,10 @@ const StatsCards: FC = () => {
           type={openDetail}
           summary={summary}
           onClose={() => setOpenDetail(null)}
+          onOpenPaymentDetail={setOpenPaymentId}
         />
       )}
+      <PaymentDetailModal open={!!openPaymentId} paymentId={openPaymentId} onClose={() => setOpenPaymentId(null)} />
     </>
   );
 };
@@ -171,8 +175,9 @@ type ModalProps = {
   type: 'sales' | 'outstanding' | 'orders' | 'customers';
   summary: DashboardSummary;
   onClose: () => void;
+  onOpenPaymentDetail?: (paymentId: string) => void;
 };
-const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
+const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPaymentDetail }) => {
   let title = '';
   if (type === 'sales') title = 'รายละเอียดยอดขายวันนี้';
   else if (type === 'outstanding') title = 'รายละเอียดยอดค้างชำระ';
@@ -215,7 +220,11 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
                     </td>
                     <td>{d.user_name}</td>
                     <td>{d.amount.toLocaleString('th-TH')}</td>
-                    <td>{d.payment_id}</td>
+                    <td>
+                      <button type="button" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600,background:'none',border:'none',cursor:'pointer',padding:0}} onClick={() => onOpenPaymentDetail && onOpenPaymentDetail(d.payment_id)}>
+                        {d.payment_id}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -233,7 +242,11 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
               <tbody>
                 {summary.outstanding.details && summary.outstanding.details.map((d, i) => (
                   <tr key={i}>
-                    <td style={{minWidth:'120px'}}>{d.contract_id}</td>
+                    <td style={{minWidth:'120px'}}>
+                      <a href={`/admin/orders/${d.contract_id}`} target="_blank" rel="noopener noreferrer" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600}}>
+                        {d.contract_id}
+                      </a>
+                    </td>
                     <td style={{textAlign:'left'}}>{d.user_name} <span style={{color:'#94a3b8',fontSize:'90%'}}>({d.user_id})</span></td>
                     <td>{d.outstanding_amount.toLocaleString('th-TH')}</td>
                   </tr>
@@ -256,7 +269,11 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
                 {summary.orders.details && summary.orders.details.map((d, i) => (
                   <tr key={i}>
                     <td>{formatDateThai(d.created_at)}</td>
-                    <td>{d.contract_id}</td>
+                    <td>
+                      <a href={`/admin/orders/${d.contract_id}`} target="_blank" rel="noopener noreferrer" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600}}>
+                        {d.contract_id}
+                      </a>
+                    </td>
                     <td>{d.user_name}</td>
                     <td>{d.total_price.toLocaleString('th-TH')}</td>
                     <td>{d.status}</td>
@@ -279,7 +296,11 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
                 {summary.new_customers.details && summary.new_customers.details.map((d, i) => (
                   <tr key={i}>
                     <td>{formatDateThai(d.created_at)}</td>
-                    <td>{d.user_id}</td>
+                    <td>
+                      <a href={`/admin/customers/${d.user_id}`} target="_blank" rel="noopener noreferrer" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600}}>
+                        {d.user_id}
+                      </a>
+                    </td>
                     <td>{d.user_name}</td>
                     <td>{d.phone_number}</td>
                   </tr>
