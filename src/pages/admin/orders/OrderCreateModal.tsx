@@ -269,10 +269,10 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     const payload: Record<string, unknown> = { ...form };
     if (isCashPurchase) {
       // กรอกค่าปลอดภัยให้ช่องที่เหลือ (workaround: ใช้ 1 แทน 0)
-      payload.total_with_interest = 1;
+      payload.total_with_interest = form.total_price;
       payload.installment_months = 1;
-      payload.monthly_payment = 1;
-      payload.status = 'closed';
+      payload.monthly_payment = 0;
+      payload.status = 'active';
       // วันที่เริ่ม/สิ้นสุด ใส่วันปัจจุบันเสมอ
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -285,8 +285,8 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
       delete payload.pdpa_consent_file;
       // ถ้า user_id เป็น string ว่าง ให้ลบ property ออก (ไม่ต้องส่งไป backend)
       if (payload.user_id === '' || payload.user_id === null) delete payload.user_id;
-      // ถ้าเป็นซื้อสด ให้ user_name เป็น null เสมอ
-      payload.user_name = null;
+      // ถ้าเป็นซื้อสด ให้ user_name เป็น 'system'
+      payload.user_name = 'system';
     } else if (isRent) {
       // ช่องอื่นๆ ไม่ต้อง validate/แนบไฟล์/กรอก
       // ลบออกจาก payload ถ้าไม่กรอก

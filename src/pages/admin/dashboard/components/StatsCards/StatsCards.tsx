@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import styles from './StatsCards.module.css';
 import { getDashboardSummary, type DashboardSummary } from '../../../../../services/dashboard.service';
 import { formatDateThai, formatDateShort } from '../../../../../utils/date';
+import MobileAccessModal from '../../../../../components/MobileAccessModal';
 
 const StatsCards: FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDetail, setOpenDetail] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
+  const [showMobileWarn, setShowMobileWarn] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -85,6 +87,12 @@ const StatsCards: FC = () => {
     },
   ];
 
+  // ฟังก์ชันเช็คว่าเป็นมือถือหรือไม่
+  function isMobileScreen() {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 640;
+  }
+
   return (
     <>
       <div className={styles.statsGrid}>
@@ -124,13 +132,29 @@ const StatsCards: FC = () => {
               </div>
               <p className={styles.statValue}>{stat.value}</p>
               <p className={styles.statDescription}>{stat.description}</p>
-              <button className={styles.viewAllButton} onClick={() => setOpenDetail(stat.type as 'sales' | 'outstanding' | 'orders' | 'customers')}>
+              <button className={styles.viewAllButton} 
+                onClick={() => {
+                  if (isMobileScreen()) {
+                    setShowMobileWarn(stat.type as 'sales' | 'outstanding' | 'orders' | 'customers');
+                  } else {
+                    setOpenDetail(stat.type as 'sales' | 'outstanding' | 'orders' | 'customers');
+                  }
+                }}>
                 ดูรายละเอียด
               </button>
             </div>
           </div>
         ))}
       </div>
+      <MobileAccessModal
+        open={!!showMobileWarn}
+        mode="warn"
+        onContinue={() => {
+          setOpenDetail(showMobileWarn);
+          setShowMobileWarn(null);
+        }}
+        onCancel={() => setShowMobileWarn(null)}
+      />
       {openDetail && (
         <DashboardDetailModal
           type={openDetail}
@@ -184,7 +208,11 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
                 {summary.sales.details && summary.sales.details.map((d, i) => (
                   <tr key={i}>
                     <td>{formatDateShort(d.payment_date)}</td>
-                    <td>{d.contract_id}</td>
+                    <td>
+                      <a href={`/admin/orders/${d.contract_id}`} target="_blank" rel="noopener noreferrer" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600}}>
+                        {d.contract_id}
+                      </a>
+                    </td>
                     <td>{d.user_name}</td>
                     <td>{d.amount.toLocaleString('th-TH')}</td>
                     <td>{d.payment_id}</td>
@@ -197,16 +225,16 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose }) => {
             <table className={styles.dashboardTable}>
               <thead>
                 <tr>
-                  <th>เลขสัญญา</th>
-                  <th>ลูกค้า</th>
+                  <th style={{minWidth:'120px'}}>เลขสัญญา</th>
+                  <th style={{textAlign:'left'}}>ลูกค้า</th>
                   <th>ยอดค้างชำระ (บาท)</th>
                 </tr>
               </thead>
               <tbody>
                 {summary.outstanding.details && summary.outstanding.details.map((d, i) => (
                   <tr key={i}>
-                    <td>{d.contract_id}</td>
-                    <td>{d.user_name}</td>
+                    <td style={{minWidth:'120px'}}>{d.contract_id}</td>
+                    <td style={{textAlign:'left'}}>{d.user_name} <span style={{color:'#94a3b8',fontSize:'90%'}}>({d.user_id})</span></td>
                     <td>{d.outstanding_amount.toLocaleString('th-TH')}</td>
                   </tr>
                 ))}
