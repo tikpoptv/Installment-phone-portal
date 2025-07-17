@@ -258,7 +258,9 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
                         {d.contract_id}
                       </a>
                     </td>
-                    <td style={{textAlign:'left'}}>{d.user_name} <span style={{color:'#94a3b8',fontSize:'90%'}}>({d.user_id})</span></td>
+                    <td style={{textAlign:'left'}}>
+                      {d.user_name} <span style={{color:'#94a3b8',fontSize:'90%'}}>({d.user_id ? d.user_id : 'ซื้อเงินสด'})</span>
+                    </td>
                     <td>{d.outstanding_amount.toLocaleString('th-TH')}</td>
                   </tr>
                 ))}
