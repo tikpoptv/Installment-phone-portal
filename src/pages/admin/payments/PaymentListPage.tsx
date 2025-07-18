@@ -60,10 +60,11 @@ export default function PaymentListPage() {
       start_date: startDate,
       end_date: endDate
     })
-      .then(data => {
-        setPayments(data.items ?? []);
-        setTotal(data.total ?? 0);
-        setTotalPages(data.total_pages ?? 1);
+      .then((data) => {
+        const d = data as { items: Payment[]; total: number; total_pages: number };
+        setPayments(Array.isArray(d.items) ? d.items : []);
+        setTotal(typeof d.total === 'number' ? d.total : 0);
+        setTotalPages(typeof d.total_pages === 'number' ? d.total_pages : 1);
       })
       .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
       .finally(() => setLoading(false));
@@ -203,8 +204,11 @@ export default function PaymentListPage() {
               onSuccess={() => {
                 setShowCreateModal(false);
                 setLoading(true);
-                getAllPayments()
-                  .then(data => setPayments(data ?? []))
+                getAllPayments({ page: currentPage, limit: rowsPerPage, search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
+                  .then((data) => {
+                    const d = data as { items: Payment[] };
+                    setPayments(Array.isArray(d.items) ? d.items : []);
+                  })
                   .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
                   .finally(() => setLoading(false));
               }}
@@ -215,8 +219,11 @@ export default function PaymentListPage() {
               onClose={() => setShowDetailModal(false)}
               onActionSuccess={async () => {
                 setLoading(true);
-                getAllPayments()
-                  .then(data => setPayments(data ?? []))
+                getAllPayments({ page: currentPage, limit: rowsPerPage, search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
+                  .then((data) => {
+                    const d = data as { items: Payment[] };
+                    setPayments(Array.isArray(d.items) ? d.items : []);
+                  })
                   .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
                   .finally(() => setLoading(false));
               }}

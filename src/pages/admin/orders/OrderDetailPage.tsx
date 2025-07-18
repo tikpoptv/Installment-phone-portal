@@ -7,6 +7,7 @@ import type { ContractDetail, ContractPayment, Installment, Discount } from '../
 import PaymentDetailModal from '../payments/PaymentDetailModal';
 import DiscountModal from './DiscountModal';
 import { MdCheckCircle, MdRadioButtonUnchecked, MdPending, MdAutorenew, MdCancel } from 'react-icons/md';
+import PaymentCreateModal from '../payments/PaymentCreateModal';
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '-';
@@ -136,6 +137,8 @@ const OrderDetailPage: React.FC = () => {
   const [showDiscountDetailModal, setShowDiscountDetailModal] = useState(false);
   const [selectedDiscount, setSelectedDiscount] = useState<Discount | null>(null);
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
+  const [showCreatePaymentModal, setShowCreatePaymentModal] = useState(false);
+  const [showCreatePaymentTooltip, setShowCreatePaymentTooltip] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -332,7 +335,26 @@ const OrderDetailPage: React.FC = () => {
           </div>
         )}
         <div className={styles.sectionCard}>
-          <div className={styles.sectionTitle}>💰 ประวัติการชำระเงิน</div>
+          <div className={styles.sectionTitle} style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span>💰 ประวัติการชำระเงิน</span>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <button
+                className={styles.addDiscountBtn}
+                style={{ background: 'linear-gradient(90deg,#0ea5e9,#22c55e)', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '7px 18px', fontSize: 15, cursor: o.status !== 'active' ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #bae6fd55', transition: 'background 0.18s', opacity: o.status !== 'active' ? 0.6 : 1 }}
+                onClick={() => o.status === 'active' && setShowCreatePaymentModal(true)}
+                disabled={o.status !== 'active'}
+                onMouseEnter={() => { if (o.status !== 'active') setShowCreatePaymentTooltip(true); }}
+                onMouseLeave={() => setShowCreatePaymentTooltip(false)}
+              >
+                + สร้างรายการชำระ
+              </button>
+              {o.status !== 'active' && showCreatePaymentTooltip && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, background: '#334155', color: '#fff', fontSize: 13, borderRadius: 6, padding: '6px 14px', marginTop: 6, whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 2px 8px #33415555' }}>
+                  สร้างรายการชำระได้เฉพาะเมื่อสถานะคำสั่งซื้อเป็น "กำลังใช้งาน"
+                </div>
+              )}
+            </div>
+          </div>
           {!paymentLoading && !paymentError && (
             <PaymentAlerts contract={o} payments={payments} remainingAmount={remainingAmount} overdueMonths={overdueMonths} totalDueThisMonth={totalDueThisMonth} />
           )}
@@ -643,6 +665,29 @@ const OrderDetailPage: React.FC = () => {
             </div>
           </div>
         )}
+        <PaymentCreateModal
+          open={showCreatePaymentModal}
+          onClose={() => setShowCreatePaymentModal(false)}
+          onSuccess={() => {
+            setShowCreatePaymentModal(false);
+            if (id) {
+              setPaymentLoading(true);
+              setPaymentError(null);
+              getContractPayments(id)
+                .then(data => {
+                  setPayments(data.payments ?? []);
+                  setInstallments(data.installments ?? []);
+                  setDiscounts(data.discounts ?? []);
+                  setRemainingAmount(data.remaining_amount ?? 0);
+                  setOverdueMonths(data.overdue_months ?? 0);
+                  setTotalDueThisMonth(data.total_due_this_month ?? 0);
+                })
+                .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
+                .finally(() => setPaymentLoading(false));
+            }
+          }}
+          contractId={o.id}
+        />
         <div className={styles.meta}>
           <div>สร้างเมื่อ: {formatDate(o.created_at)}</div>
           <div>อัปเดตล่าสุด: {formatDate(o.updated_at)}</div>

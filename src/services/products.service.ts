@@ -134,4 +134,9 @@ export async function setProductStoreLocked(productId: string, locked: boolean):
     { store_locked: locked }
   );
   return res.data;
+}
+
+export async function getAvailableProducts(): Promise<Product[]> {
+  const res = await apiClient.get<Product[]>('/api/products/available');
+  return res.data;
 } 

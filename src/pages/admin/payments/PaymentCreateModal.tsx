@@ -10,6 +10,7 @@ interface PaymentCreateModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  contractId?: string;
 }
 
 const methodOptions = [
@@ -18,7 +19,7 @@ const methodOptions = [
   { value: 'online', label: 'ออนไลน์' },
 ];
 
-const PaymentCreateModal: React.FC<PaymentCreateModalProps> = ({ open, onClose, onSuccess }) => {
+const PaymentCreateModal: React.FC<PaymentCreateModalProps> = ({ open, onClose, onSuccess, contractId }) => {
   const [form, setForm] = useState<CreatePaymentPayload>({
     contract_id: '',
     payment_date: '',
@@ -37,16 +38,22 @@ const PaymentCreateModal: React.FC<PaymentCreateModalProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (!open) return;
-    getContracts().then(data => setContractList(data ?? []));
-    setContractQuery('');
-    setShowContractList(false);
+    if (contractId) {
+      setForm(prev => ({ ...prev, contract_id: contractId }));
+      setContractQuery(contractId);
+      setShowContractList(false);
+    } else {
+      getContracts().then(data => setContractList(data?.items ?? []));
+      setContractQuery('');
+      setShowContractList(false);
+    }
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     const todayStr = `${yyyy}-${mm}-${dd}`;
     setForm(prev => ({ ...prev, payment_date: todayStr }));
-  }, [open]);
+  }, [open, contractId]);
 
   if (!open) return null;
 
@@ -98,17 +105,20 @@ const PaymentCreateModal: React.FC<PaymentCreateModalProps> = ({ open, onClose, 
               name="contract_id"
               value={contractQuery}
               onChange={e => {
+                if (contractId) return;
                 setContractQuery(e.target.value);
                 setShowContractList(true);
                 setForm(prev => ({ ...prev, contract_id: '' }));
               }}
-              onFocus={() => setShowContractList(true)}
+              onFocus={() => { if (!contractId) setShowContractList(true); }}
               onBlur={() => setTimeout(() => setShowContractList(false), 120)}
               ref={contractInputRef}
               className={styles.inputBox}
               placeholder="ค้นหารหัส/ชื่อผู้เช่า/สินค้า..."
               autoComplete="off"
               required
+              disabled={!!contractId}
+              style={contractId ? { background: '#e5e7eb', color: '#64748b', cursor: 'not-allowed' } : {}}
             />
             {showContractList && contractList.length > 0 && (
               <div className={styles.contractDropdown}>

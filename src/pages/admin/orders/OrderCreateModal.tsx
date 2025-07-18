@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './OrderCreateModal.module.css';
-import { getCustomers } from '../../../services/customer/customer.service';
-import type { Customer } from '../../../services/customer/customer.service';
-import { getProducts } from '../../../services/products.service';
+import { getUserListBrief, type UserBrief } from '../../../services/dashboard/user/user-detail.service';
+import { getAvailableProducts } from '../../../services/products.service';
 import type { Product } from '../../../services/products.service';
 import { createContract } from '../../../services/contract.service';
 import { toast } from 'react-toastify';
@@ -47,8 +46,8 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
   const [userQuery, setUserQuery] = useState('');
   const [showUserList, setShowUserList] = useState(false);
   const userInputRef = useRef<HTMLInputElement | null>(null);
-  const [customerList, setCustomerList] = useState<Customer[]>([]);
-  const [customerLoading, setCustomerLoading] = useState(false);
+  const [userList, setUserList] = useState<UserBrief[]>([]);
+  const [userLoading, setUserLoading] = useState(false);
   const [productList, setProductList] = useState<Product[]>([]);
   const [productLoading, setProductLoading] = useState(false);
   const [productQuery, setProductQuery] = useState('');
@@ -61,14 +60,14 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
 
   useEffect(() => {
     if (!open) return;
-    setCustomerLoading(true);
-    getCustomers()
-      .then(data => setCustomerList(data ?? []))
-      .catch(() => setCustomerList([]))
-      .finally(() => setCustomerLoading(false));
+    setUserLoading(true);
+    getUserListBrief()
+      .then(data => setUserList(data ?? []))
+      .catch(() => setUserList([]))
+      .finally(() => setUserLoading(false));
     setProductLoading(true);
-    getProducts()
-      .then(data => setProductList((data ?? []).filter(p => p.status === 'available')))
+    getAvailableProducts()
+      .then(data => setProductList(data ?? []))
       .catch(() => setProductList([]))
       .finally(() => setProductLoading(false));
 
@@ -329,15 +328,13 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     }
   };
 
-  const filteredUsers = customerList
-    .filter(u => u.is_verified)
-    .filter(u =>
-      (u.first_name + ' ' + u.last_name + ' ' + u.phone_number).toLowerCase().includes(userQuery.toLowerCase())
-    );
+  const filteredUsers = userList.filter(u =>
+    (u.first_name + ' ' + u.phone_number).toLowerCase().includes(userQuery.toLowerCase())
+  );
 
-  const handleUserSelect = (user: Customer) => {
-    setForm(prev => ({ ...prev, user_id: user.id, user_name: user.first_name + ' ' + user.last_name }));
-    setUserQuery(user.first_name + ' ' + user.last_name + ' (' + user.phone_number + ')');
+  const handleUserSelect = (user: UserBrief) => {
+    setForm(prev => ({ ...prev, user_id: user.id, user_name: user.first_name }));
+    setUserQuery(user.first_name + ' (' + user.phone_number + ')');
     setShowUserList(false);
   };
 
@@ -397,15 +394,32 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
                 boxShadow: '0 2px 12px #bae6fd22',
                 maxHeight: 180, overflowY: 'auto', marginTop: 2
               }}>
-                {customerLoading ? (
+                {userLoading ? (
                   <div style={{ padding: '10px 14px', color: '#64748b' }}>กำลังโหลด...</div>
                 ) : filteredUsers.map(u => (
                   <div
                     key={u.id}
                     style={{ padding: '10px 14px', cursor: 'pointer', color: '#0ea5e9', fontWeight: 500 }}
                     onMouseDown={() => handleUserSelect(u)}
-                  >{u.first_name} {u.last_name} <span style={{color:'#64748b',fontWeight:400}}>({u.phone_number})</span></div>
+                  >{u.first_name} <span style={{color:'#64748b',fontWeight:400}}>({u.phone_number})</span></div>
                 ))}
+              </div>
+            )}
+            {!userLoading && userList.length === 0 && (
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(30,41,59,0.72)',
+                color: '#fff',
+                zIndex: 30,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                fontWeight: 600,
+                borderRadius: 8
+              }}>
+                ไม่พบข้อมูลในระบบ
               </div>
             )}
             {form.user_id && (
@@ -464,6 +478,23 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
                     onMouseDown={() => handleProductSelect(p)}
                   >{p.id} - {p.model_name}</div>
                 ))}
+              </div>
+            )}
+            {!productLoading && productList.length === 0 && (
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(30,41,59,0.72)',
+                color: '#fff',
+                zIndex: 30,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                fontWeight: 600,
+                borderRadius: 8
+              }}>
+                ไม่พบข้อมูลในระบบ
               </div>
             )}
             {form.product_id && (

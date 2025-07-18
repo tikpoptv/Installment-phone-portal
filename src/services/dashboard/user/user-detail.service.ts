@@ -55,6 +55,12 @@ export interface UserDetailResponse {
   reference_contacts: ReferenceContact[];
 }
 
+export interface UserBrief {
+  id: string;
+  first_name: string;
+  phone_number: string;
+}
+
 export async function getUserDetail(userId: string): Promise<UserDetailResponse> {
   const res = await apiClient.get<UserDetailResponse>(`/api/admin/users/${userId}/detail`);
   return res.data;
@@ -65,6 +71,11 @@ export async function getCitizenIdImage(userId: string, filename: string): Promi
     `/api/admin/files/citizen_id_image/${userId}/${filename}`,
     { responseType: 'blob' }
   );
+  return res.data;
+}
+
+export async function getUserListBrief(): Promise<UserBrief[]> {
+  const res = await apiClient.get<UserBrief[]>(`/api/admin/users/brief`);
   return res.data;
 }
 

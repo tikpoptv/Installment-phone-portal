@@ -149,7 +149,7 @@ const ProductDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (showLockModal) {
-      getIcloudCredentials().then(setIcloudList).catch(() => setIcloudList([]));
+      getIcloudCredentials().then(data => setIcloudList(data.items)).catch(() => setIcloudList([]));
     }
   }, [showLockModal]);
 
@@ -422,7 +422,7 @@ const ProductDetailPage: React.FC = () => {
         }}
         onReloadIcloudList={async () => {
           const list = await getIcloudCredentials();
-          setIcloudList(list);
+          setIcloudList(list.items);
         }}
         customer_icloud_credential_id={product.customer_icloud_credential_id}
         store_icloud_credential_id={product.store_icloud_credential_id}
