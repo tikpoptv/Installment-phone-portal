@@ -89,8 +89,14 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
   return res.data;
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const res = await apiClient.get<Product[]>('/api/products');
+export async function getProducts(params?: { page?: number; limit?: number; search?: string; status?: string; icloud_status?: string; }): Promise<{ items: Product[]; total: number; page: number; limit: number; total_pages: number; }> {
+  const query = new URLSearchParams();
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.status) query.append('status', params.status);
+  if (params?.icloud_status) query.append('icloud_status', params.icloud_status);
+  const res = await apiClient.get<{ items: Product[]; total: number; page: number; limit: number; total_pages: number; }>(`/api/products?${query.toString()}`);
   return res.data;
 }
 

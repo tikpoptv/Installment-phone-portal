@@ -25,6 +25,8 @@ const IcloudListPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showMobileWarn, setShowMobileWarn] = useState(false);
   const [iclouds, setIclouds] = useState<IcloudCredential[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -36,9 +38,16 @@ const IcloudListPage: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    getIcloudCredentials()
-      .then(data => {
-        setIclouds(data ?? []);
+    getIcloudCredentials({
+      page: currentPage,
+      limit: rowsPerPage,
+      search: search || undefined,
+      owner_type: ownerType || undefined
+    })
+      .then((data: { items: IcloudCredential[]; total: number; page: number; limit: number; total_pages: number; }) => {
+        setIclouds(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.total_pages ?? 1);
         setError(null);
       })
       .catch(() => {
@@ -46,23 +55,12 @@ const IcloudListPage: React.FC = () => {
         setIclouds([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, rowsPerPage, search, ownerType]);
 
-  // ฟิลเตอร์ข้อมูลตาม search และ ownerType
-  const filtered = iclouds.filter(item => {
-    const matchSearch =
-      item.id.includes(search) ||
-      item.icloud_username.includes(search);
-    const matchOwner = !ownerType || item.owner_type === ownerType;
-    return matchSearch && matchOwner;
-  });
-
-  // Pagination
-  const totalRows = filtered.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginated = filtered.slice(startIdx, endIdx);
+  const endIdx = startIdx + iclouds.length;
+  const paginated = iclouds;
 
   // ตรวจสอบขนาดหน้าจอเมื่อ mount
   useEffect(() => {

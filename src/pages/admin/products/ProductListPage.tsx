@@ -73,6 +73,8 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
 
 export default function ProductListPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'available' | 'leased' | 'sold'>('all');
@@ -89,9 +91,17 @@ export default function ProductListPage() {
 
   useEffect(() => {
     setLoading(true);
-    getProducts()
-      .then(data => {
-        setProducts(data ?? []);
+    getProducts({
+      page: currentPage,
+      limit: rowsPerPage,
+      search: search || undefined,
+      status: filter === 'all' ? undefined : filter,
+      icloud_status: icloudFilter === 'all' ? undefined : icloudFilter
+    })
+      .then((data: { items: Product[]; total: number; total_pages: number; }) => {
+        setProducts(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.total_pages ?? 1);
         setFetchError(null);
       })
       .catch(() => {
@@ -99,7 +109,7 @@ export default function ProductListPage() {
         setProducts([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, rowsPerPage, search, filter, icloudFilter]);
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -107,33 +117,13 @@ export default function ProductListPage() {
     }
   }, []);
 
-  const filtered = products.filter((p) => {
-    const match =
-      (p.model_name?.includes(search) || false) ||
-      (p.imei?.includes(search) || false) ||
-      (p.remark?.includes(search) || false) ||
-      (p.id?.includes(search) || false);
-    let priceOk = true;
-    if (minPrice && !isNaN(Number(minPrice))) priceOk = priceOk && p.price >= Number(minPrice);
-    if (maxPrice && !isNaN(Number(maxPrice))) priceOk = priceOk && p.price <= Number(maxPrice);
-    let icloudOk = true;
-    if (icloudFilter === 'unlocked') icloudOk = p.icloud_status === 'unlocked';
-    if (icloudFilter === 'locked') icloudOk = p.icloud_status === 'locked';
-    if (filter === 'all') return match && priceOk && icloudOk;
-    if (filter === 'available') return p.status === 'available' && match && priceOk && icloudOk;
-    if (filter === 'leased') return p.status === 'leased' && match && priceOk && icloudOk;
-    if (filter === 'sold') return p.status === 'sold' && match && priceOk && icloudOk;
-    return match && priceOk && icloudOk;
-  });
-
-  const totalRows = filtered.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginated = filtered.slice(startIdx, endIdx);
+  const endIdx = startIdx + products.length;
+  const paginated = products;
 
   // reset page เมื่อเปลี่ยน filter/search/rowsPerPage
-  useEffect(() => { setCurrentPage(1); }, [search, filter, rowsPerPage]);
+  useEffect(() => { setCurrentPage(1); }, [search, filter, rowsPerPage, icloudFilter]);
 
   // ฟังก์ชันแปลงเลขเป็น comma
   const formatNumber = (val: string) => {
@@ -309,7 +299,7 @@ export default function ProductListPage() {
         <ExportModal
           open={exportModalOpen}
           onClose={() => setExportModalOpen(false)}
-          onExportFiltered={() => exportProductsToCSV(filtered)}
+          onExportFiltered={() => exportProductsToCSV(paginated)}
           onExportAll={() => exportProductsToCSV(products)}
         />
       </div>

@@ -52,9 +52,17 @@ export interface UserStoreBankAccountsResponse {
   }>;
 }
 
-export async function getAllPayments(): Promise<Payment[]> {
-  const res = await apiClient.get<Payment[]>('/api/payment');
-  return res.data;
+export async function getAllPayments(params?: { page?: number; limit?: number; search?: string; status?: string; method?: string; start_date?: string; end_date?: string; }) {
+  const query = new URLSearchParams();
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.status) query.append('status', params.status);
+  if (params?.method) query.append('method', params.method);
+  if (params?.start_date) query.append('start_date', params.start_date);
+  if (params?.end_date) query.append('end_date', params.end_date);
+  const res = await apiClient.get(`/api/payment?${query.toString()}`);
+  return res.data; // { items, total, page, limit, total_pages }
 }
 
 export async function createPayment(payload: CreatePaymentPayload) {

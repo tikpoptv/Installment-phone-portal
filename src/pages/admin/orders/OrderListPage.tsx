@@ -95,6 +95,8 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
 
 export default function OrderListPage() {
   const [orders, setOrders] = useState<Contract[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -112,39 +114,32 @@ export default function OrderListPage() {
 
   useEffect(() => {
     setLoading(true);
-    getContracts()
-      .then(data => {
-        setOrders(data ?? []);
-        setLoading(false);
+    getContracts({
+      page: currentPage,
+      limit: rowsPerPage,
+      search: search || undefined,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      category: categoryFilter === 'all' ? undefined : categoryFilter,
+      product_name: productFilter || undefined,
+      // start_date, end_date: ถ้า backend รองรับให้เพิ่ม filter นี้ด้วย
+    })
+      .then((data: { items: Contract[]; total: number; total_pages: number; }) => {
+        setOrders(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.total_pages ?? 1);
         setFetchError(null);
       })
       .catch(() => {
         setFetchError('เกิดข้อผิดพลาดในการโหลดข้อมูลคำสั่งซื้อ');
-        setLoading(false);
-      });
-  }, []);
+      })
+      .finally(() => setLoading(false));
+  }, [currentPage, rowsPerPage, search, statusFilter, categoryFilter, productFilter, startDate, endDate]);
 
-  // สร้างรายการสินค้าไม่ซ้ำสำหรับ filter
   const productNames = Array.from(new Set(orders.map(o => o.product_name)));
-
-  const filtered = orders.filter((o) => {
-    const matchSearch =
-      o.id.includes(search) ||
-      o.user_name.includes(search) ||
-      o.product_name.includes(search);
-    const matchStatus = statusFilter === 'all' || o.status === statusFilter;
-    const matchCategory = categoryFilter === 'all' || o.category === categoryFilter;
-    const matchProduct = !productFilter || o.product_name === productFilter;
-    const matchStart = !startDate || o.start_date >= startDate;
-    const matchEnd = !endDate || o.end_date <= endDate;
-    return matchSearch && matchStatus && matchCategory && matchProduct && matchStart && matchEnd;
-  });
-
-  const totalRows = filtered.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginated = filtered.slice(startIdx, endIdx);
+  const endIdx = startIdx + orders.length;
+  const paginated = orders;
 
   useEffect(() => { setCurrentPage(1); }, [search, rowsPerPage, statusFilter, categoryFilter, productFilter, startDate, endDate]);
 
@@ -322,7 +317,7 @@ export default function OrderListPage() {
         <ExportModal
           open={exportModalOpen}
           onClose={() => setExportModalOpen(false)}
-          onExportFiltered={() => exportOrdersToCSV(filtered)}
+          onExportFiltered={() => exportOrdersToCSV(paginated)}
           onExportAll={() => exportOrdersToCSV(orders)}
         />
       </div>

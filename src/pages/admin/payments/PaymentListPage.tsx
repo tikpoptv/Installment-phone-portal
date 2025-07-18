@@ -40,6 +40,8 @@ export default function PaymentListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 20;
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -49,28 +51,28 @@ export default function PaymentListPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getAllPayments()
-      .then(data => setPayments(data ?? []))
+    getAllPayments({
+      page: currentPage,
+      limit: rowsPerPage,
+      search,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      method: methodFilter === 'all' ? undefined : methodFilter,
+      start_date: startDate,
+      end_date: endDate
+    })
+      .then(data => {
+        setPayments(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.total_pages ?? 1);
+      })
       .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, search, statusFilter, methodFilter, startDate, endDate]);
 
-  const filtered = payments.filter(p => {
-    const matchSearch =
-      p.id.includes(search) ||
-      p.contract_id.includes(search);
-    const matchStatus = statusFilter === 'all' || p.verify_status === statusFilter;
-    const matchMethod = methodFilter === 'all' || p.method === methodFilter;
-    const matchStart = !startDate || p.payment_date >= startDate;
-    const matchEnd = !endDate || p.payment_date <= endDate;
-    return matchSearch && matchStatus && matchMethod && matchStart && matchEnd;
-  });
-
-  const totalRows = filtered.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginated = filtered.slice(startIdx, endIdx);
+  const endIdx = startIdx + payments.length;
+  const paginated = payments;
 
   return (
     <>

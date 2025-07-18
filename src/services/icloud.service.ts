@@ -39,8 +39,13 @@ export interface UpdateIcloudCredentialPayload {
   note?: string;
 }
 
-export async function getIcloudCredentials(): Promise<IcloudCredential[]> {
-  const res = await apiClient.get<IcloudCredential[]>('/api/icloud-credentials');
+export async function getIcloudCredentials(params?: { page?: number; limit?: number; search?: string; owner_type?: string; }): Promise<{ items: IcloudCredential[]; total: number; page: number; limit: number; total_pages: number; }> {
+  const query = new URLSearchParams();
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.owner_type) query.append('owner_type', params.owner_type);
+  const res = await apiClient.get<{ items: IcloudCredential[]; total: number; page: number; limit: number; total_pages: number; }>(`/api/icloud-credentials?${query.toString()}`);
   return res.data;
 }
 

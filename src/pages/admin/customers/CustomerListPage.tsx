@@ -105,34 +105,33 @@ export default function CustomerListPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [mobileWarningOpen, setMobileWarningOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<string | null>(null);
 
   useEffect(() => {
-    getCustomers()
-      .then(data => setCustomers(data ?? []))
+    setLoading(true);
+    getCustomers({
+      page: currentPage,
+      limit: rowsPerPage,
+      search: search || undefined,
+      is_verified: filter === 'all' ? undefined : filter === 'verified' ? true : false
+    })
+      .then((data: { items: Customer[]; total: number; total_pages: number; }) => {
+        setCustomers(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.total_pages ?? 1);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, rowsPerPage, search, filter]);
 
-  const filtered = customers.filter((c) => {
-    const match =
-      c.first_name.includes(search) ||
-      c.last_name.includes(search) ||
-      c.phone_number.includes(search) ||
-      c.email.includes(search);
-    if (filter === 'all') return match;
-    if (filter === 'verified') return c.is_verified && match;
-    if (filter === 'unverified') return !c.is_verified && match;
-    return match;
-  });
-
-  const totalRows = filtered.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginated = filtered.slice(startIdx, endIdx);
+  const endIdx = startIdx + customers.length;
+  const paginated = customers;
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -250,8 +249,20 @@ export default function CustomerListPage() {
       <ExportModal
         open={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
-        onExportFiltered={() => exportCustomersToCSV(filtered)}
-        onExportAll={() => exportCustomersToCSV(customers)}
+        onExportFiltered={() => exportCustomersToCSV(paginated)}
+        onExportAll={() => {
+          setLoading(true);
+          getCustomers({
+            page: 1,
+            limit: rowsPerPage,
+            search: search || undefined,
+            is_verified: filter === 'all' ? undefined : filter === 'verified' ? true : false
+          })
+            .then((data: { items: Customer[] }) => {
+              exportCustomersToCSV(data.items ?? []);
+            })
+            .finally(() => setLoading(false));
+        }}
       />
       {/* Mobile Warning Modal */}
       <MobileAccessModal
