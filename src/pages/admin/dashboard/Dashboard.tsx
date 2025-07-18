@@ -13,6 +13,7 @@ import Notifications from './components/Notifications/Notifications';
 import VerifyCustomerModal from './components/VerifyCustomerModal/VerifyCustomerModal';
 import ProductCreateModal from '../products/ProductCreateModal';
 import OrderCreateModal from '../orders/OrderCreateModal';
+import { getDashboardSummary, type DashboardSummary } from '../../../services/dashboard.service';
 
 const Dashboard: FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,26 +21,34 @@ const Dashboard: FC = () => {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading data
+    // โหลดข้อมูลแดชบอร์ดและ username พร้อมกัน
     const loadData = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        setIsLoading(true);
         // ดึง username จาก localStorage
         const userStr = localStorage.getItem('auth_user');
         if (userStr) {
           const user = JSON.parse(userStr);
           setUsername(user.username || '');
         }
-        setIsLoading(false);
+        // โหลดข้อมูล summary
+        try {
+          const data = await getDashboardSummary();
+          setSummary(data);
+          setSummaryError(null);
+        } catch {
+          setSummaryError('เกิดข้อผิดพลาดในการโหลดข้อมูลสรุปแดชบอร์ด');
+        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+      } finally {
         setIsLoading(false);
       }
     };
-
     loadData();
   }, []);
 
@@ -72,7 +81,7 @@ const Dashboard: FC = () => {
             onAddProductClick={() => setShowCreateProductModal(true)}
             onCreateOrderClick={() => setShowCreateOrderModal(true)}
           />
-          <StatsCards />
+          <StatsCards summary={summary} loading={isLoading} error={summaryError} />
         </div>
 
         <div className={styles.contentGrid}>

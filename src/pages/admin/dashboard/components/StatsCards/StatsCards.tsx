@@ -1,8 +1,8 @@
 import React from 'react';
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import styles from './StatsCards.module.css';
-import { getDashboardSummary, type DashboardSummary } from '../../../../../services/dashboard.service';
+import type { DashboardSummary } from '../../../../../services/dashboard.service';
 import { formatDateThai, formatDateShort } from '../../../../../utils/date';
 import MobileAccessModal from '../../../../../components/MobileAccessModal';
 import PaymentDetailModal from '../../../payments/PaymentDetailModal';
@@ -18,26 +18,16 @@ function orderStatusLabel(status: string) {
   return status;
 }
 
-const StatsCards: FC = () => {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface StatsCardsProps {
+  summary: DashboardSummary | null;
+  loading: boolean;
+  error: string | null;
+}
+
+const StatsCards: FC<StatsCardsProps> = ({ summary, loading, error }) => {
   const [openDetail, setOpenDetail] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
   const [showMobileWarn, setShowMobileWarn] = useState<null | 'sales' | 'outstanding' | 'orders' | 'customers'>(null);
   const [openPaymentId, setOpenPaymentId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    getDashboardSummary()
-      .then((data: DashboardSummary) => {
-        setSummary(data);
-        setError(null);
-      })
-      .catch(() => {
-        setError('เกิดข้อผิดพลาดในการโหลดข้อมูลสรุปแดชบอร์ด');
-      })
-      .finally(() => setLoading(false));
-  }, []);
 
   if (loading) {
     return <div className={styles.statsGrid}>กำลังโหลดข้อมูล...</div>;
