@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import type { TooltipItem } from 'chart.js';
 import styles from './PaymentStatus.module.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -26,7 +27,7 @@ const options = {
       boxPadding: 6,
       usePointStyle: true,
       callbacks: {
-        label: function(context: any) {
+        label: function(context: TooltipItem<'pie'>) {
           const label = context.label || '';
           const value = context.parsed || 0;
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);

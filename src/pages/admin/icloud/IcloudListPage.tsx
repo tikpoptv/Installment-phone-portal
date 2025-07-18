@@ -123,7 +123,7 @@ const IcloudListPage: React.FC = () => {
             toast.success('ลบ iCloud สำเร็จ!');
             getIcloudCredentials()
               .then(data => {
-                setIclouds(data ?? []);
+                setIclouds(data.items ?? []);
                 setError(null);
               })
               .catch(() => {

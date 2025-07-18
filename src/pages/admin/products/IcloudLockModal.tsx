@@ -201,7 +201,8 @@ const IcloudLockModal: React.FC<Props> = ({ open, productId, productImei, icloud
                 await onReloadIcloudList();
               }
               try {
-                const freshList = await getIcloudCredentials();
+                const freshListObj = await getIcloudCredentials();
+                const freshList = freshListObj.items ?? [];
                 const prevCustomerId = extractId(customerQuery);
                 const prevStoreId = extractId(storeQuery);
                 const newCustomer = freshList.find(i => i.id === prevCustomerId && i.owner_type === 'customer');
