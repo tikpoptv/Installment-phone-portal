@@ -103,16 +103,17 @@ export interface CreateDiscountPayload {
   note?: string;
 }
 
-export async function getContracts(params?: { page?: number; limit?: number; search?: string; status?: string; category?: string; user_name?: string; product_name?: string; }): Promise<{ items: Contract[]; total: number; page: number; limit: number; total_pages: number; }> {
+export async function getContracts(params?: { page?: number; limit?: number; search?: string; status?: string; category?: string; product_name?: string; start_date?: string; end_date?: string; }): Promise<{ items: Contract[]; total: number; page: number; limit: number; total_pages: number; }> {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.status) query.append('status', params.status);
   if (params?.category) query.append('category', params.category);
-  if (params?.user_name) query.append('user_name', params.user_name);
   if (params?.product_name) query.append('product_name', params.product_name);
-  const res = await apiClient.get<{ items: Contract[]; total: number; page: number; limit: number; total_pages: number; }>(`/api/contracts?${query.toString()}`);
+  if (params?.start_date) query.append('start_date', params.start_date);
+  if (params?.end_date) query.append('end_date', params.end_date);
+  const res = await apiClient.get<{ items: Contract[]; total: number; page: number; limit: number; total_pages: number; }>(`/api/orders?${query.toString()}`);
   return res.data;
 }
 

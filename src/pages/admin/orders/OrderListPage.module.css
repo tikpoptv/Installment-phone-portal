@@ -413,4 +413,18 @@
   text-align: center;
   color: #ef4444;
   font-size: 18px;
+}
+.searchButton {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  font-size: 1rem;
+}
+.searchButton:hover {
+  background: #0369a1;
 } 

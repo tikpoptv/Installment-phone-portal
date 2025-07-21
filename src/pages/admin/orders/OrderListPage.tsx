@@ -99,7 +99,8 @@ export default function OrderListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(''); // ใช้สำหรับ trigger การค้นหา
+  const [searchInput, setSearchInput] = useState(''); // สำหรับ input ช่องค้นหา
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -110,6 +111,7 @@ export default function OrderListPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showMobileWarn, setShowMobileWarn] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(0); // trigger fetch
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -117,11 +119,12 @@ export default function OrderListPage() {
     getContracts({
       page: currentPage,
       limit: rowsPerPage,
-      search: search || undefined,
+      search: search || undefined, // ใช้ search (ไม่ใช่ searchInput)
       status: statusFilter === 'all' ? undefined : statusFilter,
       category: categoryFilter === 'all' ? undefined : categoryFilter,
       product_name: productFilter || undefined,
-      // start_date, end_date: ถ้า backend รองรับให้เพิ่ม filter นี้ด้วย
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
     })
       .then((data: { items: Contract[]; total: number; total_pages: number; }) => {
         setOrders(data.items ?? []);
@@ -133,7 +136,7 @@ export default function OrderListPage() {
         setFetchError('เกิดข้อผิดพลาดในการโหลดข้อมูลคำสั่งซื้อ');
       })
       .finally(() => setLoading(false));
-  }, [currentPage, rowsPerPage, search, statusFilter, categoryFilter, productFilter, startDate, endDate]);
+  }, [searchTrigger, currentPage, rowsPerPage]); // fetch เมื่อ searchTrigger เปลี่ยน หรือเปลี่ยนหน้า/จำนวนต่อหน้า
 
   const productNames = Array.from(new Set(orders.map(o => o.product_name)));
   const totalRows = total;
@@ -141,7 +144,7 @@ export default function OrderListPage() {
   const endIdx = startIdx + orders.length;
   const paginated = orders;
 
-  useEffect(() => { setCurrentPage(1); }, [search, rowsPerPage, statusFilter, categoryFilter, productFilter, startDate, endDate]);
+  // ปิด auto reset page เมื่อ filter เปลี่ยน
 
   // ตรวจสอบขนาดหน้าจอเมื่อ mount
   useEffect(() => {
@@ -193,11 +196,20 @@ export default function OrderListPage() {
             <input
               type="text"
               placeholder="ค้นหาชื่อลูกค้า, สินค้า, รหัสคำสั่งซื้อ..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className={styles.searchInput}
               style={{ flex: 1, minWidth: 0 }}
             />
+            <button
+              className={styles.searchButton}
+              style={{ marginLeft: 8, minWidth: 80 }}
+              onClick={() => {
+                setSearch(searchInput);
+                setCurrentPage(1);
+                setSearchTrigger(t => t + 1);
+              }}
+            >ค้นหา</button>
             <select
               value={rowsPerPage}
               onChange={e => setRowsPerPage(Number(e.target.value))}
