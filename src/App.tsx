@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/admin/Navbar';
 import Dashboard from './pages/admin/dashboard/Dashboard';
 import AdminLogin from './pages/admin/auth/Login';
@@ -85,6 +85,7 @@ function AppContent() {
   const [sessionExpired, setSessionExpired] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation(); // เพิ่ม useLocation เพื่อดึง path ปัจจุบัน
 
   // อ่านค่าจาก env
   const ADMIN_DOMAIN = import.meta.env.VITE_ADMIN_DOMAIN;
@@ -128,7 +129,9 @@ function AppContent() {
         localStorage.setItem('app_initialized', 'true');
 
         // ถ้าไม่ได้ login ให้ redirect ไปหน้า login
-        if (!isLoggedIn) {
+        // ยกเว้น path /create-admin/:token (หรือ path ที่ขึ้นต้นด้วย /create-admin/)
+        const isCreateAdminPath = location.pathname.startsWith('/create-admin/');
+        if (!isLoggedIn && !isCreateAdminPath) {
           if (showAdminUI) {
             navigate('/admin/login');
           } else if (showUserUI) {
@@ -139,7 +142,7 @@ function AppContent() {
 
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isLoggedIn, showAdminUI, showUserUI, navigate]);
+  }, [isLoading, isLoggedIn, showAdminUI, showUserUI, navigate, location.pathname]);
 
   useEffect(() => {
     const handler = () => setSessionExpired(true);
