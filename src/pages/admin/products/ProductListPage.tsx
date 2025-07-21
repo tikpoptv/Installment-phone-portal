@@ -76,7 +76,7 @@ export default function ProductListPage() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [filter, setFilter] = useState<'all' | 'available' | 'leased' | 'sold'>('all');
   const [icloudFilter, setIcloudFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -87,6 +87,19 @@ export default function ProductListPage() {
   const [maxPrice, setMaxPrice] = useState('');
   const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useState<{
+    search: string;
+    status: string;
+    icloud_status: string;
+    min_price?: number;
+    max_price?: number;
+  }>({
+    search: '',
+    status: 'all',
+    icloud_status: 'all',
+    min_price: undefined,
+    max_price: undefined
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,9 +107,11 @@ export default function ProductListPage() {
     getProducts({
       page: currentPage,
       limit: rowsPerPage,
-      search: search || undefined,
-      status: filter === 'all' ? undefined : filter,
-      icloud_status: icloudFilter === 'all' ? undefined : icloudFilter
+      search: searchParams.search || undefined,
+      status: searchParams.status === 'all' ? undefined : searchParams.status,
+      icloud_status: searchParams.icloud_status === 'all' ? undefined : searchParams.icloud_status,
+      min_price: searchParams.min_price,
+      max_price: searchParams.max_price
     })
       .then((data: { items: Product[]; total: number; total_pages: number; }) => {
         setProducts(data.items ?? []);
@@ -109,7 +124,7 @@ export default function ProductListPage() {
         setProducts([]);
       })
       .finally(() => setLoading(false));
-  }, [currentPage, rowsPerPage, search, filter, icloudFilter]);
+  }, [searchParams, currentPage, rowsPerPage]);
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -122,8 +137,7 @@ export default function ProductListPage() {
   const endIdx = startIdx + products.length;
   const paginated = products;
 
-  // reset page เมื่อเปลี่ยน filter/search/rowsPerPage
-  useEffect(() => { setCurrentPage(1); }, [search, filter, rowsPerPage, icloudFilter]);
+  // ปิด auto reset page เมื่อ filter/search/rowsPerPage เปลี่ยน
 
   // ฟังก์ชันแปลงเลขเป็น comma
   const formatNumber = (val: string) => {
@@ -171,11 +185,25 @@ export default function ProductListPage() {
             <input
               type="text"
               placeholder="ค้นหาชื่อรุ่น, IMEI, หมายเหตุ, รหัสสินค้า..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className={styles.searchInput}
               style={{ flex: 1, minWidth: 0 }}
             />
+            <button
+              className={styles.searchButton}
+              style={{ marginLeft: 8, minWidth: 80 }}
+              onClick={() => {
+                setSearchParams({
+                  search: searchInput,
+                  status: filter,
+                  icloud_status: icloudFilter,
+                  min_price: minPrice ? Number(minPrice) : undefined,
+                  max_price: maxPrice ? Number(maxPrice) : undefined
+                });
+                setCurrentPage(1);
+              }}
+            >ค้นหา</button>
             <select
               value={rowsPerPage}
               onChange={e => setRowsPerPage(Number(e.target.value))}

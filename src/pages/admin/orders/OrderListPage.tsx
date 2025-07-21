@@ -99,19 +99,25 @@ export default function OrderListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [search, setSearch] = useState(''); // ใช้สำหรับ trigger การค้นหา
-  const [searchInput, setSearchInput] = useState(''); // สำหรับ input ช่องค้นหา
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [productFilter, setProductFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showMobileWarn, setShowMobileWarn] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [searchTrigger, setSearchTrigger] = useState(0); // trigger fetch
+  const [searchParams, setSearchParams] = useState({
+    search: '',
+    status: 'all',
+    category: 'all',
+    product_name: '',
+    start_date: '',
+    end_date: ''
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,12 +125,12 @@ export default function OrderListPage() {
     getContracts({
       page: currentPage,
       limit: rowsPerPage,
-      search: search || undefined, // ใช้ search (ไม่ใช่ searchInput)
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      category: categoryFilter === 'all' ? undefined : categoryFilter,
-      product_name: productFilter || undefined,
-      start_date: startDate || undefined,
-      end_date: endDate || undefined,
+      search: searchParams.search || undefined,
+      status: searchParams.status === 'all' ? undefined : searchParams.status,
+      category: searchParams.category === 'all' ? undefined : searchParams.category,
+      product_name: searchParams.product_name || undefined,
+      start_date: searchParams.start_date || undefined,
+      end_date: searchParams.end_date || undefined,
     })
       .then((data: { items: Contract[]; total: number; total_pages: number; }) => {
         setOrders(data.items ?? []);
@@ -136,7 +142,7 @@ export default function OrderListPage() {
         setFetchError('เกิดข้อผิดพลาดในการโหลดข้อมูลคำสั่งซื้อ');
       })
       .finally(() => setLoading(false));
-  }, [searchTrigger, currentPage, rowsPerPage]); // fetch เมื่อ searchTrigger เปลี่ยน หรือเปลี่ยนหน้า/จำนวนต่อหน้า
+  }, [searchParams, currentPage, rowsPerPage]);
 
   const productNames = Array.from(new Set(orders.map(o => o.product_name)));
   const totalRows = total;
@@ -205,9 +211,15 @@ export default function OrderListPage() {
               className={styles.searchButton}
               style={{ marginLeft: 8, minWidth: 80 }}
               onClick={() => {
-                setSearch(searchInput);
+                setSearchParams({
+                  search: searchInput,
+                  status: statusFilter,
+                  category: categoryFilter,
+                  product_name: productFilter,
+                  start_date: startDate,
+                  end_date: endDate
+                });
                 setCurrentPage(1);
-                setSearchTrigger(t => t + 1);
               }}
             >ค้นหา</button>
             <select
