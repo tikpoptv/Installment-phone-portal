@@ -19,7 +19,8 @@ const ownerTypeOptions = [
 const rowsPerPageOptions = [25, 50, 75, 100];
 
 const IcloudListPage: React.FC = () => {
-  const [search, setSearch] = useState('');
+  // const [search, setSearch] = useState(''); // สำหรับ trigger fetch จริง (ลบทิ้ง)
+  const [searchInput, setSearchInput] = useState(''); // สำหรับ input ช่องค้นหา
   const [ownerType, setOwnerType] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,6 +35,7 @@ const IcloudListPage: React.FC = () => {
   const [selectedIcloudId, setSelectedIcloudId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetUsername, setDeleteTargetUsername] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useState<{search: string; ownerType: string;}>({search: '', ownerType: ''});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,8 +43,8 @@ const IcloudListPage: React.FC = () => {
     getIcloudCredentials({
       page: currentPage,
       limit: rowsPerPage,
-      search: search || undefined,
-      owner_type: ownerType || undefined
+      search: searchParams.search || undefined,
+      owner_type: searchParams.ownerType || undefined
     })
       .then((data: { items: IcloudCredential[]; total: number; page: number; limit: number; total_pages: number; }) => {
         setIclouds(data.items ?? []);
@@ -55,7 +57,7 @@ const IcloudListPage: React.FC = () => {
         setIclouds([]);
       })
       .finally(() => setLoading(false));
-  }, [currentPage, rowsPerPage, search, ownerType]);
+  }, [searchParams, currentPage, rowsPerPage]);
 
   const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
@@ -163,9 +165,17 @@ const IcloudListPage: React.FC = () => {
             type="text"
             className={styles.searchInput}
             placeholder="ค้นหา ID, ชื่อผู้ใช้..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
           />
+          <button
+            className={styles.searchButton}
+            style={{ marginLeft: 8, minWidth: 80 }}
+            onClick={() => {
+              setSearchParams({search: searchInput, ownerType});
+              setCurrentPage(1);
+            }}
+          >ค้นหา</button>
           <select
             className={styles.select}
             value={ownerType}

@@ -98,7 +98,8 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
 }
 
 export default function CustomerListPage() {
-  const [search, setSearch] = useState('');
+  // const [search, setSearch] = useState(''); // สำหรับ trigger fetch จริง (ลบทิ้ง)
+  const [searchInput, setSearchInput] = useState(''); // สำหรับ input ช่องค้นหา
   const [filter, setFilter] = useState<FilterType>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -111,14 +112,15 @@ export default function CustomerListPage() {
   const navigate = useNavigate();
   const [mobileWarningOpen, setMobileWarningOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useState<{search: string; filter: FilterType;}>({search: '', filter: 'all'});
 
   useEffect(() => {
     setLoading(true);
     getCustomers({
       page: currentPage,
       limit: rowsPerPage,
-      search: search || undefined,
-      is_verified: filter === 'all' ? undefined : filter === 'verified' ? true : false
+      search: searchParams.search || undefined,
+      is_verified: searchParams.filter === 'all' ? undefined : searchParams.filter === 'verified' ? true : false
     })
       .then((data: { items: Customer[]; total: number; total_pages: number; }) => {
         setCustomers(data.items ?? []);
@@ -126,16 +128,17 @@ export default function CustomerListPage() {
         setTotalPages(data.total_pages ?? 1);
       })
       .finally(() => setLoading(false));
-  }, [currentPage, rowsPerPage, search, filter]);
+  }, [searchParams, currentPage, rowsPerPage]);
 
   const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
   const endIdx = startIdx + customers.length;
   const paginated = customers;
 
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [rowsPerPage, search, filter]);
+  // React.useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [rowsPerPage, search, filter]);
+  // ปิด auto reset page เมื่อ search/filter เปลี่ยน
 
   const handleMobileCancel = () => {
     if (window.innerWidth <= 640) {
@@ -162,10 +165,18 @@ export default function CustomerListPage() {
         <input
           type="text"
           placeholder="ค้นหาชื่อ, เบอร์, อีเมล..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
           className={styles.searchInput}
         />
+        <button
+          className={styles.searchButton}
+          style={{ marginLeft: 8, minWidth: 80 }}
+          onClick={() => {
+            setSearchParams({search: searchInput, filter});
+            setCurrentPage(1);
+          }}
+        >ค้นหา</button>
         <select
           value={filter}
           onChange={e => setFilter(e.target.value as FilterType)}
@@ -255,8 +266,8 @@ export default function CustomerListPage() {
           getCustomers({
             page: 1,
             limit: rowsPerPage,
-            search: search || undefined,
-            is_verified: filter === 'all' ? undefined : filter === 'verified' ? true : false
+            search: searchParams.search || undefined,
+            is_verified: searchParams.filter === 'all' ? undefined : searchParams.filter === 'verified' ? true : false
           })
             .then((data: { items: Customer[] }) => {
               exportCustomersToCSV(data.items ?? []);

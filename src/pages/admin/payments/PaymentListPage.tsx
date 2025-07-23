@@ -32,7 +32,8 @@ const verifyStatusLabel = (status: string) => {
 };
 
 export default function PaymentListPage() {
-  const [search, setSearch] = useState('');
+  // const [search, setSearch] = useState(''); // สำหรับ trigger fetch จริง (ลบทิ้ง)
+  const [searchInput, setSearchInput] = useState(''); // สำหรับ input ช่องค้นหา
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
@@ -47,6 +48,7 @@ export default function PaymentListPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useState<{search: string; status: string; method: string; startDate: string; endDate: string;}>({search: '', status: 'all', method: 'all', startDate: '', endDate: ''});
 
   useEffect(() => {
     setLoading(true);
@@ -54,11 +56,11 @@ export default function PaymentListPage() {
     getAllPayments({
       page: currentPage,
       limit: rowsPerPage,
-      search,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-      method: methodFilter === 'all' ? undefined : methodFilter,
-      start_date: startDate,
-      end_date: endDate
+      search: searchParams.search,
+      status: searchParams.status === 'all' ? undefined : searchParams.status,
+      method: searchParams.method === 'all' ? undefined : searchParams.method,
+      start_date: searchParams.startDate || undefined,
+      end_date: searchParams.endDate || undefined
     })
       .then((data) => {
         const d = data as { items: Payment[]; total: number; total_pages: number };
@@ -68,7 +70,7 @@ export default function PaymentListPage() {
       })
       .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูล'))
       .finally(() => setLoading(false));
-  }, [currentPage, search, statusFilter, methodFilter, startDate, endDate]);
+  }, [searchParams, currentPage]);
 
   const totalRows = total;
   const startIdx = (currentPage - 1) * rowsPerPage;
@@ -95,11 +97,25 @@ export default function PaymentListPage() {
                 <input
                   type="text"
                   placeholder="ค้นหาเลขที่ชำระ, รหัสคำสั่งซื้อ..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
                   className={styles.searchInput}
                   style={{ flex: 1, minWidth: 0 }}
                 />
+                <button
+                  className={styles.searchButton}
+                  style={{ marginLeft: 8, minWidth: 80 }}
+                  onClick={() => {
+                    setSearchParams({
+                      search: searchInput,
+                      status: statusFilter,
+                      method: methodFilter,
+                      startDate,
+                      endDate
+                    });
+                    setCurrentPage(1);
+                  }}
+                >ค้นหา</button>
               </div>
               <div className={styles.filterRightRow}>
                 <div className={styles.filterRightGroup}>
@@ -204,7 +220,7 @@ export default function PaymentListPage() {
               onSuccess={() => {
                 setShowCreateModal(false);
                 setLoading(true);
-                getAllPayments({ page: currentPage, limit: rowsPerPage, search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
+                getAllPayments({ page: currentPage, limit: rowsPerPage, search: searchParams.search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
                   .then((data) => {
                     const d = data as { items: Payment[] };
                     setPayments(Array.isArray(d.items) ? d.items : []);
@@ -219,7 +235,7 @@ export default function PaymentListPage() {
               onClose={() => setShowDetailModal(false)}
               onActionSuccess={async () => {
                 setLoading(true);
-                getAllPayments({ page: currentPage, limit: rowsPerPage, search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
+                getAllPayments({ page: currentPage, limit: rowsPerPage, search: searchParams.search, status: statusFilter === 'all' ? undefined : statusFilter, method: methodFilter === 'all' ? undefined : methodFilter, start_date: startDate, end_date: endDate })
                   .then((data) => {
                     const d = data as { items: Payment[] };
                     setPayments(Array.isArray(d.items) ? d.items : []);
