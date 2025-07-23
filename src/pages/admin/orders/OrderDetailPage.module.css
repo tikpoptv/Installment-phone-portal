@@ -436,3 +436,27 @@
   display: flex;
   align-items: center;
 } 
+
+/* จัดคอลัมน์หมวดหมู่ในตารางงวดผ่อนให้อยู่ตรงกลาง */
+.paymentTable th.categoryCol, .paymentTable td.categoryCol {
+  text-align: center;
+  vertical-align: middle;
+} 
+
+/* สีสำหรับหมวดหมู่ในตารางงวดผ่อน */
+.categoryDown {
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 12px;
+  padding: 2px 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+.categoryRent {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border-radius: 12px;
+  padding: 2px 12px;
+  font-weight: 700;
+  display: inline-block;
+} 

@@ -356,7 +356,7 @@ const OrderDetailPage: React.FC = () => {
             </div>
           </div>
           {!paymentLoading && !paymentError && (
-            <PaymentAlerts contract={o} payments={payments} remainingAmount={remainingAmount} overdueMonths={overdueMonths} totalDueThisMonth={totalDueThisMonth} />
+            <PaymentAlerts contract={o} payments={payments} installments={installments} remainingAmount={remainingAmount} overdueMonths={overdueMonths} totalDueThisMonth={totalDueThisMonth} />
           )}
           {/* ตาราง Installments */}
           {!paymentLoading && !paymentError && installments.length > 0 && (
@@ -369,6 +369,7 @@ const OrderDetailPage: React.FC = () => {
                       <th>งวดที่</th>
                       <th>ครบกำหนด</th>
                       <th>จำนวนเงิน</th>
+                      <th className={styles.categoryCol}>หมวดหมู่</th>
                       <th>สถานะ</th>
                       <th></th>
                     </tr>
@@ -379,6 +380,11 @@ const OrderDetailPage: React.FC = () => {
                         <td>{inst.installment_number}</td>
                         <td>{formatDate(inst.due_date)}</td>
                         <td>{inst.amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}</td>
+                        <td className={styles.categoryCol}>
+                          <span className={inst.category === 'down_payment' ? styles.categoryDown : styles.categoryRent}>
+                            {inst.category === 'down_payment' ? 'ดาวน์' : 'ผ่อน'}
+                          </span>
+                        </td>
                         <td>
                           <span className={`${styles.installmentStatus} ${getInstallmentStatusClass(inst.status)}`}>
                             {getInstallmentStatusLabel(inst.status)}
@@ -614,6 +620,12 @@ const OrderDetailPage: React.FC = () => {
                       <span>{selectedInstallment.note}</span>
                     </div>
                   )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
+                    <span style={{ fontWeight: 600, color: '#64748b' }}>หมวดหมู่:</span>
+                    <span className={selectedInstallment.category === 'down_payment' ? styles.categoryDown : styles.categoryRent}>
+                      {selectedInstallment.category === 'down_payment' ? 'ดาวน์' : 'ผ่อน'}
+                    </span>
+                  </div>
                   {selectedInstallment.is_final_payment && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e5e7eb' }}>
                       <span style={{ fontWeight: 600, color: '#64748b' }}>ประเภท:</span>
@@ -720,9 +732,10 @@ const OrderDetailPage: React.FC = () => {
   );
 };
 
-function PaymentAlerts({ contract, payments, remainingAmount, overdueMonths, totalDueThisMonth }: { 
+function PaymentAlerts({ contract, payments, installments, remainingAmount, overdueMonths, totalDueThisMonth }: { 
   contract: ContractDetail, 
   payments: ContractPayment[],
+  installments: Installment[],
   remainingAmount: number,
   overdueMonths: number,
   totalDueThisMonth: number
@@ -748,15 +761,17 @@ function PaymentAlerts({ contract, payments, remainingAmount, overdueMonths, tot
     alerts.push(`📅 ยอดที่ต้องชำระเดือนนี้: ${totalDueThisMonth.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`);
   }
   
-  // เงินดาวน์ - คำนวณเฉพาะการชำระเงินที่อนุมัติแล้ว
-  if (typeof contract.down_payment_amount === 'number' && contract.down_payment_amount > 0) {
-    const approvedPayments = payments.filter(p => p.verify_status === 'approved');
-    const downPaid = approvedPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    
-    if (downPaid < contract.down_payment_amount) {
-      alerts.push(`⚠️ เงินดาวน์ที่ต้องชำระ ${contract.down_payment_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} ชำระแล้ว ${downPaid.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} คงเหลือ ${ (contract.down_payment_amount - downPaid).toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) }`);
-    } else if (downPaid >= contract.down_payment_amount) {
-      alerts.push(`✅ เงินดาวน์ชำระครบแล้ว (${contract.down_payment_amount.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })})`);
+  // เงินดาวน์ - อิงจาก installments ที่ category เป็น 'down_payment'
+  if (Array.isArray(installments)) {
+    const downInstallments = installments.filter(ins => ins.category === 'down_payment');
+    if (downInstallments.length > 0) {
+      const totalDown = downInstallments.reduce((sum, ins) => sum + (ins.amount || 0), 0);
+      const paidDown = downInstallments.reduce((sum, ins) => sum + (ins.amount_paid || 0), 0);
+      if (paidDown < totalDown) {
+        alerts.push(`⚠️ เงินดาวน์ที่ต้องชำระ ${totalDown.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} ชำระแล้ว ${paidDown.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })} คงเหลือ ${(totalDown - paidDown).toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`);
+      } else {
+        alerts.push(`✅ เงินดาวน์ชำระครบแล้ว (${totalDown.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })})`);
+      }
     }
   }
   

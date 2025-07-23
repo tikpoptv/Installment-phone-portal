@@ -593,10 +593,10 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             />
           </div>
           <div>
-            <label>ไฟล์สัญญาคำสั่งซื้อ (PDF) <span className={styles.required}>*</span></label>
+            <label>ไฟล์สัญญาคำสั่งซื้อ (PDF หรือ รูปภาพ) <span className={styles.required}>*</span></label>
             <input
               type="file"
-              accept="application/pdf"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
               onChange={handleFileChange}
               className={styles.inputBox}
               ref={fileInputRef}
@@ -622,7 +622,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
                     verticalAlign: 'middle',
                     lineHeight: 1.5
                   }}
-                >ดูไฟล์สัญญา</button>
+                >ดูตัวอย่างไฟล์</button>
               </div>
             )}
           </div>
@@ -642,17 +642,25 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         }}>
           <div style={{ background: '#fff', borderRadius: 12, maxWidth: 600, width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', background: '#f1f5f9' }}>
-              <span>แสดงไฟล์สัญญาคำสั่งซื้อ</span>
+              <span>แสดงตัวอย่างไฟล์สัญญาคำสั่งซื้อ</span>
               <button onClick={() => { setShowPdpaPreview(false); if (pdpaPreviewUrl) { URL.revokeObjectURL(pdpaPreviewUrl); setPdpaPreviewUrl(null); } }} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#64748b', cursor: 'pointer', padding: '4px 8px' }}>&times;</button>
             </div>
-            <div style={{ padding: 0, flex: 1, overflow: 'auto', background: '#f9fafb', minHeight: 400 }}>
-              <iframe
-                src={pdpaPreviewUrl}
-                title="Order Contract File Preview"
-                width="100%"
-                height="500px"
-                style={{ border: 'none', display: 'block' }}
-              />
+            <div style={{ padding: 0, flex: 1, overflow: 'auto', background: '#f9fafb', minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {form.pdpa_consent_file && form.pdpa_consent_file.type.startsWith('image/') ? (
+                <img
+                  src={pdpaPreviewUrl}
+                  alt="Order Contract File Preview"
+                  style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8, boxShadow: '0 2px 8px #bae6fd55' }}
+                />
+              ) : (
+                <iframe
+                  src={pdpaPreviewUrl}
+                  title="Order Contract File Preview"
+                  width="100%"
+                  height="500px"
+                  style={{ border: 'none', display: 'block' }}
+                />
+              )}
             </div>
           </div>
         </div>

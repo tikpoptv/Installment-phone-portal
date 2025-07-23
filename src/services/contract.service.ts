@@ -74,6 +74,7 @@ export interface Installment {
   paid_at?: string;
   is_final_payment: boolean;
   note?: string;
+  category?: string; // เพิ่ม field category เพื่อรองรับหมวดหมู่งวด เช่น down_payment, rent
 }
 
 export interface Discount {
