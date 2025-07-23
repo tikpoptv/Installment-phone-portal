@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import React from 'react';
 import styles from './CustomerListPage.module.css';
 import { MdVerified, MdHourglassEmpty, MdClose } from 'react-icons/md';
 import { getCustomers } from '../../../services/customer/customer.service';
