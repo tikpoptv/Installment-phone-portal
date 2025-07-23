@@ -6,6 +6,7 @@ import type { DashboardSummary } from '../../../../../services/dashboard.service
 import { formatDateThai, formatDateShort } from '../../../../../utils/date';
 import MobileAccessModal from '../../../../../components/MobileAccessModal';
 import PaymentDetailModal from '../../../payments/PaymentDetailModal';
+import { useMemo } from 'react';
 
 // เพิ่มฟังก์ชันแปลงสถานะเป็นชื่อไทยไว้ด้านบนสุด
 function orderStatusLabel(status: string) {
@@ -16,6 +17,17 @@ function orderStatusLabel(status: string) {
   if (status === 'returned') return 'คืนสินค้า';
   if (status === 'processing') return 'กำลังดำเนินการ';
   return status;
+}
+
+// ฟังก์ชัน normalize date string เป็น YYYY-MM-DD (รองรับ DD/MM/YYYY, YYYY-MM-DD, YYYY-MM-DDTHH:mm:ssZ)
+function normalizeDateString(date: string | undefined | null): string | null {
+  if (!date) return null;
+  if (date.includes('/')) {
+    // DD/MM/YYYY
+    const [d, m, y] = date.split('/');
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return date.split('T')[0];
 }
 
 interface StatsCardsProps {
@@ -185,6 +197,25 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
   else if (type === 'orders') title = 'รายละเอียดคำสั่งซื้อใหม่';
   else if (type === 'customers') title = 'รายละเอียดลูกค้าใหม่';
 
+  // ฟิลเตอร์วันสำหรับ outstanding
+  const [filterStart, setFilterStart] = useState<string>('');
+  const [filterEnd, setFilterEnd] = useState<string>('');
+  const outstandingDetails = useMemo(() => {
+    if (type !== 'outstanding') return summary.outstanding.details;
+    if (!filterStart && !filterEnd) return summary.outstanding.details;
+    const filterStartNorm = normalizeDateString(filterStart);
+    const filterEndNorm = normalizeDateString(filterEnd);
+    return summary.outstanding.details.filter(d => {
+      const dueDateNorm = normalizeDateString(d.due_date);
+      if (!dueDateNorm) return false;
+      // เปรียบเทียบ string YYYY-MM-DD ได้เลย
+      if (filterStartNorm && !filterEndNorm && dueDateNorm < filterStartNorm) return false;
+      if (!filterStartNorm && filterEndNorm && dueDateNorm > filterEndNorm) return false;
+      if (filterStartNorm && filterEndNorm && (dueDateNorm < filterStartNorm || dueDateNorm > filterEndNorm)) return false;
+      return true;
+    });
+  }, [type, summary.outstanding.details, filterStart, filterEnd]);
+
   // ฟังก์ชันช่วยเช็คและแสดง fallback ถ้าไม่มีข้อมูล
   function renderTableOrEmpty(details: unknown[] | undefined, table: React.ReactElement) {
     if (!details || details.length === 0) {
@@ -198,6 +229,18 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
       <div className={styles.dashboardModalContent}>
         <button className={styles.dashboardCloseButton} style={{position:'absolute',top:18,right:18,fontSize:24,background:'none',border:'none',cursor:'pointer',width:32,height:32,padding:0}} onClick={onClose}>×</button>
         <h2 className={styles.dashboardModalTitle}>{title}</h2>
+        {/* ฟิลเตอร์วันสำหรับ outstanding */}
+        {type === 'outstanding' && (
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:18}}>
+            <label style={{fontWeight:600,color:'#0ea5e9'}}>ช่วงวันที่ครบกำหนด:</label>
+            <input type="date" value={filterStart} onChange={e => setFilterStart(e.target.value)} style={{padding:'6px 10px',borderRadius:6,border:'1.5px solid #bae6fd'}} />
+            <span style={{color:'#64748b',fontWeight:600}}>ถึง</span>
+            <input type="date" value={filterEnd} onChange={e => setFilterEnd(e.target.value)} style={{padding:'6px 10px',borderRadius:6,border:'1.5px solid #bae6fd'}} />
+            {(filterStart || filterEnd) && (
+              <button type="button" style={{marginLeft:8,background:'#e0e7ef',color:'#0ea5e9',border:'none',borderRadius:6,padding:'6px 14px',fontWeight:600,cursor:'pointer'}} onClick={()=>{setFilterStart('');setFilterEnd('');}}>ล้าง</button>
+            )}
+          </div>
+        )}
         <div className={styles.dashboardTableWrapper}>
           {type === 'sales' && renderTableOrEmpty(summary.sales.details, (
             <table className={styles.dashboardTable}>
@@ -231,17 +274,19 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
               </tbody>
             </table>
           ))}
-          {type === 'outstanding' && renderTableOrEmpty(summary.outstanding.details, (
+          {type === 'outstanding' && renderTableOrEmpty(outstandingDetails, (
             <table className={styles.dashboardTable}>
               <thead>
                 <tr>
                   <th style={{minWidth:'120px'}}>เลขสัญญา</th>
                   <th style={{textAlign:'left'}}>ลูกค้า</th>
-                  <th>ยอดค้างชำระ (บาท)</th>
+                  <th style={{minWidth:'120px'}}>ยอดค้างชำระ</th>
+                  <th style={{minWidth:'120px'}}>ครบกำหนด</th>
+                  <th style={{minWidth:'130px',maxWidth:'160px'}}>จำนวนงวดที่ค้าง</th>
                 </tr>
               </thead>
               <tbody>
-                {summary.outstanding.details && summary.outstanding.details.map((d, i) => (
+                {outstandingDetails && outstandingDetails.map((d, i) => (
                   <tr key={i}>
                     <td style={{minWidth:'120px'}}>
                       <a href={`/admin/orders/${d.contract_id}`} target="_blank" rel="noopener noreferrer" style={{color:'#0ea5e9',textDecoration:'underline',fontWeight:600}}>
@@ -252,6 +297,8 @@ const DashboardDetailModal: FC<ModalProps> = ({ type, summary, onClose, onOpenPa
                       {d.user_name} <span style={{color:'#94a3b8',fontSize:'90%'}}>({d.user_id ? d.user_id : 'ซื้อเงินสด'})</span>
                     </td>
                     <td>{d.outstanding_amount.toLocaleString('th-TH')}</td>
+                    <td>{d.due_date ? formatDateShort(d.due_date) : '-'}</td>
+                    <td style={{minWidth:'130px',maxWidth:'160px'}}>{typeof d.overdue_count === 'number' ? d.overdue_count : '-'}</td>
                   </tr>
                 ))}
               </tbody>

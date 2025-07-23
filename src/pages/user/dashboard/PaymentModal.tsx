@@ -202,14 +202,48 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
     toast.success('คัดลอกเลขบัญชีแล้ว!');
   };
 
+  // ===== แจ้งเตือนเงินดาวน์และยอดผ่อนเดือนนี้ =====
+  let downPaymentAlert = null;
+  let monthlyPaymentAlert = null;
+  if (Array.isArray(paymentData?.installments)) {
+    // เงินดาวน์
+    const downInstallments = paymentData.installments.filter(inst => inst.category === 'down_payment');
+    const unpaidDown = downInstallments.find(inst => (inst.amount_paid ?? 0) < (inst.amount ?? 0));
+    if (unpaidDown) {
+      downPaymentAlert = (
+        <div style={{ background: '#dcfce7', color: '#16a34a', borderRadius: 8, padding: '10px 16px', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{fontSize:20}}>⚠️</span> กรุณาชำระเงินดาวน์ {unpaidDown.amount.toLocaleString()} บาท ก่อนเริ่มผ่อนงวดแรก
+        </div>
+      );
+    }
+    // ยอดผ่อนเดือนนี้ (หางวดที่ครบกำหนดล่าสุดที่ยังไม่จ่าย)
+    const now = new Date();
+    const dueInstallments = paymentData.installments.filter(inst => inst.category !== 'down_payment' && inst.status !== 'paid');
+    // หาอันที่ครบกำหนดเร็วที่สุด (แต่ยังไม่จ่าย)
+    const nextDue = dueInstallments.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
+    if (nextDue && new Date(nextDue.due_date) <= now) {
+      monthlyPaymentAlert = (
+        <div style={{ background: '#fef9c3', color: '#eab308', borderRadius: 8, padding: '10px 16px', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{fontSize:20}}>⚠️</span> กรุณาชำระยอดผ่อนงวดที่ {nextDue.installment_number} จำนวน {nextDue.amount.toLocaleString()} บาท ภายใน {formatDate(nextDue.due_date)}
+        </div>
+      );
+    }
+  }
+
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <h2>
           {hasEarlyClosureDiscount ? 'แจ้งชำระเงิน (ปิดยอด)' : 'แจ้งชำระเงิน'}
         </h2>
+        {/* แจ้งเตือน */}
+        {downPaymentAlert}
+        {monthlyPaymentAlert}
         {/* สรุปข้อมูลสัญญา */}
         <div className={styles.summaryBox} style={{ marginBottom: 24 }}>
+          {typeof paymentData?.overdue_amount === 'number' && paymentData.overdue_amount > 0 && (
+            <div style={{ color: '#dc2626', fontWeight: 700 }}><strong>ยอดค้างชำระ:</strong> {paymentData.overdue_amount.toLocaleString()} บาท</div>
+          )}
           <div><strong>ยอดผ่อนต่อเดือน:</strong> {paymentData?.monthly_payment?.toLocaleString() ?? '-'} บาท</div>
           <div><strong>งวดที่จ่ายไปแล้ว:</strong> {paymentData?.paid_installments ?? '-'} งวด</div>
           <div><strong>วันที่ชำระล่าสุด:</strong> {paymentData?.last_payment_date ? formatDate(paymentData.last_payment_date) : '-'}</div>
@@ -406,6 +440,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                   <th>ครบกำหนด</th>
                   <th className={styles.amountCol}>จำนวนเงิน</th>
                   <th className={styles.paidCol}>ชำระแล้ว</th>
+                  <th>หมวดหมู่</th>
                   <th>สถานะ</th>
                   <th>หมายเหตุ</th>
                 </tr>
@@ -417,6 +452,9 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                     <td>{formatDate(installment.due_date)}</td>
                     <td className={styles.amountCol}>{installment.amount.toLocaleString()} บาท</td>
                     <td className={styles.paidCol}>{installment.amount_paid.toLocaleString()} บาท</td>
+                    <td style={{ textAlign: 'center', fontWeight: 700, color: installment.category === 'down_payment' ? '#16a34a' : '#0ea5e9' }}>
+                      {installment.category === 'down_payment' ? 'ดาวน์' : 'ผ่อน'}
+                    </td>
                     <td className={getStatusColor(installment.status)}>
                       {installmentStatusLabel[installment.status] || '-'}
                     </td>

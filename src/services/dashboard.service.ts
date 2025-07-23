@@ -23,6 +23,8 @@ export interface DashboardSummary {
       user_name: string;
       contract_id: string;
       outstanding_amount: number;
+      due_date?: string; // เพิ่ม field due_date เพื่อรองรับข้อมูลจาก backend
+      overdue_count?: number; // เพิ่ม field overdue_count ในแต่ละ detail
     }[];
   };
   orders: {
