@@ -14,6 +14,7 @@ export interface TrackingOrder {
   total_price: number;
   outstanding: number;
   outstanding_count: number;
+  overdue_count: number;
   next_due_date: string;
   outstanding_installments: OutstandingInstallment[];
 }

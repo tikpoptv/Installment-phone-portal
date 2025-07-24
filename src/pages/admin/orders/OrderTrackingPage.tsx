@@ -181,27 +181,40 @@ const OrderTrackingPage: React.FC = () => {
               <th>รหัสสัญญา</th>
               <th>ลูกค้า</th>
               <th>สินค้า</th>
-              <th>สถานะ</th>
               <th style={{ textAlign: 'center' }}>ยอดรวม</th>
               <th style={{ textAlign: 'center' }}>ยอดค้าง</th>
-              <th style={{ textAlign: 'center' }}>งวดค้าง</th>
+              <th style={{ textAlign: 'center' }}>งวดค้างเกินกำหนด</th>
               <th style={{ textAlign: 'center' }}>งวดถัดไป</th>
+              <th>สถานะ</th>
               <th>รายละเอียด</th>
             </tr>
           </thead>
           <tbody>
             {orders.length === 0 ? (
-              <tr><td colSpan={9} style={{ textAlign: 'center', color: '#64748b', padding: 32 }}>ไม่พบข้อมูล</td></tr>
+              <tr>
+                <td colSpan={document.querySelectorAll(`.${styles.tableModern} thead th`).length || 10}
+                    style={{ textAlign: 'center', color: '#64748b', padding: 48, height: '180px', verticalAlign: 'middle' }}>
+                  ไม่พบข้อมูล
+                </td>
+              </tr>
             ) : orders.map((order) => (
               <React.Fragment key={order.contract_id}>
                 <tr className={expanded === order.contract_id ? styles.rowActive : ''}>
                   <td>
-                    <Link to={`/admin/orders/${order.contract_id}`} style={{ color: '#0ea5e9', textDecoration: 'underline', fontWeight: 700 }}>
-                      {order.contract_id}
-                    </Link>
+                    {order.contract_id ? (
+                      <Link to={`/admin/orders/${order.contract_id}`} style={{ color: '#0ea5e9', textDecoration: 'underline', fontWeight: 700 }}>
+                        {order.contract_id}
+                      </Link>
+                    ) : (
+                      <span style={{ color: '#64748b' }}>-</span>
+                    )}
                   </td>
                   <td>{order.user_name}</td>
                   <td>{order.product_name}</td>
+                  <td style={{ textAlign: 'center' }}>{order.total_price.toLocaleString('th-TH')}</td>
+                  <td style={{ textAlign: 'center', color: order.outstanding > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>{order.outstanding.toLocaleString('th-TH')}</td>
+                  <td style={{ textAlign: 'center' }}>{typeof order.overdue_count === 'number' ? order.overdue_count : '-'}</td>
+                  <td style={{ textAlign: 'center' }}>{formatDateShort(order.next_due_date)}</td>
                   <td>
                     {order.status ? (
                       <span className={styles.statusBadge} style={{ background: (statusMap[order.status]?.color || statusMap.default.color) + '22', color: statusMap[order.status]?.color || statusMap.default.color }}>
@@ -211,10 +224,6 @@ const OrderTrackingPage: React.FC = () => {
                       <span style={{ color: '#64748b' }}>-</span>
                     )}
                   </td>
-                  <td style={{ textAlign: 'center' }}>{order.total_price.toLocaleString('th-TH')}</td>
-                  <td style={{ textAlign: 'center', color: order.outstanding > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>{order.outstanding.toLocaleString('th-TH')}</td>
-                  <td style={{ textAlign: 'center' }}>{order.outstanding_count}</td>
-                  <td style={{ textAlign: 'center' }}>{formatDateShort(order.next_due_date)}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button className={styles.detailIconBtn} onClick={() => setExpanded(expanded === order.contract_id ? null : order.contract_id)}>
                       {expanded === order.contract_id ? <FaEyeSlash /> : <FaEye />}

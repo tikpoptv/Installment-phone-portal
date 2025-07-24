@@ -7,13 +7,30 @@ import type { Contract } from '../../../services/contract.service';
 import OrderCreateModal from './OrderCreateModal';
 import { formatDateShort, formatDateThai } from '../../../utils/date';
 
+const statusMap: Record<string, { label: string; color: string }> = {
+  active: { label: 'ผ่อนชำระอยู่', color: '#0ea5e9' },
+  closed: { label: 'ปิดสัญญา', color: '#22c55e' },
+  overdue: { label: 'ค้างชำระ', color: '#ef4444' },
+  repossessed: { label: 'ยึดสินค้า', color: '#a21caf' },
+  processing: { label: 'รอดำเนินการ', color: '#f59e42' },
+  returned: { label: 'คืนสินค้า', color: '#6366f1' },
+  default: { label: 'ค้างชำระ', color: '#ef4444' },
+};
+
 const statusLabel = (status: string) => {
-  if (status === 'active') return <span className={styles.statusActive}>กำลังใช้งาน</span>;
-  if (status === 'closed') return <span className={styles.statusCompleted}>เสร็จสิ้น</span>;
-  if (status === 'pending') return <span className={styles.statusDefault}>รอดำเนินการ</span>;
-  if (status === 'repossessed') return <span className={styles.statusCancelled}>ยึดคืน</span>;
-  if (status === 'returned') return <span className={styles.statusCancelled}>คืนสินค้า</span>;
-  return <span className={styles.statusDefault}>{status}</span>;
+  const s = statusMap[status] || statusMap.default;
+  return (
+    <span style={{
+      display: 'inline-block',
+      padding: '6px 16px',
+      borderRadius: 16,
+      fontWeight: 700,
+      fontSize: '0.98rem',
+      letterSpacing: '0.5px',
+      background: s.color + '22',
+      color: s.color,
+    }}>{s.label}</span>
+  );
 };
 
 const categoryLabel = (cat: string) => {
