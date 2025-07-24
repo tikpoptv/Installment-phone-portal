@@ -99,10 +99,12 @@ const SalesChart: FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [monthlyGoals, setMonthlyGoals] = useState<number[]>([]);
   const [monthlySales, setMonthlySales] = useState<number[]>([]);
+  const [monthlyDue, setMonthlyDue] = useState<number[]>([]); // เพิ่มสถานะสำหรับยอดครบกำหนด
   const [chartData, setChartData] = useState<{
     labels: string[];
     datasets: [
       { label: string; data: number[]; borderColor: string; backgroundColor: string; fill: boolean; },
+      { label: string; data: number[]; borderColor: string; borderDash: number[]; fill: boolean; },
       { label: string; data: number[]; borderColor: string; borderDash: number[]; fill: boolean; }
     ];
   }>(() => ({
@@ -121,6 +123,14 @@ const SalesChart: FC = () => {
         borderColor: '#94a3b8',
         borderDash: [5, 5],
         fill: false,
+      },
+      {
+        label: 'ยอดครบกำหนด',
+        data: Array(12).fill(0),
+        borderColor: '#f59e42', // สีส้ม
+        backgroundColor: 'rgba(245, 158, 66, 0.18)', // สีส้มอ่อน
+        borderDash: [2, 6],
+        fill: true,
       }
     ],
   }));
@@ -135,8 +145,8 @@ const SalesChart: FC = () => {
   const salesChange = ((lastMonthSales - previousMonthSales) / previousMonthSales) * 100;
 
   // คำนวณเปอร์เซ็นต์ความสำเร็จ
-  const targetSales = 50000 * 12; // เป้าหมายต่อเดือน * 12 เดือน
-  const achievementRate = (totalSales / targetSales) * 100;
+  const targetSales = monthlyGoals.reduce((a, b) => a + b, 0);
+  const achievementRate = targetSales ? (totalSales / targetSales) * 100 : 0;
 
   // คำนวณเดือนที่มีการเติบโตสูงสุด
   const monthlyGrowth = monthlySales.map((value, index, array) => {
@@ -147,9 +157,12 @@ const SalesChart: FC = () => {
   const maxGrowthRate = Math.max(...monthlyGrowth);
 
   // คำนวณข้อมูลเพิ่มเติม
-  const monthsAboveTarget = monthlySales.filter(value => value > 50000).length;
+  const monthsAboveTarget = monthlySales.filter((value, i) => value > (monthlyGoals[i] ?? 0)).length;
   const bestMonth = labels[monthlySales.indexOf(maxSales)] ?? '';
-  const worstMonth = labels[monthlySales.indexOf(minSales)] ?? '';
+  const worstMonths = monthlySales
+    .map((v, i) => v === minSales ? labels[i] : null)
+    .filter(Boolean)
+    .join(', ');
   const totalGrowth = monthlySales.length ? ((lastMonthSales - monthlySales[0]) / monthlySales[0]) * 100 : 0;
 
   // ดึงข้อมูลจริงจาก backend
@@ -157,7 +170,7 @@ const SalesChart: FC = () => {
     // ดึงยอดขายและยอดครบกำหนด
     getMonthlyGoalsData().then((res: MonthlyGoalsDataResponse) => {
       setMonthlySales(res.monthly_sales);
-      // setMonthlyDue(res.monthly_due); // ไม่ได้ใช้
+      setMonthlyDue(res.monthly_due); // ใช้ข้อมูลจาก backend
     });
     // ดึงเป้าหมายจาก system settings
     getSystemSettings().then((settings: SystemSettingResponse[]) => {
@@ -187,10 +200,16 @@ const SalesChart: FC = () => {
         {
           ...prev.datasets[1],
           data: monthlyGoals.length === 12 ? monthlyGoals : Array(12).fill(0)
+        },
+        {
+          ...prev.datasets[2],
+          data: monthlyDue.length === 12 ? monthlyDue : Array(12).fill(0),
+          fill: true,
+          backgroundColor: 'rgba(245, 158, 66, 0.18)'
         }
       ]
     }));
-  }, [monthlySales, monthlyGoals]);
+  }, [monthlySales, monthlyGoals, monthlyDue]);
   const handleEditClick = () => setEditOpen(true);
   // ดึงข้อมูลเป้าหมายรายเดือนใหม่จาก backend หลังบันทึก
   const fetchMonthlyGoals = () => {
@@ -243,6 +262,10 @@ const SalesChart: FC = () => {
     );
   }
 
+  // หาค่าเป้าหมายของเดือนปัจจุบัน
+  const thisMonth = new Date().getMonth(); // 0 = ม.ค.
+  const thisMonthGoal = monthlyGoals[thisMonth] ?? 0;
+
   return (
     <div className={styles.chartContainer}>
       <div className={styles.chartHeader}>
@@ -255,6 +278,10 @@ const SalesChart: FC = () => {
           <span className={styles.legendItem}>
             <span className={styles.legendColor} style={{ backgroundColor: '#94a3b8' }}></span>
             เป้าหมาย
+          </span>
+          <span className={styles.legendItem}>
+            <span className={styles.legendColor} style={{ backgroundColor: '#f59e42' }}></span>
+            ยอดครบกำหนด
           </span>
         </div>
         <button type="button" onClick={handleEditClick} style={{marginLeft:12,background:'#e0e7ef',color:'#0ea5e9',border:'none',borderRadius:6,padding:'6px 16px',fontWeight:600,cursor:'pointer',fontSize:14}}>
@@ -300,7 +327,7 @@ const SalesChart: FC = () => {
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>เดือนที่ต่ำที่สุด</span>
-              <span className={styles.infoValue}>{worstMonth}</span>
+              <span className={styles.infoValue}>{worstMonths}</span>
             </div>
           </div>
         </div>
@@ -319,8 +346,8 @@ const SalesChart: FC = () => {
               <span className={styles.infoValue}>฿{averageSales.toLocaleString()}</span>
             </div>
             <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>เป้าหมายต่อเดือน</span>
-              <span className={styles.infoValue}>฿50,000</span>
+              <span className={styles.infoLabel}>เป้าหมายเดือนนี้</span>
+              <span className={styles.infoValue}>฿{thisMonthGoal.toLocaleString('th-TH')}</span>
             </div>
           </div>
         </div>

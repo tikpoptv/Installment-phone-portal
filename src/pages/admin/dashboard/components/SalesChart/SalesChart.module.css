@@ -167,6 +167,10 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #1e293b;
+  max-width: 120px;
+  word-break: break-all;
+  display: inline-block;
+  vertical-align: bottom;
 }
 
 @media (max-width: 1024px) {
