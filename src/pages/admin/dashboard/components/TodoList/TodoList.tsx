@@ -3,6 +3,28 @@ import styles from './TodoList.module.css';
 import { useEffect, useState } from 'react';
 import { getAdminTasks } from '../../../../../services/admin.service';
 import type { AdminTasksResponse, AdminTaskItem, AdminTaskSummary } from '../../../../../services/admin.service';
+// เพิ่ม import PaymentDetailModal
+import PaymentDetailModal from '../../../payments/PaymentDetailModal';
+import React from 'react';
+
+// CSS สำหรับแจ้งเตือนกระพริบ
+const blinkStyle = {
+  animation: 'blink 1.2s linear infinite',
+  background: '#fef08a',
+  border: '2px solid #facc15',
+  color: '#b45309',
+  borderRadius: 10,
+  padding: '14px 18px',
+  marginBottom: 16,
+  fontWeight: 600,
+  fontSize: '1.02rem',
+  boxShadow: '0 2px 12px #fde68a88',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+};
+
+const blinkKeyframes = `@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }`;
 
 const TASK_TYPE_MAP: Record<string, { title: string; description: string; style: string }> = {
   approve_payment: {
@@ -42,6 +64,9 @@ const TodoList: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  // เพิ่ม state สำหรับ PaymentDetailModal
+  const [showPaymentDetailModal, setShowPaymentDetailModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -60,8 +85,13 @@ const TodoList: FC = () => {
     groupedTasks[task.type].push(task);
   });
 
+  // เพิ่มแยก remark tasks
+  const remarkTasks = tasks.filter(t => t.type === 'remark');
+
   return (
     <div className={styles.todoContainer}>
+      {/* Inject keyframes สำหรับ blink */}
+      <style>{blinkKeyframes}</style>
       <div className={styles.todoHeader}>
         <h2 className={styles.todoTitle}>งานที่ต้องทำ</h2>
         <button className={styles.viewAllButton} onClick={() => setModalOpen(true)}>ดูทั้งหมด</button>
@@ -96,6 +126,16 @@ const TodoList: FC = () => {
                     <div style={{fontWeight:700,fontSize:'1.05rem',color:'#0ea5e9',marginBottom:8}}>
                       {TASK_TYPE_MAP[type]?.title || type}
                     </div>
+                    {/* แสดง remark เฉพาะของหมวดนี้ */}
+                    {remarkTasks.filter(r => r.id.includes(type.replace('_', '-'))).map((task) => (
+                      <div key={task.id} style={blinkStyle}>
+                        <span style={{fontSize:'1.25em',marginRight:8}}>⚠️</span>
+                        <span>
+                          <b>{task.title}</b>
+                          <span style={{display:'block',fontWeight:400,fontSize:'0.98em',color:'#b45309',marginTop:2}}>{task.description}</span>
+                        </span>
+                      </div>
+                    ))}
                     <div style={{overflowX:'auto'}}>
                       <table style={{width:'100%',borderCollapse:'collapse',background:'#f8fafc',fontSize:'0.97rem'}}>
                         <thead>
@@ -113,7 +153,17 @@ const TodoList: FC = () => {
                               <td style={{padding:'8px',color:'#64748b',textAlign:'left'}}>{task.description}</td>
                               <td style={{padding:'8px',color:'#94a3b8',textAlign:'left'}}>{new Date(task.created_at).toLocaleString('th-TH')}</td>
                               <td style={{padding:'8px',textAlign:'left'}}>
-                                {getTaskLink(task) ? (
+                                {task.type === 'approve_payment' ? (
+                                  <button
+                                    style={{color:'#0ea5e9',fontWeight:600,textDecoration:'underline',background:'none',border:'none',cursor:'pointer',padding:0}}
+                                    onClick={() => {
+                                      setSelectedPaymentId(task.link ?? null);
+                                      setShowPaymentDetailModal(true);
+                                    }}
+                                  >
+                                    รายละเอียด
+                                  </button>
+                                ) : getTaskLink(task) ? (
                                   <a href={getTaskLink(task)!} style={{color:'#0ea5e9',fontWeight:600,textDecoration:'underline'}} target="_blank" rel="noopener noreferrer">รายละเอียด</a>
                                 ) : '-'}
                               </td>
@@ -131,6 +181,12 @@ const TodoList: FC = () => {
           </div>
         </div>
       )}
+      {/* Modal สำหรับรายละเอียดการชำระเงิน */}
+      <PaymentDetailModal
+        open={showPaymentDetailModal}
+        paymentId={selectedPaymentId}
+        onClose={() => setShowPaymentDetailModal(false)}
+      />
     </div>
   );
 };
