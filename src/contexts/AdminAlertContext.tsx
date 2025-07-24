@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import { createContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
@@ -10,12 +10,6 @@ interface AdminAlertContextType {
 }
 
 const AdminAlertContext = createContext<AdminAlertContextType | undefined>(undefined);
-
-export function useAdminAlert() {
-  const ctx = useContext(AdminAlertContext);
-  if (!ctx) throw new Error('useAdminAlert must be used within AdminAlertProvider');
-  return ctx;
-}
 
 export function AdminAlertProvider({ children }: { children: ReactNode }) {
   const showAlert = (message: string, type: AdminAlertType = 'info') => {

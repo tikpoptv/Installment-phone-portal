@@ -174,27 +174,45 @@
   background: #f9fafb;
   border-radius: 12px;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 520px;
 }
 .detailListModern {
   margin: 14px 0 0 0;
   padding: 0;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 520px;
+  width: 100%;
+  align-items: flex-start;
 }
 .detailListItemModern {
-  margin-bottom: 8px;
-  color: #ef4444;
-  font-weight: 600;
-  font-size: 1.01rem;
+  background: #f8fafc;
+  border: 1.2px solid #e0e7ef;
+  border-radius: 6px;
+  padding: 9px 18px;
   display: flex;
-  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: #22223b;
+  width: 100%;
+  box-shadow: 0 1px 4px rgba(14,165,233,0.06);
 }
 .installmentNumber {
   color: #0ea5e9;
   font-weight: 700;
+  margin-right: 12px;
 }
 .installmentDue {
   color: #64748b;
   font-weight: 500;
+  margin-right: 12px;
 }
 
 /* Modern Pagination */
