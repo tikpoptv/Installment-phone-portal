@@ -27,6 +27,8 @@ import ManageAdmin from './pages/admin/manage-admin/ManageAdmin';
 import CreateAdminSuccessPage from './pages/admin/manage-admin/CreateAdminSuccessPage';
 import NoPermissionModal from './components/NoPermissionModal';
 import SystemSettingCreatePage from './pages/admin/settings/SystemSettingCreatePage';
+import { AdminAlertProvider } from './contexts/AdminAlertContext';
+import { Toaster } from 'sonner';
 
 // Loading Component
 function LoadingScreen() {
@@ -315,10 +317,13 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
-      <ToastContainer position="top-right" autoClose={3000} />
-      <NoPermissionModal />
-      <ErrorBackendModal />
+      <AdminAlertProvider>
+        <AppContent />
+        <Toaster position="bottom-right" richColors closeButton duration={Infinity} visibleToasts={5} />
+        <ToastContainer position="top-right" autoClose={3000} />
+        <NoPermissionModal />
+        <ErrorBackendModal />
+      </AdminAlertProvider>
     </Router>
   );
 }

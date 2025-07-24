@@ -58,6 +58,18 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
+  scrollbar-width: thin;
+  scrollbar-color: #bae6fd #e0f2fe;
+}
+.menuList::-webkit-scrollbar {
+  width: 6px;
+  background: #e0f2fe;
+}
+.menuList::-webkit-scrollbar-thumb {
+  background: #bae6fd;
+  border-radius: 4px;
 }
 
 .menuItemWrapper {

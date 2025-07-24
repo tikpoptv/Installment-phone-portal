@@ -64,6 +64,7 @@ const Navbar: FC = () => {
   const menuItems = [
     { path: '/admin', icon: '📊', label: 'Dashboard' },
     { path: '/admin/orders', icon: '📦', label: 'คำสั่งซื้อ' },
+    { path: '/admin/order-tracking', icon: '🕵️‍♂️', label: 'ติดตามคำสั่งซื้อ' },
     { path: '/admin/products', icon: '📱', label: 'สินค้า' },
     { path: '/admin/customers', icon: '👥', label: 'ลูกค้า' },
     { path: '/admin/payments', icon: '💳', label: 'ชำระเงิน' },
