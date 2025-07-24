@@ -141,4 +141,16 @@ export async function setProductStoreLocked(productId: string, locked: boolean):
 export async function getAvailableProducts(): Promise<Product[]> {
   const res = await apiClient.get<Product[]>('/api/products/available');
   return res.data;
+}
+
+export interface ProductStockSummaryItem {
+  id: number;
+  name: string;
+  stock: number;
+  status: 'normal' | 'warning' | 'error';
+}
+
+export async function getStockSummary(): Promise<ProductStockSummaryItem[]> {
+  const res = await apiClient.get<ProductStockSummaryItem[]>('/api/products/stock-summary');
+  return res.data;
 } 
