@@ -115,46 +115,58 @@ const TodoList: FC = () => {
         )}
       </div>
       {modalOpen && (
-        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(30,41,59,0.18)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
-          <div style={{background:'#fff',borderRadius:14,boxShadow:'0 12px 48px rgba(14,165,233,0.18)',padding:'40px 56px 32px 56px',minWidth:520,maxWidth:980,width:'100%',maxHeight:'80vh',overflowY:'auto',position:'relative'}}>
-            <h3 style={{fontSize:'1.15rem',fontWeight:700,color:'#0ea5e9',marginBottom:18,textAlign:'center'}}>รายละเอียดงานที่ต้องทำ</h3>
+        <div className={styles.todoModalOverlay}>
+          <div className={styles.todoModalContent}>
+            <h3 className={styles.todoModalTitle}>รายละเอียดงานที่ต้องทำ</h3>
             <div>
               {taskTypes.map(type => (
                 groupedTasks[type] && groupedTasks[type].length > 0 && (
-                  <div key={type} style={{marginBottom:32}}>
-                    <div style={{fontWeight:700,fontSize:'1.05rem',color:'#0ea5e9',marginBottom:8}}>
+                  <div key={type} style={{ marginBottom: 32 }}>
+                    <div className={styles.todoModalSectionTitle}>
                       {TASK_TYPE_MAP[type]?.title || type}
                     </div>
                     {/* แสดง remark เฉพาะของหมวดนี้ */}
-                    {remarkTasks.filter(r => r.id.includes(type.replace('_', '-'))).map((task) => (
-                      <div key={task.id} style={blinkStyle}>
-                        <span style={{fontSize:'1.25em',marginRight:8}}>⚠️</span>
-                        <span>
-                          <b>{task.title}</b>
-                          <span style={{display:'block',fontWeight:400,fontSize:'0.98em',color:'#b45309',marginTop:2}}>{task.description}</span>
-                        </span>
-                      </div>
-                    ))}
-                    <div style={{overflowX:'auto'}}>
-                      <table style={{width:'100%',borderCollapse:'collapse',background:'#f8fafc',fontSize:'0.97rem'}}>
+                    {remarkTasks
+                      .filter(r => r.id.includes(type.replace('_', '-')))
+                      .map(task => (
+                        <div key={task.id} style={blinkStyle}>
+                          <span style={{ fontSize: '1.25em', marginRight: 8 }}>⚠️</span>
+                          <span>
+                            <b>{task.title}</b>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontWeight: 400,
+                                fontSize: '0.98em',
+                                color: '#b45309',
+                                marginTop: 2,
+                              }}
+                            >
+                              {task.description}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    <div className={styles.todoModalTableWrapper}>
+                      <table className={styles.todoModalTable}>
                         <thead>
-                          <tr style={{background:'#f1f5f9'}}>
-                            <th style={{padding:'8px',color:'#64748b',fontWeight:600,textAlign:'left'}}>หัวข้อ</th>
-                            <th style={{padding:'8px',color:'#64748b',fontWeight:600,textAlign:'left'}}>รายละเอียด</th>
-                            <th style={{padding:'8px',color:'#64748b',fontWeight:600,textAlign:'left'}}>วันที่สร้าง</th>
-                            <th style={{padding:'8px',color:'#64748b',fontWeight:600,textAlign:'left'}}>ลิงก์</th>
+                          <tr style={{ background: '#f1f5f9' }}>
+                            <th className={styles.todoModalTh}>หัวข้อ</th>
+                            <th className={styles.todoModalTh}>รายละเอียด</th>
+                            <th className={styles.todoModalTh}>วันที่สร้าง</th>
+                            <th className={styles.todoModalTh}>ลิงก์</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {groupedTasks[type].map((task) => (
-                            <tr key={task.id} style={{borderBottom:'1px solid #e2e8f0'}}>
-                              <td style={{padding:'8px',fontWeight:600,color:'#1e293b',textAlign:'left'}}>{task.title}</td>
-                              <td style={{padding:'8px',color:'#64748b',textAlign:'left'}}>{task.description}</td>
-                              <td style={{padding:'8px',color:'#94a3b8',textAlign:'left'}}>{new Date(task.created_at).toLocaleString('th-TH')}</td>
-                              <td style={{padding:'8px',textAlign:'left'}}>
+                          {groupedTasks[type].map(task => (
+                            <tr key={task.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                              <td className={`${styles.todoModalTd} ${styles.todoModalTdTitle}`}>{task.title}</td>
+                              <td className={`${styles.todoModalTd} ${styles.todoModalTdDesc}`}>{task.description}</td>
+                              <td className={`${styles.todoModalTd} ${styles.todoModalTdDate}`}>{new Date(task.created_at).toLocaleString('th-TH')}</td>
+                              <td className={styles.todoModalTd}>
                                 {task.type === 'approve_payment' ? (
                                   <button
-                                    style={{color:'#0ea5e9',fontWeight:600,textDecoration:'underline',background:'none',border:'none',cursor:'pointer',padding:0}}
+                                    className={styles.todoModalLinkBtn}
                                     onClick={() => {
                                       setSelectedPaymentId(task.link ?? null);
                                       setShowPaymentDetailModal(true);
@@ -163,8 +175,17 @@ const TodoList: FC = () => {
                                     รายละเอียด
                                   </button>
                                 ) : getTaskLink(task) ? (
-                                  <a href={getTaskLink(task)!} style={{color:'#0ea5e9',fontWeight:600,textDecoration:'underline'}} target="_blank" rel="noopener noreferrer">รายละเอียด</a>
-                                ) : '-'}
+                                  <a
+                                    href={getTaskLink(task)!}
+                                    className={styles.todoModalLinkA}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    รายละเอียด
+                                  </a>
+                                ) : (
+                                  '-'
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -174,9 +195,18 @@ const TodoList: FC = () => {
                   </div>
                 )
               ))}
-              {tasks.length === 0 && <div style={{textAlign:'center',color:'#64748b',padding:'24px 0'}}>ไม่มีงานที่ต้องทำ</div>}
+              {tasks.length === 0 && (
+                <div style={{ textAlign: 'center', color: '#64748b', padding: '24px 0' }}>
+                  ไม่มีงานที่ต้องทำ
+                </div>
+              )}
             </div>
-            <button style={{background:'#e0f2fe',color:'#0ea5e9',fontWeight:600,border:'none',borderRadius:20,padding:'6px 0',fontSize:'0.93rem',marginTop:18,cursor:'pointer',width:'60%',minWidth:80,maxWidth:120,display:'block',marginLeft:'auto',marginRight:'auto'}} onClick={() => setModalOpen(false)}>ปิด</button>
+            <button
+              className={styles.todoModalCloseBtn}
+              onClick={() => setModalOpen(false)}
+            >
+              ปิด
+            </button>
           </div>
         </div>
       )}
