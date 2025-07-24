@@ -25,6 +25,7 @@
 .chartLegend {
   display: flex;
   gap: 1rem;
+  margin-left: auto;
 }
 
 .legendItem {

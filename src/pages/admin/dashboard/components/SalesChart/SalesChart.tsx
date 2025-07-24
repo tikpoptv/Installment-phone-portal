@@ -14,6 +14,10 @@ import {
 } from 'chart.js';
 import type { CoreScaleOptions } from 'chart.js';
 import styles from './SalesChart.module.css';
+import { useState, useEffect } from 'react';
+import SettingEditModal from '../../../../../components/SettingEditModal';
+import { getSystemSettings, getMonthlyGoalsData } from '../../../../../services/system-setting.service';
+import type { SystemSettingResponse, MonthlyGoalsDataResponse } from '../../../../../services/system-setting.service';
 
 ChartJS.register(
   CategoryScale,
@@ -90,34 +94,44 @@ const options = {
 
 const labels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
 
-const data = {
-  labels,
-  datasets: [
-    {
-      label: 'ยอดขาย',
-      data: [45000, 52000, 48000, 58000, 62000, 55000, 68000, 72000, 65000, 75000, 82000, 90000],
-      borderColor: '#0ea5e9',
-      backgroundColor: 'rgba(14, 165, 233, 0.1)',
-      fill: true,
-    },
-    {
-      label: 'เป้าหมาย',
-      data: [50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000, 50000],
-      borderColor: '#94a3b8',
-      borderDash: [5, 5],
-      fill: false,
-    }
-  ],
-};
-
+// ไม่มี mock sales แล้ว ใช้ข้อมูลจริงจาก backend
 const SalesChart: FC = () => {
+  const [editOpen, setEditOpen] = useState(false);
+  const [monthlyGoals, setMonthlyGoals] = useState<number[]>([]);
+  const [monthlySales, setMonthlySales] = useState<number[]>([]);
+  const [chartData, setChartData] = useState<{
+    labels: string[];
+    datasets: [
+      { label: string; data: number[]; borderColor: string; backgroundColor: string; fill: boolean; },
+      { label: string; data: number[]; borderColor: string; borderDash: number[]; fill: boolean; }
+    ];
+  }>(() => ({
+    labels,
+    datasets: [
+      {
+        label: 'ยอดขาย',
+        data: [],
+        borderColor: '#0ea5e9',
+        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+        fill: true,
+      },
+      {
+        label: 'เป้าหมาย',
+        data: Array(12).fill(0),
+        borderColor: '#94a3b8',
+        borderDash: [5, 5],
+        fill: false,
+      }
+    ],
+  }));
+
   // คำนวณข้อมูลสรุป
-  const totalSales = data.datasets[0].data.reduce((a, b) => a + b, 0);
-  const averageSales = Math.round(totalSales / data.datasets[0].data.length);
-  const maxSales = Math.max(...data.datasets[0].data);
-  const minSales = Math.min(...data.datasets[0].data);
-  const lastMonthSales = data.datasets[0].data[data.datasets[0].data.length - 1];
-  const previousMonthSales = data.datasets[0].data[data.datasets[0].data.length - 2];
+  const totalSales = monthlySales.reduce((a, b) => a + b, 0);
+  const averageSales = monthlySales.length ? Math.round(totalSales / monthlySales.length) : 0;
+  const maxSales = monthlySales.length ? Math.max(...monthlySales) : 0;
+  const minSales = monthlySales.length ? Math.min(...monthlySales) : 0;
+  const lastMonthSales = monthlySales[monthlySales.length - 1] ?? 0;
+  const previousMonthSales = monthlySales[monthlySales.length - 2] ?? 0;
   const salesChange = ((lastMonthSales - previousMonthSales) / previousMonthSales) * 100;
 
   // คำนวณเปอร์เซ็นต์ความสำเร็จ
@@ -125,7 +139,7 @@ const SalesChart: FC = () => {
   const achievementRate = (totalSales / targetSales) * 100;
 
   // คำนวณเดือนที่มีการเติบโตสูงสุด
-  const monthlyGrowth = data.datasets[0].data.map((value, index, array) => {
+  const monthlyGrowth = monthlySales.map((value, index, array) => {
     if (index === 0) return 0;
     return ((value - array[index - 1]) / array[index - 1]) * 100;
   });
@@ -133,10 +147,101 @@ const SalesChart: FC = () => {
   const maxGrowthRate = Math.max(...monthlyGrowth);
 
   // คำนวณข้อมูลเพิ่มเติม
-  const monthsAboveTarget = data.datasets[0].data.filter(value => value > 50000).length;
-  const bestMonth = labels[data.datasets[0].data.indexOf(maxSales)];
-  const worstMonth = labels[data.datasets[0].data.indexOf(minSales)];
-  const totalGrowth = ((lastMonthSales - data.datasets[0].data[0]) / data.datasets[0].data[0]) * 100;
+  const monthsAboveTarget = monthlySales.filter(value => value > 50000).length;
+  const bestMonth = labels[monthlySales.indexOf(maxSales)] ?? '';
+  const worstMonth = labels[monthlySales.indexOf(minSales)] ?? '';
+  const totalGrowth = monthlySales.length ? ((lastMonthSales - monthlySales[0]) / monthlySales[0]) * 100 : 0;
+
+  // ดึงข้อมูลจริงจาก backend
+  useEffect(() => {
+    // ดึงยอดขายและยอดครบกำหนด
+    getMonthlyGoalsData().then((res: MonthlyGoalsDataResponse) => {
+      setMonthlySales(res.monthly_sales);
+      // setMonthlyDue(res.monthly_due); // ไม่ได้ใช้
+    });
+    // ดึงเป้าหมายจาก system settings
+    getSystemSettings().then((settings: SystemSettingResponse[]) => {
+      const arr: number[] = [];
+      for (let i = 1; i <= 12; i++) {
+        const found = settings.find(s => s.key === `MonthlyGoals-${i}`);
+        if (found && found.value) {
+          const val = Number(found.value);
+          arr.push(isNaN(val) ? 0 : val);
+        } else {
+          arr.push(0);
+        }
+      }
+      setMonthlyGoals(arr);
+    });
+  }, []);
+
+  // อัปเดตเส้นเป้าหมายในกราฟทุกครั้งที่ monthlyGoals เปลี่ยน
+  useEffect(() => {
+    setChartData(prev => ({
+      ...prev,
+      datasets: [
+        {
+          ...prev.datasets[0],
+          data: monthlySales.length === 12 ? monthlySales : Array(12).fill(0)
+        },
+        {
+          ...prev.datasets[1],
+          data: monthlyGoals.length === 12 ? monthlyGoals : Array(12).fill(0)
+        }
+      ]
+    }));
+  }, [monthlySales, monthlyGoals]);
+  const handleEditClick = () => setEditOpen(true);
+  // ดึงข้อมูลเป้าหมายรายเดือนใหม่จาก backend หลังบันทึก
+  const fetchMonthlyGoals = () => {
+    getSystemSettings().then((settings: SystemSettingResponse[]) => {
+      const arr: number[] = [];
+      for (let i = 1; i <= 12; i++) {
+        const found = settings.find(s => s.key === `MonthlyGoals-${i}`);
+        if (found && found.value) {
+          const val = Number(found.value);
+          arr.push(isNaN(val) ? 0 : val);
+        } else {
+          arr.push(0);
+        }
+      }
+      setMonthlyGoals(arr);
+    });
+  };
+
+  useEffect(() => {
+    fetchMonthlyGoals();
+  }, []);
+
+  const handleEditSave = () => {
+    fetchMonthlyGoals();
+  };
+
+  // ถ้าไม่มีข้อมูลเป้าหมายเลย ให้แสดงข้อความแทนกราฟเป้าหมาย
+  if (monthlyGoals.length !== 12) {
+    return (
+      <div className={styles.chartContainer}>
+        <div className={styles.chartHeader}>
+          <h2 className={styles.chartTitle}>ยอดขายรายเดือน</h2>
+        </div>
+        <div style={{textAlign:'center',color:'#64748b',padding:'48px 0',fontSize:'1.1rem'}}>ไม่มีข้อมูลเป้าหมายรายเดือน</div>
+        <button type="button" onClick={handleEditClick} style={{margin:'24px auto 0',display:'block',background:'#e0e7ef',color:'#0ea5e9',border:'none',borderRadius:6,padding:'8px 24px',fontWeight:600,cursor:'pointer',fontSize:16}}>
+          ตั้งค่าเป้าหมายรายเดือน
+        </button>
+        <SettingEditModal
+          open={editOpen}
+          onClose={()=>setEditOpen(false)}
+          settings={Array.from({length:12}, (_,i) => ({
+            key: `MonthlyGoals-${i+1}`,
+            value: monthlyGoals[i] ?? '',
+            valueType: 'integer',
+            description: `เป้าหมายเดือน ${labels[i]}`
+          }))}
+          onSave={handleEditSave}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.chartContainer}>
@@ -152,9 +257,12 @@ const SalesChart: FC = () => {
             เป้าหมาย
           </span>
         </div>
+        <button type="button" onClick={handleEditClick} style={{marginLeft:12,background:'#e0e7ef',color:'#0ea5e9',border:'none',borderRadius:6,padding:'6px 16px',fontWeight:600,cursor:'pointer',fontSize:14}}>
+          แก้ไข
+        </button>
       </div>
       <div className={styles.chartWrapper}>
-        <Line options={options} data={data} />
+        <Line options={options} data={chartData} />
       </div>
       <div className={styles.chartSummary}>
         <div className={styles.summaryItem}>
@@ -217,6 +325,17 @@ const SalesChart: FC = () => {
           </div>
         </div>
       </div>
+      <SettingEditModal
+        open={editOpen}
+        onClose={()=>setEditOpen(false)}
+        settings={Array.from({length:12}, (_,i) => ({
+          key: `MonthlyGoals-${i+1}`,
+          value: monthlyGoals[i] ?? '',
+          valueType: 'integer',
+          description: `เป้าหมายเดือน ${labels[i]}`
+        }))}
+        onSave={handleEditSave}
+      />
     </div>
   );
 };

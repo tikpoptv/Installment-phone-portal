@@ -26,6 +26,7 @@ import PaymentListPage from './pages/admin/payments/PaymentListPage';
 import ManageAdmin from './pages/admin/manage-admin/ManageAdmin';
 import CreateAdminSuccessPage from './pages/admin/manage-admin/CreateAdminSuccessPage';
 import NoPermissionModal from './components/NoPermissionModal';
+import SystemSettingCreatePage from './pages/admin/settings/SystemSettingCreatePage';
 
 // Loading Component
 function LoadingScreen() {
@@ -256,6 +257,7 @@ function AppContent() {
                     <Route path="orders" element={<OrderListPage />} />
                     <Route path="orders/:id" element={<OrderDetailPage />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="settings/system-setting-create" element={<SystemSettingCreatePage />} />
                     <Route path="icloud" element={<IcloudListPage />} />
                     <Route path="payments" element={<PaymentListPage />} />
                     <Route path="manage-admin" element={<ManageAdmin />} />
