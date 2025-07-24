@@ -29,6 +29,7 @@ import NoPermissionModal from './components/NoPermissionModal';
 import SystemSettingCreatePage from './pages/admin/settings/SystemSettingCreatePage';
 import { AdminAlertProvider } from './contexts/AdminAlertContext';
 import { Toaster } from 'sonner';
+import OrderTrackingPage from './pages/admin/orders/OrderTrackingPage';
 
 // Loading Component
 function LoadingScreen() {
@@ -258,6 +259,7 @@ function AppContent() {
                     <Route path="products/:id" element={<ProductDetailPage />} />
                     <Route path="orders" element={<OrderListPage />} />
                     <Route path="orders/:id" element={<OrderDetailPage />} />
+                    <Route path="order-tracking" element={<OrderTrackingPage />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="settings/system-setting-create" element={<SystemSettingCreatePage />} />
                     <Route path="icloud" element={<IcloudListPage />} />

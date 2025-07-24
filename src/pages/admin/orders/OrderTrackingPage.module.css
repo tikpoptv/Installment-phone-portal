@@ -1,0 +1,297 @@
+/* Modern Container */
+.containerModern {
+  max-width: 100vw;
+  margin: 0 auto;
+  padding: 2.5rem 2vw;
+  min-height: 100vh;
+}
+.headerModern {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.titleModern {
+  font-size: 1.5rem; /* เดิม 2.1rem */
+  font-weight: 800;
+  color: #0ea5e9;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+/* Modern Filter Card */
+.filterCard {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(14,165,233,0.10);
+  padding: 24px 24px 12px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px 24px;
+}
+.filterGroupModern {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.filterGroupModern label {
+  font-size: 0.98rem;
+  color: #0ea5e9;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.filterGroupModern input,
+.filterGroupModern select {
+  font-size: 0.98rem; /* เดิม 1.08rem */
+  border-radius: 8px; /* เดิม 10px */
+  border: 1.5px solid #bae6fd;
+  padding: 7px 10px; /* เดิม 10px 14px */
+  background: #f8fafc;
+  color: #22223b;
+  transition: border 0.18s;
+}
+.filterGroupModern input:focus,
+.filterGroupModern select:focus {
+  border: 1.5px solid #0ea5e9;
+  outline: none;
+}
+.filterActionBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+.searchBtnModern {
+  background: #0ea5e9;
+  color: #fff;
+  font-size: 0.98rem; /* เดิม 1.08rem */
+  font-weight: 700;
+  border-radius: 8px; /* เดิม 10px */
+  padding: 7px 18px; /* เดิม 10px 28px */
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: flex;
+  align-items: center;
+}
+.searchBtnModern:hover {
+  background: #0369a1;
+}
+.clearBtnModern {
+  background: #e0e7ef;
+  color: #0ea5e9;
+  font-size: 0.98rem; /* เดิม 1.08rem */
+  font-weight: 700;
+  border-radius: 8px; /* เดิม 10px */
+  padding: 7px 14px; /* เดิม 10px 22px */
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+}
+.clearBtnModern:hover {
+  background: #bae6fd;
+  color: #0369a1;
+}
+
+/* Modern Table */
+.tableModernWrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(14,165,233,0.10);
+  background: #fff;
+}
+.tableModern {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.98rem; /* เดิม 1.08rem */
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.tableModern th {
+  padding: 14px 10px;
+  text-align: left;
+  color: #0ea5e9;
+  font-weight: 800;
+  background: #f1f5f9;
+  font-size: 1.05rem;
+}
+.tableModern th, .tableModern td {
+  padding: 10px 6px; /* เดิม 16px 10px */
+  font-size: 0.98rem; /* เดิม 1.08rem */
+}
+.tableModern tr {
+  border-bottom: 1.5px solid #e5e7eb;
+  transition: background 0.18s;
+}
+.tableModern tr:hover {
+  background: #f0f9ff;
+}
+.rowActive {
+  background: #e0f2fe !important;
+}
+.statusBadge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.5px;
+}
+.detailIconBtn {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detailIconBtn:hover {
+  background: #0ea5e9;
+  color: #fff;
+}
+.detailCardTd {
+  background: #f9fafb;
+  padding: 0;
+}
+.detailCardModern {
+  padding: 22px 38px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin: 0;
+}
+.detailListModern {
+  margin: 14px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.detailListItemModern {
+  margin-bottom: 8px;
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 1.01rem;
+  display: flex;
+  gap: 18px;
+}
+.installmentNumber {
+  color: #0ea5e9;
+  font-weight: 700;
+}
+.installmentDue {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Modern Pagination */
+.paginationBarModern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 24px;
+  box-shadow: 0 1px 8px rgba(14,165,233,0.07);
+  font-size: 1.08rem;
+}
+.paginationControlsModern {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.paginationButtonModern {
+  background: #e0f2fe;
+  color: #0ea5e9;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 50px;
+  padding: 6px 18px; /* เดิม 8px 28px */
+  font-weight: 700;
+  font-size: 0.98rem; /* เดิม 1.08rem */
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+.paginationButtonModern:disabled {
+  background: #f1f5f9;
+  color: #b0b8c1;
+  border: 1.5px solid #e5e7eb;
+  cursor: not-allowed;
+}
+.paginationButtonModern:not(:disabled):hover {
+  background: #0ea5e9;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .containerModern {
+    padding: 1.2rem 0.5vw;
+  }
+  .filterCard {
+    padding: 14px 6px 8px 6px;
+  }
+  .tableModern {
+    min-width: 600px;
+    font-size: 0.97rem;
+  }
+  .detailCardModern {
+    padding: 14px 10px;
+  }
+  .paginationBarModern {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 6px;
+    font-size: 0.97rem;
+  }
+}
+@media (max-width: 600px) {
+  .containerModern {
+    padding: 0.5rem 0.1rem;
+  }
+  .headerModern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .filterGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .tableModernWrapper {
+    border-radius: 8px;
+  }
+  .tableModern {
+    min-width: 420px;
+    font-size: 0.93rem;
+  }
+  .tableModern th, .tableModern td {
+    padding: 7px 4px;
+    font-size: 0.93rem;
+  }
+  .detailCardModern {
+    padding: 10px 4px;
+  }
+  .paginationBarModern {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 6px;
+    font-size: 0.97rem;
+  }
+  .paginationControlsModern {
+    width: 100%;
+    justify-content: flex-end;
+  }
+} 
