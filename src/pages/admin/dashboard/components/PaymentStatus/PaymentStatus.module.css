@@ -66,6 +66,31 @@
   color: #ef4444;
 }
 
+.periodBtn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-weight: 500;
+  font-size: 14px;
+  margin-right: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.activePeriodBtn {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(14,165,233,0.08);
+}
+
 @media (max-width: 1024px) {
   .paymentContainer {
     padding: 1.25rem;

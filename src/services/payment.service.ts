@@ -52,6 +52,16 @@ export interface UserStoreBankAccountsResponse {
   }>;
 }
 
+export interface PaymentStatusSummaryItem {
+  status: 'paid' | 'unpaid' | 'partial' | 'advance_paid';
+  count: number;
+  amount: number;
+}
+
+export interface PaymentStatusSummaryResponse {
+  payment_status_summary: PaymentStatusSummaryItem[];
+}
+
 export async function getAllPayments(params?: { page?: number; limit?: number; search?: string; status?: string; method?: string; start_date?: string; end_date?: string; }) {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
@@ -122,5 +132,13 @@ export async function verifyPayment(paymentId: string, status: 'approved' | 'rej
 
 export async function getUserStoreBankAccounts(): Promise<UserStoreBankAccountsResponse> {
   const res = await apiClient.get<UserStoreBankAccountsResponse>('/api/user/store-bank-accounts');
+  return res.data;
+}
+
+export async function getPaymentStatusSummary(params?: { year?: number; months?: string; }): Promise<PaymentStatusSummaryResponse> {
+  const query = new URLSearchParams();
+  if (params?.year) query.append('year', params.year.toString());
+  if (params?.months) query.append('months', params.months);
+  const res = await apiClient.get<PaymentStatusSummaryResponse>(`/api/payment/status-summary?${query.toString()}`);
   return res.data;
 } 
