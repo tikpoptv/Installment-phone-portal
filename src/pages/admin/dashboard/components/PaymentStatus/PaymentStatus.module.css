@@ -62,8 +62,17 @@
   color: #10b981;
 }
 
-.statItem:last-child .statValue {
+.statPaid {
+  color: #10b981;
+}
+.statUnpaid {
   color: #ef4444;
+}
+.statPartial {
+  color: #f59e42;
+}
+.statAdvancePaid {
+  color: #6366f1 !important;
 }
 
 .periodBtn {

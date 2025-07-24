@@ -128,20 +128,20 @@ const PaymentStatus: FC = () => {
       <div className={styles.paymentStats}>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>ชำระแล้ว</span>
-          <span className={styles.statValue}>{percent(paid)}%</span>
+          <span className={`${styles.statValue} ${styles.statPaid}`}>{percent(paid)}%</span>
         </div>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>ค้างชำระ</span>
-          <span className={styles.statValue}>{percent(unpaid)}%</span>
+          <span className={`${styles.statValue} ${styles.statUnpaid}`}>{percent(unpaid)}%</span>
         </div>
         <div className={styles.statItem}>
           <span className={styles.statLabel}>จ่ายบางส่วน</span>
-          <span className={styles.statValue}>{percent(partial)}%</span>
+          <span className={`${styles.statValue} ${styles.statPartial}`}>{percent(partial)}%</span>
         </div>
         {showAdvancePaid && (
           <div className={styles.statItem}>
             <span className={styles.statLabel}>จ่ายล่วงหน้า</span>
-            <span className={styles.statValue}>{percent(advancePaid)}%</span>
+            <span className={`${styles.statValue} ${styles.statAdvancePaid}`}>{percent(advancePaid)}%</span>
           </div>
         )}
       </div>
