@@ -215,7 +215,7 @@ const Settings: React.FC = () => {
       }
     };
     doPing();
-    const interval = setInterval(doPing, 30000);
+    const interval = setInterval(doPing, 10000);
     return () => { isMounted = false; clearInterval(interval); };
   }, []);
 
