@@ -48,6 +48,28 @@ export interface EditAdminModalProps {
   errorMessage?: string;
 }
 
+export interface AdminTaskSummary {
+  approve_payment: number;
+  verify_identity: number;
+  processing_orders: number;
+  [key: string]: number;
+}
+
+export interface AdminTaskItem {
+  id: string;
+  type: 'approve_payment' | 'verify_identity' | 'processing_orders' | string;
+  title: string;
+  description: string;
+  created_at: string;
+  status: string;
+  link?: string;
+}
+
+export interface AdminTasksResponse {
+  summary: AdminTaskSummary;
+  tasks: AdminTaskItem[];
+}
+
 export async function getAdmins(): Promise<Admin[]> {
   const res = await apiClient.get<Admin[]>('/api/admins');
   return res.data;
@@ -85,5 +107,10 @@ export async function deleteAdmin(adminId: string): Promise<{ success: boolean; 
   const res = await apiClient.post<{ success: boolean; id: string }>(
     `/api/admins/${adminId}/delete`
   );
+  return res.data;
+}
+
+export async function getAdminTasks(): Promise<AdminTasksResponse> {
+  const res = await apiClient.get<AdminTasksResponse>('/api/admin/tasks');
   return res.data;
 } 
