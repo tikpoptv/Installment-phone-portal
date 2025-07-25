@@ -10,6 +10,7 @@ import EditAdminModal from './EditAdminModal';
 import LockAdminModal from './LockAdminModal';
 import MobileAccessModal from '../../../components/MobileAccessModal';
 import DeleteAdminModal from './DeleteAdminModal';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 function formatDate(dt: string) {
   return new Date(dt).toLocaleString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -24,6 +25,8 @@ function getStatus(admin: Admin): React.ReactNode {
 
 const ManageAdmin: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [successModal, setSuccessModal] = useState<null | {
     createToken: string;
@@ -68,9 +71,12 @@ const ManageAdmin: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    getAdmins().then(setAdmins).catch(() => {
-      // TODO: handle error เช่น toast
-    });
+    setLoading(true);
+    setError(null);
+    getAdmins()
+      .then(setAdmins)
+      .catch(() => setError('เกิดข้อผิดพลาดในการโหลดข้อมูลแอดมิน'))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleCreateAdmin = async (data: { username: string; role: 'superadmin' | 'staff' }) => {
@@ -134,7 +140,21 @@ const ManageAdmin: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {admins.map(admin => (
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 48 }}>
+                  <LoadingSpinner text="กำลังโหลดข้อมูล..." />
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', color: '#ef4444', padding: 32 }}>{error}</td>
+              </tr>
+            ) : admins.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 32 }}>ไม่พบข้อมูลแอดมิน</td>
+              </tr>
+            ) : admins.map(admin => (
               <tr key={admin.id} style={admin.is_deleted ? {opacity:0.5, textDecoration:'line-through'} : {}}>
                 <td>{admin.username}</td>
                 <td>

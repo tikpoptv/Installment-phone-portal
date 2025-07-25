@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { getPaymentDetail, getPaymentProofFile, verifyPayment } from '../../../services/payment.service';
 import type { PaymentDetail } from '../../../services/payment.service';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 interface PaymentDetailModalProps {
   open: boolean;
@@ -137,7 +138,7 @@ const PaymentDetailModal: React.FC<PaymentDetailModalProps> = ({ open, paymentId
         <button className={styles.closeBtn} onClick={onClose} aria-label="ปิด">×</button>
         <h2 className={styles.title}>รายละเอียดการชำระเงิน</h2>
         {loading ? (
-          <div className={styles.loadingText}>กำลังโหลดข้อมูล...</div>
+          <div style={{ padding: 32, textAlign: 'center' }}><LoadingSpinner text="กำลังโหลดข้อมูล..." size={36} /></div>
         ) : error ? (
           <div className={styles.errorText}>{error}</div>
         ) : data && (

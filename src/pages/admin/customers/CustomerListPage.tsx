@@ -6,6 +6,7 @@ import type { Customer } from '../../../services/customer/customer.service';
 import { useNavigate } from 'react-router-dom';
 import { formatDateThai } from '../../../utils/date';
 import MobileAccessModal from '../../../components/MobileAccessModal';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 type FilterType = 'all' | 'verified' | 'unverified';
 
@@ -147,10 +148,6 @@ export default function CustomerListPage() {
     }
   };
 
-  if (loading) {
-    return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 18 }}>กำลังโหลดข้อมูล...</div>;
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -211,7 +208,13 @@ export default function CustomerListPage() {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 48 }}>
+                  <LoadingSpinner text="กำลังโหลดข้อมูล..." />
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 32 }}>ไม่พบข้อมูล</td></tr>
             ) : paginated.map((c, idx) => (
               <tr key={c.id}>

@@ -6,6 +6,7 @@ import MobileAccessModal from '../../../components/MobileAccessModal';
 import ProductCreateModal from './ProductCreateModal';
 import { getProducts } from '../../../services/products.service';
 import type { Product } from '../../../services/products.service';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const statusLabel = (status: string) => {
   if (!status) return <span style={{ color: '#64748b', fontWeight: 600 }}>ไม่ระบุ</span>;
@@ -155,14 +156,6 @@ export default function ProductListPage() {
     }
   };
 
-  if (loading) {
-    return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
-  }
-
-  if (fetchError) {
-    return <div className={styles.loadingMessage} style={{color:'#ef4444'}}>{fetchError}</div>;
-  }
-
   return (
     <>
       <MobileAccessModal
@@ -286,7 +279,17 @@ export default function ProductListPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={10} style={{ textAlign: 'center', padding: 48 }}>
+                    <LoadingSpinner text="กำลังโหลดข้อมูล..." />
+                  </td>
+                </tr>
+              ) : fetchError ? (
+                <tr>
+                  <td colSpan={10} style={{ textAlign: 'center', color: '#ef4444', padding: 32 }}>{fetchError}</td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr><td colSpan={10} style={{ textAlign: 'center', color: '#64748b', padding: 32 }}>ไม่พบข้อมูลสินค้า</td></tr>
               ) : paginated.map((p, idx) => (
                 <tr key={p.id}>

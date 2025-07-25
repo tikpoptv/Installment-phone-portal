@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { FaFileAlt, FaTrash, FaPlus } from 'react-icons/fa';
 import IcloudDetailModal from './IcloudDetailModal';
 import IcloudDeleteConfirmModal from './IcloudDeleteConfirmModal';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const ownerTypeOptions = [
   { value: '', label: 'ทุกประเภทเจ้าของ' },
@@ -82,13 +83,6 @@ const IcloudListPage: React.FC = () => {
       setShowMobileWarn(false);
     }
   };
-
-  if (loading) {
-    return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
-  }
-  if (error) {
-    return <div className={styles.loadingMessage} style={{color:'#ef4444'}}>{error}</div>;
-  }
 
   return (
     <>
@@ -209,7 +203,17 @@ const IcloudListPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: 48 }}>
+                    <LoadingSpinner text="กำลังโหลดข้อมูล..." />
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', color: '#ef4444', padding: 32 }}>{error}</td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr><td colSpan={6} className={styles.centerTextEmpty}>ไม่พบข้อมูล iCloud</td></tr>
               ) : paginated.map((item, idx) => (
                 <tr key={item.id}>
