@@ -1,7 +1,10 @@
 import React from 'react';
 import styles from './MaintenancePage.module.css';
+import { useMaintenance } from '../hooks/useMaintenance';
 
 const MaintenancePage: React.FC = () => {
+  const { estimatedCompletionTime } = useMaintenance();
+
   return (
     <div className={styles.maintenanceContainer}>
       <div className={styles.maintenanceContent}>
@@ -17,7 +20,7 @@ const MaintenancePage: React.FC = () => {
           กรุณาลองใหม่อีกครั้งในภายหลัง
         </p>
         <div className={styles.maintenanceInfo}>
-          <p>⏰ เวลาที่คาดว่าจะเสร็จสิ้น: เร็วๆ นี้</p>
+          <p>⏰ เวลาที่คาดว่าจะเสร็จสิ้น: {estimatedCompletionTime || 'เร็วๆนี้'}</p>
           <p>📧 ติดต่อสอบถาม: support@phitik.com</p>
         </div>
         <button 

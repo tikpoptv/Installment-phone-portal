@@ -6,6 +6,7 @@ import { MaintenanceContext } from './MaintenanceContextTypes';
 export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [estimatedCompletionTime, setEstimatedCompletionTime] = useState<string | undefined>();
   const location = useLocation();
 
   // เช็ค bypass maintenance mode จาก environment variable (เฉพาะ development)
@@ -25,13 +26,17 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         if (maintenanceSetting && maintenanceSetting.value === 'true') {
           setIsMaintenanceMode(true);
+          // ใช้ description เป็น estimated completion time ถ้ามี
+          setEstimatedCompletionTime(maintenanceSetting.description || 'เร็วๆนี้');
         } else {
           setIsMaintenanceMode(false);
+          setEstimatedCompletionTime(undefined);
         }
       } catch (error) {
         console.error('Failed to check maintenance mode:', error);
         // ถ้าไม่สามารถเช็คได้ ให้ไม่แสดง maintenance mode
         setIsMaintenanceMode(false);
+        setEstimatedCompletionTime(undefined);
       } finally {
         setLoading(false);
       }
@@ -42,7 +47,7 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [location.pathname, BYPASS_MAINTENANCE]); // เช็คทุกครั้งที่ path เปลี่ยน
 
   return (
-    <MaintenanceContext.Provider value={{ isMaintenanceMode, loading }}>
+    <MaintenanceContext.Provider value={{ isMaintenanceMode, loading, estimatedCompletionTime }}>
       {children}
     </MaintenanceContext.Provider>
   );
