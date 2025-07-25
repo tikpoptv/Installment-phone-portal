@@ -20,8 +20,8 @@
 }
 
 .maintenanceIcon {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   margin: 0 auto 30px;
   background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
   border-radius: 50%;
@@ -31,6 +31,80 @@
   color: white;
   font-size: 40px;
   box-shadow: 0 8px 32px rgba(14, 165, 233, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+.maintenanceGif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  animation: gifPulse 3s ease-in-out infinite;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade In Effect */
+.fadeIn {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) brightness(1);
+}
+
+/* Fade Out Effect */
+.fadeOut {
+  opacity: 0;
+  transform: scale(0.8) rotate(5deg);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) brightness(0.7);
+}
+
+@keyframes gifPulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Enhanced Fade Animation */
+@keyframes enhancedFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-10deg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) brightness(0.5);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.9) rotate(-2deg);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15)) brightness(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) brightness(1);
+  }
+}
+
+@keyframes enhancedFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) brightness(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.9) rotate(2deg);
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15)) brightness(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.7) rotate(10deg);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) brightness(0.5);
+  }
 }
 
 .maintenanceTitle {
@@ -90,6 +164,11 @@
     margin: 20px;
   }
   
+  .maintenanceIcon {
+    width: 100px;
+    height: 100px;
+  }
+  
   .maintenanceTitle {
     font-size: 1.5rem;
   }
@@ -99,8 +178,8 @@
   }
   
   .maintenanceIcon {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     font-size: 30px;
   }
 } 

@@ -1,17 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './MaintenancePage.module.css';
 import { useMaintenance } from '../hooks/useMaintenance';
 
 const MaintenancePage: React.FC = () => {
   const { estimatedCompletionTime } = useMaintenance();
+  const [currentGifIndex, setCurrentGifIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
+  
+  // รายการ GIF ที่จะสลับ (เพิ่มไฟล์ใหม่ทั้งหมด)
+  const gifList = [
+    '/gif/1ed2f24a0444ee7a3f59f6aaa5f9d092.gif',
+    '/gif/45fa006df254a8e567151c27ade0b31e.gif',
+    '/gif/fc504576b225dddb40e38ba7c05a5bf4.gif',
+    '/gif/001d2f18b6d27dbd36191d66064bef6f.gif',
+    '/gif/a4cd4d37d90e1185047d4bc59e0ce52d.gif'
+  ];
+
+  useEffect(() => {
+    // สลับ GIF ทุก 3 วินาที
+    const interval = setInterval(() => {
+      setIsFading(true);
+      
+      // รอให้ fade out เสร็จก่อนเปลี่ยน GIF
+      setTimeout(() => {
+        setCurrentGifIndex(prev => (prev + 1) % gifList.length);
+        setIsFading(false);
+      }, 300); // ครึ่งหนึ่งของ fade duration
+      
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className={styles.maintenanceContainer}>
       <div className={styles.maintenanceContent}>
         <div className={styles.maintenanceIcon}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path fillRule="evenodd" d="M12 6.75a5.25 5.25 0 016.975-5.025.75.75 0 01.985.985 5.25 5.25 0 01-5.025 6.975.75.75 0 01-.985-.985A5.25 5.25 0 0112 6.75zM12 15.75a5.25 5.25 0 01-6.975 5.025.75.75 0 01-.985-.985 5.25 5.25 0 015.025-6.975.75.75 0 01.985.985A5.25 5.25 0 0112 15.75zM12 12a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 0112 12zM12 9a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 0112 9z" clipRule="evenodd" />
-          </svg>
+          <img 
+            src={gifList[currentGifIndex]}
+            alt="Maintenance Animation"
+            className={`${styles.maintenanceGif} ${isFading ? styles.fadeOut : styles.fadeIn}`}
+            key={currentGifIndex}
+          />
         </div>
         <h1 className={styles.maintenanceTitle}>ระบบกำลังซ่อมบำรุง</h1>
         <p className={styles.maintenanceMessage}>
