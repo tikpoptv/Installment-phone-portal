@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ContractDetailModal from './ContractDetailModal';
 import { getUserContracts, getUserContractDetail, type UserContract, type ContractDetailType } from '../../../services/user/contract.service';
 import PaymentModal from './PaymentModal';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 type UserInfo = {
   id: string;
@@ -96,7 +97,7 @@ export default function Dashboard() {
       </section>
       <section className={styles.installmentList}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: '#0ea5e9', padding: '32px 0' }}>กำลังโหลดข้อมูล...</div>
+          <div style={{ textAlign: 'center', padding: '32px 0' }}><LoadingSpinner text="กำลังโหลดข้อมูล..." /></div>
         ) : error ? (
           <div style={{ textAlign: 'center', color: '#ef4444', padding: '32px 0' }}>{error}</div>
         ) : contracts.length === 0 ? (
@@ -110,10 +111,32 @@ export default function Dashboard() {
               <div className={styles.installmentProduct}>📱 {contract.product_name}</div>
               <div className={styles.installmentInfoRow}>
                 <span>งวดที่: {contract.current_installment}</span>
-                <span className={contract.month_status === 'pending' ? styles.badgeDue : styles.badgePaid}>
-                  {contract.month_status === 'pending' ? 'รอชำระ' : 'ชำระแล้ว'}
+                <span className={
+                  contract.month_status === 'pending' ? styles.badgeDue :
+                  contract.month_status === 'paid' ? styles.badgePaid :
+                  contract.month_status === 'overdue' ? styles.badgeOverdue :
+                  styles.badgeDue
+                }>
+                  {contract.month_status === 'pending' ? 'รอชำระ' :
+                   contract.month_status === 'paid' ? 'ชำระแล้ว' :
+                   contract.month_status === 'overdue' ? 'ค้างชำระ' :
+                   'รอชำระ'}
                 </span>
               </div>
+              {(contract.status === 'processing' || contract.status === 'closed') && (
+                <div className={styles.installmentInfoRow}>
+                  <span>สถานะสัญญา:</span>
+                  <span className={
+                    contract.status === 'processing' ? styles.badgeDue :
+                    contract.status === 'closed' ? styles.badgeOverdue :
+                    styles.badgeDue
+                  }>
+                    {contract.status === 'processing' ? 'กำลังดำเนินการ' :
+                     contract.status === 'closed' ? 'ปิดสัญญา' :
+                     contract.status}
+                  </span>
+                </div>
+              )}
               <div className={styles.installmentInfoRow}>
                 <span>ครบกำหนด: {formatDate(contract.due_date)}</span>
               </div>
@@ -121,7 +144,7 @@ export default function Dashboard() {
                 <span>วันชำระล่าสุด: {formatDate(contract.last_payment_date)}</span>
               </div>
               <button className={styles.detailBtn} onClick={() => handleShowDetail(contract.id)}>ดูรายละเอียด</button>
-              {contract.status === 'active' && (
+              {contract.status !== 'processing' && contract.status !== 'closed' && (
                 <button
                   className={styles.detailBtn}
                   style={{ 

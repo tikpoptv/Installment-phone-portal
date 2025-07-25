@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { getUserProductImage, type ContractDetailType } from '../../../services/user/contract.service';
 import { getUserPaymentProofFile } from '../../../services/payment.service';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 interface Props {
   openDetail: ContractDetailType | null;
@@ -23,6 +24,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
   const [loading, setLoading] = useState(false);
   const [selectedPaymentImage, setSelectedPaymentImage] = useState<string | null>(null);
   const [showPaymentImageModal, setShowPaymentImageModal] = useState(false);
+  const [paymentImageLoading, setPaymentImageLoading] = useState(false);
 
   const uniqueFilenames = useMemo(() => (
     openDetail ? Array.from(new Set(openDetail.product.product_image_filenames)) : []
@@ -63,6 +65,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
   }, [openDetail]);
 
   const handleViewPaymentImage = async (paymentId: string, filename: string) => {
+    setPaymentImageLoading(true);
     try {
       const blob = await getUserPaymentProofFile(paymentId, filename);
       const url = URL.createObjectURL(blob);
@@ -71,6 +74,8 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
     } catch (error) {
       console.error('View image error:', error);
       toast.error('ไม่สามารถดูภาพได้');
+    } finally {
+      setPaymentImageLoading(false);
     }
   };
 
@@ -91,7 +96,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
         <div className={styles.modalTitle}>รายละเอียดสัญญา</div>
         {loading && (
           <div style={{position:'absolute',left:0,top:0,width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2001,background:'rgba(255,255,255,0.7)'}}>
-            <span style={{color:'#0ea5e9',fontWeight:600,fontSize:'1.1em'}}>กำลังโหลด...</span>
+            <LoadingSpinner text="กำลังโหลด..." size={36} />
           </div>
         )}
         {imageUrls[selectedImageIdx] && (
@@ -198,6 +203,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
         <div className={styles.sectionTitle}>รายละเอียดสัญญา</div>
         <div className={styles.contractSection}>
           <div className={styles.group}>
+            <div className={styles.labelRow}><span className={styles.label}>เลขคำสั่งซื้อ</span><span className={styles.value}>{openDetail.id}</span></div>
             <div className={styles.labelRow}><span className={styles.label}>เงินดาวน์</span><span className={styles.value}>{openDetail.down_payment_amount.toLocaleString()} บาท</span></div>
             <div className={styles.labelRow}><span className={styles.label}>จำนวนงวด</span><span className={styles.value}>{openDetail.installment_months} เดือน</span></div>
             <div className={styles.labelRow}><span className={styles.label}>ผ่อนต่อเดือน</span><span className={styles.value}>{openDetail.monthly_payment.toLocaleString()} บาท</span></div>
@@ -267,7 +273,13 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
         <div className={styles.paymentImageModalOverlay} onClick={() => setShowPaymentImageModal(false)}>
           <div className={styles.paymentImageModalContent} onClick={e => e.stopPropagation()}>
             <button className={styles.paymentImageModalClose} onClick={() => setShowPaymentImageModal(false)} aria-label="ปิด">×</button>
-            <img src={selectedPaymentImage} alt="Payment Proof" className={styles.paymentImageModalImage} />
+            {paymentImageLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '200px' }}>
+                <LoadingSpinner text="กำลังโหลดภาพ..." size={32} />
+              </div>
+            ) : (
+              <img src={selectedPaymentImage} alt="Payment Proof" className={styles.paymentImageModalImage} />
+            )}
           </div>
         </div>
       )}
