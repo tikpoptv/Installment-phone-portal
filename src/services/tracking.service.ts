@@ -41,6 +41,8 @@ export interface GetTrackingOrdersParams {
   outstanding_count_min?: number;
   outstanding_count_max?: number;
   day_of_month?: number;
+  overdue_count_min?: number;
+  overdue_count_max?: number;
 }
 
 export async function getTrackingOrders(params?: GetTrackingOrdersParams): Promise<TrackingOrdersResponse> {

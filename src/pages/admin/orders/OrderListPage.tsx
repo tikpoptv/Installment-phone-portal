@@ -6,6 +6,7 @@ import { getContracts } from '../../../services/contract.service';
 import type { Contract } from '../../../services/contract.service';
 import OrderCreateModal from './OrderCreateModal';
 import { formatDateShort, formatDateThai } from '../../../utils/date';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   active: { label: 'ผ่อนชำระอยู่', color: '#0ea5e9' },
@@ -187,15 +188,7 @@ export default function OrderListPage() {
     }
   };
 
-  if (loading) {
-    return <div className={styles.loadingMessage}>กำลังโหลดข้อมูล...</div>;
-  }
-  if (fetchError) {
-    return <div className={styles.errorText}>{fetchError}</div>;
-  }
-  if (!orders) {
-    return <div className={styles.centerTextEmpty}>ไม่มีข้อมูลคำสั่งซื้อ</div>;
-  }
+  // ไม่ return ทั้งหน้า ให้ render โครงสร้างตลอด
 
   return (
     <>
@@ -317,7 +310,17 @@ export default function OrderListPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={11} style={{ textAlign: 'center', padding: 48 }}>
+                    <LoadingSpinner text="กำลังโหลดข้อมูล..." />
+                  </td>
+                </tr>
+              ) : fetchError ? (
+                <tr>
+                  <td colSpan={11} className={styles.errorText}>{fetchError}</td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr><td colSpan={11} className={styles.centerTextEmpty}>ไม่พบข้อมูลคำสั่งซื้อ</td></tr>
               ) : paginated.map((o, idx) => (
                 <tr key={o.id}>

@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './OrderTrackingPage.module.css';
 import { FaSearch, FaSyncAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 import { getTrackingOrders } from '../../../services/tracking.service';
 import type { TrackingOrder } from '../../../services/tracking.service';
 import { formatDateShort } from '../../../utils/date';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const statusMap: Record<string, { label: string; color: string }> = {
   active: { label: 'ผ่อนชำระอยู่', color: '#0ea5e9' },
-  closed: { label: 'ปิดสัญญา', color: '#22c55e' },
-  overdue: { label: 'ค้างชำระ', color: '#ef4444' },
-  repossessed: { label: 'ยึดสินค้า', color: '#a21caf' },
   processing: { label: 'รอดำเนินการ', color: '#f59e42' },
   default: { label: 'ค้างชำระ', color: '#ef4444' },
-  returned: { label: 'คืนสินค้า', color: '#6366f1' },
 };
 
 const installmentStatusMap: Record<string, { label: string; color: string }> = {
@@ -33,7 +32,9 @@ const defaultFilter = {
   outstanding_max: '',
   outstanding_count_min: '',
   outstanding_count_max: '',
-  installment_number: '',
+  overdue_count_min: '',
+  overdue_count_max: '',
+  day_of_month: '',
   limit: 10,
 };
 
@@ -62,10 +63,10 @@ const OrderTrackingPage: React.FC = () => {
         Object.keys(params).forEach((k) => {
           if (params[k] === '') params[k] = undefined;
         });
-        if (params.installment_number) {
-          params.day_of_month = params.installment_number;
+        if (params.day_of_month) {
+          params.installment_number = params.day_of_month;
         }
-        delete params.installment_number;
+        delete params.day_of_month;
         const res = await getTrackingOrders(params);
         if (!ignore) {
           setOrders(res.orders);
@@ -85,11 +86,50 @@ const OrderTrackingPage: React.FC = () => {
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilterDraft(f => ({ ...f, [name]: value }));
+    setFilterDraft(f => {
+      const updated = { ...f, [name]: value };
+      // Auto fill max if min is set and max is empty
+      if (name === 'outstanding_min' && value && !f.outstanding_max) {
+        updated.outstanding_max = value.toString();
+      }
+      if (name === 'outstanding_count_min' && value && !f.outstanding_count_max) {
+        updated.outstanding_count_max = value.toString();
+      }
+      if (name === 'overdue_count_min' && value && !f.overdue_count_max) {
+        updated.overdue_count_max = value.toString();
+      }
+      return updated;
+    });
   };
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setFilter({ ...filterDraft });
+    const newFilter = { ...filterDraft };
+    // Validation: ถ้า min > max ให้แจ้ง error และไม่ fetch
+    if (
+      (newFilter.outstanding_min && newFilter.outstanding_max && Number(newFilter.outstanding_min) > Number(newFilter.outstanding_max)) ||
+      (newFilter.outstanding_count_min && newFilter.outstanding_count_max && Number(newFilter.outstanding_count_min) > Number(newFilter.outstanding_count_max)) ||
+      (newFilter.overdue_count_min && newFilter.overdue_count_max && Number(newFilter.overdue_count_min) > Number(newFilter.overdue_count_max))
+    ) {
+      toast.error('เงื่อนไขตัวเลขไม่ถูกต้อง: ค่าขั้นต่ำต้องไม่มากกว่าค่าสูงสุด');
+      return;
+    }
+    // ถ้า max < min หรือ max ว่างแต่ min มีค่า ให้ set max = min
+    if (newFilter.outstanding_min) {
+      if (!newFilter.outstanding_max || Number(newFilter.outstanding_max) < Number(newFilter.outstanding_min)) {
+        newFilter.outstanding_max = newFilter.outstanding_min;
+      }
+    }
+    if (newFilter.outstanding_count_min) {
+      if (!newFilter.outstanding_count_max || Number(newFilter.outstanding_count_max) < Number(newFilter.outstanding_count_min)) {
+        newFilter.outstanding_count_max = newFilter.outstanding_count_min;
+      }
+    }
+    if (newFilter.overdue_count_min) {
+      if (!newFilter.overdue_count_max || Number(newFilter.overdue_count_max) < Number(newFilter.overdue_count_min)) {
+        newFilter.overdue_count_max = newFilter.overdue_count_min;
+      }
+    }
+    setFilter(newFilter);
     setPage(1);
   };
   const handleClear = () => {
@@ -100,6 +140,7 @@ const OrderTrackingPage: React.FC = () => {
 
   return (
     <div className={styles.containerModern}>
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className={styles.headerModern}>
         <h1 className={styles.titleModern}>ติดตามคำสั่งซื้อ</h1>
       </div>
@@ -107,18 +148,16 @@ const OrderTrackingPage: React.FC = () => {
       <form onSubmit={handleSearch} className={styles.filterCard}>
         <div className={styles.filterGrid}>
           <div className={styles.filterGroupModern}>
-            <label>ค้นหาชื่อ/สินค้า</label>
-            <input name="search" value={filterDraft.search} onChange={handleFilterChange} placeholder="ค้นหาชื่อ/สินค้า" />
+            <label>ค้นหาเลขคำสั่งซื้อ/ชื่อ/สินค้า</label>
+            <input name="search" value={filterDraft.search} onChange={handleFilterChange} placeholder="ค้นหาเลขคำสั่งซื้อ/ชื่อ/สินค้า" />
           </div>
           <div className={styles.filterGroupModern}>
             <label>สถานะ</label>
             <select name="status" value={filterDraft.status} onChange={handleFilterChange}>
               <option value="">ทุกสถานะ</option>
               <option value="active">ผ่อนชำระอยู่</option>
-              <option value="closed">ปิดสัญญา</option>
-              <option value="overdue">ค้างชำระ</option>
-              <option value="repossessed">ยึดสินค้า</option>
               <option value="processing">รอดำเนินการ</option>
+              <option value="default">ค้างชำระ</option>
             </select>
           </div>
           <div className={styles.filterGroupModern}>
@@ -131,7 +170,7 @@ const OrderTrackingPage: React.FC = () => {
           </div>
           <div className={styles.filterGroupModern}>
             <label>งวด</label>
-            <select name="installment_number" value={filterDraft.installment_number} onChange={handleFilterChange}>
+            <select name="day_of_month" value={filterDraft.day_of_month} onChange={handleFilterChange}>
               <option value="">ทุกงวด</option>
               {Array.from({ length: 31 }, (_, i) => (
                 <option key={i+1} value={i+1}>{i+1}</option>
@@ -155,6 +194,14 @@ const OrderTrackingPage: React.FC = () => {
             <input name="outstanding_count_max" value={filterDraft.outstanding_count_max} onChange={handleFilterChange} placeholder="0" type="number" min={0} />
           </div>
           <div className={styles.filterGroupModern}>
+            <label>งวดค้างเกินกำหนดขั้นต่ำ</label>
+            <input name="overdue_count_min" value={filterDraft.overdue_count_min ?? ''} onChange={handleFilterChange} placeholder="0" type="number" min={0} />
+          </div>
+          <div className={styles.filterGroupModern}>
+            <label>งวดค้างเกินกำหนดสูงสุด</label>
+            <input name="overdue_count_max" value={filterDraft.overdue_count_max ?? ''} onChange={handleFilterChange} placeholder="0" type="number" min={0} />
+          </div>
+          <div className={styles.filterGroupModern}>
             <label>แสดงต่อหน้า</label>
             <select name="limit" value={filterDraft.limit} onChange={handleFilterChange}>
               <option value={10}>10 รายการ/หน้า</option>
@@ -171,7 +218,7 @@ const OrderTrackingPage: React.FC = () => {
       {/* Table Modern */}
       <div className={styles.tableModernWrapper}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 32, color: '#64748b' }}>กำลังโหลดข้อมูล...</div>
+          <LoadingSpinner />
         ) : error ? (
           <div style={{ textAlign: 'center', padding: 32, color: '#ef4444' }}>{error}</div>
         ) : (
@@ -185,7 +232,7 @@ const OrderTrackingPage: React.FC = () => {
               <th style={{ textAlign: 'center' }}>ยอดค้าง</th>
               <th style={{ textAlign: 'center' }}>งวดค้างเกินกำหนด</th>
               <th style={{ textAlign: 'center' }}>งวดถัดไป</th>
-              <th>สถานะ</th>
+              <th style={{ textAlign: 'center' }}>สถานะ</th>
               <th>รายละเอียด</th>
             </tr>
           </thead>
@@ -215,7 +262,7 @@ const OrderTrackingPage: React.FC = () => {
                   <td style={{ textAlign: 'center', color: order.outstanding > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>{order.outstanding.toLocaleString('th-TH')}</td>
                   <td style={{ textAlign: 'center' }}>{typeof order.overdue_count === 'number' ? order.overdue_count : '-'}</td>
                   <td style={{ textAlign: 'center' }}>{formatDateShort(order.next_due_date)}</td>
-                  <td>
+                  <td style={{ textAlign: 'center' }}>
                     {order.status ? (
                       <span className={styles.statusBadge} style={{ background: (statusMap[order.status]?.color || statusMap.default.color) + '22', color: statusMap[order.status]?.color || statusMap.default.color }}>
                         {statusMap[order.status]?.label || order.status || statusMap.default.label}
