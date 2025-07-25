@@ -30,6 +30,8 @@ import SystemSettingCreatePage from './pages/admin/settings/SystemSettingCreateP
 import { AdminAlertProvider } from './contexts/AdminAlertContext';
 import { Toaster } from 'sonner';
 import OrderTrackingPage from './pages/admin/orders/OrderTrackingPage';
+import { MaintenanceProvider, useMaintenance } from './contexts/MaintenanceContext';
+import MaintenancePage from './pages/MaintenancePage';
 
 // Loading Component
 function LoadingScreen() {
@@ -316,15 +318,50 @@ function AppContent() {
   );
 }
 
+function AppContentWithMaintenance() {
+  const { isMaintenanceMode, loading } = useMaintenance();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)'
+      }}>
+        <div style={{ 
+          display: 'inline-block',
+          width: 40,
+          height: 40,
+          border: '4px solid #bae6fd',
+          borderTop: '4px solid #0ea5e9',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (isMaintenanceMode) {
+    return <MaintenancePage />;
+  }
+
+  return <AppContent />;
+}
+
 function App() {
   return (
     <Router>
       <AdminAlertProvider>
-        <AppContent />
-        <Toaster position="bottom-right" richColors closeButton duration={Infinity} visibleToasts={5} />
-        <ToastContainer position="top-right" autoClose={3000} />
-        <NoPermissionModal />
-        <ErrorBackendModal />
+        <MaintenanceProvider>
+          <AppContentWithMaintenance />
+          <Toaster position="bottom-right" richColors closeButton duration={Infinity} visibleToasts={5} />
+          <ToastContainer position="top-right" autoClose={3000} />
+          <NoPermissionModal />
+          <ErrorBackendModal />
+        </MaintenanceProvider>
       </AdminAlertProvider>
     </Router>
   );
