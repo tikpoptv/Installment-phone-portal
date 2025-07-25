@@ -1,21 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getSystemSettings } from '../services/system-setting.service';
+import React, { useEffect, useState } from 'react';
+import { getPortalMaintenance } from '../services/portal-maintenance.service';
 import { useLocation } from 'react-router-dom';
-
-interface MaintenanceContextType {
-  isMaintenanceMode: boolean;
-  loading: boolean;
-}
-
-const MaintenanceContext = createContext<MaintenanceContextType | undefined>(undefined);
-
-export const useMaintenance = () => {
-  const context = useContext(MaintenanceContext);
-  if (context === undefined) {
-    throw new Error('useMaintenance must be used within a MaintenanceProvider');
-  }
-  return context;
-};
+import { MaintenanceContext } from './MaintenanceContextTypes';
 
 export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -35,8 +21,7 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       try {
-        const settings = await getSystemSettings();
-        const maintenanceSetting = settings.find(setting => setting.key === 'PortalMaintenance');
+        const maintenanceSetting = await getPortalMaintenance();
         
         if (maintenanceSetting && maintenanceSetting.value === 'true') {
           setIsMaintenanceMode(true);

@@ -18,7 +18,7 @@ const MaintenancePage: React.FC = () => {
         </p>
         <div className={styles.maintenanceInfo}>
           <p>⏰ เวลาที่คาดว่าจะเสร็จสิ้น: เร็วๆ นี้</p>
-          <p>📧 ติดต่อสอบถาม: support@example.com</p>
+          <p>📧 ติดต่อสอบถาม: support@phitik.com</p>
         </div>
         <button 
           className={styles.retryButton}

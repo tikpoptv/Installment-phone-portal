@@ -30,7 +30,8 @@ import SystemSettingCreatePage from './pages/admin/settings/SystemSettingCreateP
 import { AdminAlertProvider } from './contexts/AdminAlertContext';
 import { Toaster } from 'sonner';
 import OrderTrackingPage from './pages/admin/orders/OrderTrackingPage';
-import { MaintenanceProvider, useMaintenance } from './contexts/MaintenanceContext';
+import { MaintenanceProvider } from './contexts/MaintenanceContext';
+import { useMaintenance } from './hooks/useMaintenance';
 import MaintenancePage from './pages/MaintenancePage';
 
 // Loading Component
