@@ -15,8 +15,17 @@ const InventoryStatus: FC = () => {
   useEffect(() => {
     setLoading(true);
     getStockSummary()
-      .then(setItems)
-      .catch(() => setError('ไม่สามารถโหลดข้อมูลสถานะสินค้าได้'))
+      .then((response) => {
+        setItems(response);
+        if (response.length === 0) {
+          setError('ไม่พบข้อมูลสินค้า');
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching stock summary:', error);
+        setError('ไม่สามารถโหลดข้อมูลสถานะสินค้าได้');
+        setItems([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 

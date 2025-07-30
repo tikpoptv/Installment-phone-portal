@@ -9,7 +9,16 @@ export interface PortalMaintenanceResponse {
   updated_at?: string;
 }
 
-export async function getPortalMaintenance(): Promise<PortalMaintenanceResponse> {
-  const res = await apiClient.get<PortalMaintenanceResponse>('/api/system/portal-maintenance');
-  return res.data;
+export async function getPortalMaintenance(): Promise<PortalMaintenanceResponse | null> {
+  try {
+    const res = await apiClient.get<PortalMaintenanceResponse>('/api/system/portal-maintenance');
+    return res.data;
+  } catch (error: unknown) {
+    // ถ้าเป็น error "PortalMaintenance setting not found" ให้ return null
+    if (error && typeof error === 'object' && 'error' in error && error.error === 'PortalMaintenance setting not found') {
+      return null;
+    }
+    // ถ้าเป็น error อื่นๆ ให้ throw ต่อไป
+    throw error;
+  }
 } 

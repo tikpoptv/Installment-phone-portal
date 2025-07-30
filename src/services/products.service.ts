@@ -151,6 +151,12 @@ export interface ProductStockSummaryItem {
 }
 
 export async function getStockSummary(): Promise<ProductStockSummaryItem[]> {
-  const res = await apiClient.get<ProductStockSummaryItem[]>('/api/products/stock-summary');
-  return res.data;
+  try {
+    const res = await apiClient.get<ProductStockSummaryItem[]>('/api/products/stock-summary');
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching stock summary:', error);
+    // Return empty array เมื่อเกิด error
+    return [];
+  }
 } 

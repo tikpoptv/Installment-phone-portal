@@ -30,7 +30,7 @@ const MaintenancePage: React.FC = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [gifList.length]);
 
   return (
     <div className={styles.maintenanceContainer}>
