@@ -48,8 +48,19 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
     if (!open) return;
     setLoadingModels(true);
     getPhoneModels()
-      .then(data => setPhoneModelsState(data))
-      .catch(() => setPhoneModelsState([]))
+      .then(data => {
+        // ตรวจสอบว่า data เป็น array หรือไม่
+        if (Array.isArray(data)) {
+          setPhoneModelsState(data);
+        } else {
+          console.warn('getPhoneModels returned non-array data:', data);
+          setPhoneModelsState([]);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching phone models:', error);
+        setPhoneModelsState([]);
+      })
       .finally(() => setLoadingModels(false));
     // ดึง user id แล้ว set owner_id
     const user = authService.getUser();
@@ -151,13 +162,32 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
     // fetch models ใหม่หลัง modal ปิด (เผื่อมีการแก้ไขชื่อรุ่น)
     setLoadingModels(true);
     getPhoneModels()
-      .then(data => setPhoneModelsState(data))
-      .catch(() => setPhoneModelsState([]))
+      .then(data => {
+        // ตรวจสอบว่า data เป็น array หรือไม่
+        if (Array.isArray(data)) {
+          setPhoneModelsState(data);
+        } else {
+          console.warn('getPhoneModels returned non-array data:', data);
+          setPhoneModelsState([]);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching phone models:', error);
+        setPhoneModelsState([]);
+      })
       .finally(() => setLoadingModels(false));
   };
 
   const handleModelAdded = (newModel: { id: string; model_name: string }) => {
-    setPhoneModelsState(prev => [newModel, ...prev]);
+    setPhoneModelsState(prev => {
+      // ตรวจสอบว่า prev เป็น array หรือไม่
+      if (Array.isArray(prev)) {
+        return [newModel, ...prev];
+      } else {
+        console.warn('phoneModelsState is not an array, resetting to array with new model');
+        return [newModel];
+      }
+    });
     setForm(prev => ({ ...prev, phone_model_id: newModel.id }));
     setShowModelModal(false);
   };
@@ -174,11 +204,20 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <select name="phone_model_id" value={form.phone_model_id} onChange={handleChange} required className={styles.inputBox} style={{ flex: 1 }} disabled={loadingModels}>
                   <option value="">-- เลือกรุ่น --</option>
-                  {phoneModelsState.map(m => <option key={m.id} value={m.id}>{m.model_name}</option>)}
+                  {Array.isArray(phoneModelsState) && phoneModelsState.length > 0 ? (
+                    phoneModelsState.map(m => <option key={m.id} value={m.id}>{m.model_name}</option>)
+                  ) : (
+                    <option value="" disabled>ไม่มีข้อมูลรุ่นมือถือ</option>
+                  )}
                 </select>
                 <button type="button" onClick={handleAddModel} className={styles.addModelBtn} title="เพิ่มรุ่นใหม่">+
                 </button>
               </div>
+              {Array.isArray(phoneModelsState) && phoneModelsState.length === 0 && !loadingModels && (
+                <div style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '4px', fontWeight: 500 }}>
+                  ⚠️ ไม่มีข้อมูลรุ่นมือถือ กรุณาเพิ่มรุ่นใหม่ก่อนสร้างสินค้า
+                </div>
+              )}
             </div>
             <div>
               <label>IMEI</label>

@@ -27,7 +27,15 @@ const PhoneModelModal: React.FC<PhoneModelModalProps> = ({ open, onClose, onAdd 
     setLoading(true);
     setError(null);
     getPhoneModels()
-      .then(data => setModels(data))
+      .then(data => {
+        // ตรวจสอบว่า data เป็น array หรือไม่
+        if (Array.isArray(data)) {
+          setModels(data);
+        } else {
+          console.warn('getPhoneModels returned non-array data:', data);
+          setModels([]);
+        }
+      })
       .catch(() => setError('เกิดข้อผิดพลาดในการโหลดรายการรุ่นมือถือ'))
       .finally(() => setLoading(false));
   }, [open]);

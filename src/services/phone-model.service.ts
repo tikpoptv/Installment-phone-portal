@@ -8,8 +8,13 @@ export interface PhoneModel {
 }
 
 export async function getPhoneModels(): Promise<PhoneModel[]> {
-  const res = await apiClient.get<PhoneModel[]>('/api/phone-models');
-  return res.data;
+  const res = await apiClient.get<{ data: PhoneModel[]; message?: string }>('/api/phone-models');
+  // รองรับ response format ใหม่ {"data":[],"message":"No data"}
+  if (res.data && typeof res.data === 'object' && 'data' in res.data) {
+    return res.data.data || [];
+  }
+  // รองรับ response format เดิม (array โดยตรง)
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 export async function createPhoneModel(model_name: string): Promise<PhoneModel> {
