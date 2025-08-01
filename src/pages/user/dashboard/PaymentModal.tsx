@@ -260,7 +260,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
           ) : storeBankAccounts ? (
             <div className={styles.bankCategoryWrapper}>
               <div className={styles.bankTabRow}>
-                {storeBankAccounts.bank_accounts.length > 0 && (
+                {storeBankAccounts.bank_accounts && storeBankAccounts.bank_accounts.length > 0 && (
                   <button
                     type="button"
                     className={showBankAccounts ? styles.bankTabActive : styles.bankTab}
@@ -269,7 +269,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                     โอนผ่านบัญชีธนาคาร
                   </button>
                 )}
-                {storeBankAccounts.promptpay_accounts.length > 0 && (
+                {storeBankAccounts.promptpay_accounts && storeBankAccounts.promptpay_accounts.length > 0 && (
                   <button
                     type="button"
                     className={showPromptpayAccounts ? styles.bankTabActive : styles.bankTab}
@@ -279,7 +279,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                   </button>
                 )}
               </div>
-              {showBankAccounts && storeBankAccounts.bank_accounts.length > 0 && (
+              {showBankAccounts && storeBankAccounts.bank_accounts && storeBankAccounts.bank_accounts.length > 0 && (
                 <div className={styles.bankCategory}>
                   <div className={styles.bankCategoryTitle}>โอนผ่านบัญชีธนาคาร</div>
                   <div className={styles.accountList}>
@@ -310,7 +310,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                   </div>
                 </div>
               )}
-              {showPromptpayAccounts && storeBankAccounts.promptpay_accounts.length > 0 && (
+              {showPromptpayAccounts && storeBankAccounts.promptpay_accounts && storeBankAccounts.promptpay_accounts.length > 0 && (
                 <div className={styles.bankCategory}>
                   <div className={styles.bankCategoryTitle}>โอนผ่านพร้อมเพย์</div>
                   <div className={styles.promptpayCenter}>
@@ -351,7 +351,7 @@ export default function PaymentModal({ contractId, open, onClose, hasEarlyClosur
                   </div>
                 </div>
               )}
-              {storeBankAccounts.bank_accounts.length === 0 && storeBankAccounts.promptpay_accounts.length === 0 && (
+              {(!storeBankAccounts.bank_accounts || storeBankAccounts.bank_accounts.length === 0) && (!storeBankAccounts.promptpay_accounts || storeBankAccounts.promptpay_accounts.length === 0) && (
                 <div style={{ color: '#ef4444' }}>ไม่พบบัญชีธนาคารร้านค้า</div>
               )}
             </div>
