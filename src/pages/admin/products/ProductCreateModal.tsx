@@ -220,7 +220,7 @@ const ProductCreateModal: React.FC<ProductCreateModalProps> = ({ open, onClose, 
               )}
             </div>
             <div>
-              <label>IMEI</label>
+              <label>Serial Number</label>
               <input name="imei" value={form.imei} onChange={handleChange} maxLength={15} className={styles.inputBox} />
             </div>
             <div>

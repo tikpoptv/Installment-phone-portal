@@ -251,7 +251,7 @@ const OrderDetailPage: React.FC = () => {
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📦 ข้อมูลสินค้า</div>
           <div className={styles.section}><div className={styles.label}>ชื่อรุ่น:</div><div className={styles.value}>{o.product ? o.product.model_name : '-'}</div></div>
-          <div className={styles.section}><div className={styles.label}>IMEI:</div><div className={styles.value}>{o.product ? o.product.imei : '-'}</div></div>
+          <div className={styles.section}><div className={styles.label}>Serial Number:</div><div className={styles.value}>{o.product ? o.product.imei : '-'}</div></div>
           <div className={styles.section}><div className={styles.label}>ราคาสินค้า:</div><div className={styles.value}>{o.product ? o.product.price.toLocaleString('th-TH', { style: 'currency', currency: 'THB' }) : '-'}</div></div>
           {o.product && <Link className={styles.linkBtn} to={`/admin/products/${o.product.id}`}>ดูรายละเอียดสินค้า</Link>}
         </div>

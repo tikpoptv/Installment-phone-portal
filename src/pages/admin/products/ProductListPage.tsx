@@ -17,7 +17,7 @@ const statusLabel = (status: string) => {
 };
 
 function exportProductsToCSV(products: Product[]) {
-  const header = ['ลำดับ', 'รหัสสินค้า', 'ชื่อรุ่น', 'IMEI', 'ราคา', 'iCloud', 'หมายเหตุ', 'สถานะ', 'วันที่เพิ่ม'];
+  const header = ['ลำดับ', 'รหัสสินค้า', 'ชื่อรุ่น', 'Serial Number', 'ราคา', 'iCloud', 'หมายเหตุ', 'สถานะ', 'วันที่เพิ่ม'];
   const rows = products.map((p, idx) => [
     idx + 1,
     p.id || '',
@@ -177,7 +177,7 @@ export default function ProductListPage() {
           <div className={styles.filterTopRow}>
             <input
               type="text"
-              placeholder="ค้นหาชื่อรุ่น, IMEI, หมายเหตุ, รหัสสินค้า..."
+              placeholder="ค้นหาชื่อรุ่น, Serial Number, หมายเหตุ, รหัสสินค้า..."
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               className={styles.searchInput}
@@ -269,7 +269,7 @@ export default function ProductListPage() {
                 <th>ลำดับ</th>
                 <th>รหัสสินค้า</th>
                 <th>ชื่อรุ่น</th>
-                <th>IMEI</th>
+                <th>Serial Number</th>
                 <th>ราคา</th>
                 <th>iCloud</th>
                 <th>สถานะ</th>

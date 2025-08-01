@@ -72,7 +72,7 @@ const IcloudLockModal: React.FC<Props> = ({ open, productId, productImei, icloud
       <div className={styles.modalBox} style={{ width: 520 }}>
         <div className={styles.title}>เชื่อมโยงกับบัญชี iCloud</div>
         <div className={styles.msg}>
-          กรุณาเลือกบัญชี iCloud ที่ต้องการเชื่อมโยงกับสินค้านี้ (IMEI: <b>{productImei}</b>)
+          กรุณาเลือกบัญชี iCloud ที่ต้องการเชื่อมโยงกับสินค้านี้ (Serial Number: <b>{productImei}</b>)
         </div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
           <div style={{ flex: 1, position: 'relative' }}>

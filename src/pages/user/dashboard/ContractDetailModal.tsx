@@ -198,7 +198,7 @@ export default function ContractDetailModal({ openDetail, onClose, formatDate }:
         <div className={styles.sectionTitle}>ข้อมูลสินค้า</div>
         <div className={styles.productSection}>
           <div className={styles.labelRow}><span className={styles.label}>สินค้า</span><span className={styles.value}>{openDetail.product.model_name}</span></div>
-          <div className={styles.labelRow}><span className={styles.label}>IMEI</span><span className={styles.value}>{openDetail.product.imei}</span></div>
+          <div className={styles.labelRow}><span className={styles.label}>Serial Number</span><span className={styles.value}>{openDetail.product.imei}</span></div>
         </div>
         <div className={styles.sectionTitle}>รายละเอียดสัญญา</div>
         <div className={styles.contractSection}>

@@ -32,7 +32,6 @@ const InventoryStatus: FC = () => {
   // เรียงตาม error > warning > normal
   const sortedItems = [...items].sort((a, b) => sortPriority[a.status] - sortPriority[b.status]);
   const top4 = sortedItems.slice(0, 4);
-  const rest = sortedItems.slice(4);
   const alertCount = sortedItems.filter(i => i.status === 'error' || i.status === 'warning').length;
 
   return (
@@ -86,7 +85,7 @@ const InventoryStatus: FC = () => {
           <div style={{background:'#fff',borderRadius:14,boxShadow:'0 12px 48px rgba(14,165,233,0.18)',padding:'40px 40px 32px 40px',minWidth:420,maxWidth:700,width:'100%',maxHeight:'80vh',overflowY:'auto',position:'relative'}}>
             <h3 style={{fontSize:'1.15rem',fontWeight:700,color:'#0ea5e9',marginBottom:18,textAlign:'center'}}>สินค้าทั้งหมด</h3>
             <div>
-              {rest.length === 0 ? <div style={{textAlign:'center',color:'#64748b',padding:'24px 0'}}>ไม่มีข้อมูลเพิ่มเติม</div> : rest.map((item) => (
+              {sortedItems.length === 0 ? <div style={{textAlign:'center',color:'#64748b',padding:'24px 0'}}>ไม่มีข้อมูลสินค้า</div> : sortedItems.map((item) => (
                 <div key={item.id} className={`${styles.inventoryItem} ${styles[item.status]}`} style={{marginBottom:8}}>
                   <div className={styles.itemInfo}>
                     <h3 className={styles.itemName}>{item.name}</h3>

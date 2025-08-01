@@ -256,7 +256,7 @@ const ProductDetailPage: React.FC = () => {
         </div>
         <div className={styles.detailRow}><span className={styles.label}>รหัสสินค้า:</span> <span className={styles.value}>{product.id}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>ชื่อรุ่น:</span> <span className={styles.value}>{product.model_name}</span></div>
-        <div className={styles.detailRow}><span className={styles.label}>IMEI:</span> <span className={styles.value}>{product.imei}</span></div>
+        <div className={styles.detailRow}><span className={styles.label}>Serial Number:</span> <span className={styles.value}>{product.imei}</span></div>
         <div className={styles.detailRow}><span className={styles.label}>หมายเหตุ:</span> <span className={styles.value}>{product.remark || '-'}</span></div>
       </section>
 
