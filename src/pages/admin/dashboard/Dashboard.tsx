@@ -13,6 +13,7 @@ import Notifications from './components/Notifications/Notifications';
 import VerifyCustomerModal from './components/VerifyCustomerModal/VerifyCustomerModal';
 import ProductCreateModal from '../products/ProductCreateModal';
 import OrderCreateModal from '../orders/OrderCreateModal';
+import ReportsModal from './components/ReportsModal/ReportsModal';
 import { getDashboardSummary, type DashboardSummary } from '../../../services/dashboard.service';
 
 const Dashboard: FC = () => {
@@ -21,6 +22,7 @@ const Dashboard: FC = () => {
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
@@ -68,7 +70,7 @@ const Dashboard: FC = () => {
             </div>
             <div className={styles.dateInfo}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={styles.dateIcon}>
-                <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75c2.9 0 5.25 2.35 5.25 5.25v11.25c0 2.9-2.35 5.25-5.25 5.25H5.25c-2.9 0-5.25-2.35-5.25-5.25V9.75C0 6.85 2.35 4.5 5.25 4.5H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75c2.9 0 5.25 2.35 5.25 5.25v11.25c0 2.9-2.35 5.25-5.25 5.25H5.25c-2.9 0-5.25-2.35-5.25-5.25V9.75C0 6.85 2.35 4.5 5.25 4.5H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v-7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" />
               </svg>
               <span className={styles.dateText}>{new Date().toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
@@ -80,6 +82,7 @@ const Dashboard: FC = () => {
             onVerifyClick={() => setShowVerifyModal(true)}
             onAddProductClick={() => setShowCreateProductModal(true)}
             onCreateOrderClick={() => setShowCreateOrderModal(true)}
+            onReportClick={() => setShowReportsModal(true)}
           />
           <StatsCards summary={summary} loading={isLoading} error={summaryError} />
         </div>
@@ -101,6 +104,7 @@ const Dashboard: FC = () => {
       )}
       <ProductCreateModal open={showCreateProductModal} onClose={() => setShowCreateProductModal(false)} />
       <OrderCreateModal open={showCreateOrderModal} onClose={() => setShowCreateOrderModal(false)} />
+      <ReportsModal open={showReportsModal} onClose={() => setShowReportsModal(false)} />
     </div>
   );
 };

@@ -18,7 +18,8 @@ const QuickActions: FC<{
   onVerifyClick?: () => void;
   onAddProductClick?: () => void;
   onCreateOrderClick?: () => void;
-}> = ({ onVerifyClick, onAddProductClick, onCreateOrderClick }) => {
+  onReportClick?: () => void;
+}> = ({ onVerifyClick, onAddProductClick, onCreateOrderClick, onReportClick }) => {
   return (
     <div className={styles.quickActions}>
       {quickActions.map((action) => {
@@ -26,6 +27,7 @@ const QuickActions: FC<{
         if (action.label === 'ยืนยันตัวตนลูกค้า' && onVerifyClick) onClick = onVerifyClick;
         else if (action.label === 'เพิ่มสินค้า' && onAddProductClick) onClick = onAddProductClick;
         else if (action.label === 'สร้างคำสั่งซื้อ' && onCreateOrderClick) onClick = onCreateOrderClick;
+        else if (action.label === 'รายงาน' && onReportClick) onClick = onReportClick;
         return (
           <button
             key={action.id}
