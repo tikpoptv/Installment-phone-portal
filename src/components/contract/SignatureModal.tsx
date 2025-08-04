@@ -71,9 +71,23 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
     console.log('handleSave called');
     const canvas = canvasRef.current;
     if (canvas) {
-      const base64 = canvas.toDataURL('image/png');
-      onSave(base64);
-      console.log('Signature saved');
+      // สร้าง canvas ใหม่สำหรับ resize
+      const resizedCanvas = document.createElement('canvas');
+      const ctx = resizedCanvas.getContext('2d');
+      
+      // ตั้งค่าขนาดที่ต้องการ (ขนาดที่เหมาะสมสำหรับ PDF)
+      resizedCanvas.width = 400;
+      resizedCanvas.height = 150;
+      
+      if (ctx) {
+        // วาด canvas เดิมลงบน canvas ใหม่ที่ resize แล้ว
+        ctx.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
+        
+        // แปลงเป็น base64
+        const base64 = resizedCanvas.toDataURL('image/png');
+        onSave(base64);
+        console.log('Signature saved');
+      }
     }
   };
 
@@ -96,7 +110,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
         background: '#fff',
         borderRadius: '12px',
         padding: '24px',
-        minWidth: 320,
+        minWidth: 520,
         maxWidth: '90vw',
         boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
         display: 'flex',
@@ -106,16 +120,16 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
         <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>{title || 'เซ็นลายเซ็น'}</div>
         <canvas
           ref={canvasRef}
-          width={320}
-          height={120}
+          width={480}
+          height={200}
           style={{
             border: '1.5px solid #cbd5e1',
             borderRadius: 8,
             background: '#f8fafc',
             touchAction: 'none',
             marginBottom: 16,
-            width: 320,
-            height: 120,
+            width: 480,
+            height: 200,
           }}
           onMouseDown={startDraw}
           onMouseMove={draw}

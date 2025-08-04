@@ -19,19 +19,14 @@ export interface ContractPdfData {
 }
 
 export const generateContractPdf = async (contractData: ContractPdfData): Promise<Blob> => {
-  try {
-    const response = await apiClient.post<Blob>('/api/contracts/template', contractData, {
-      responseType: 'blob',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error generating contract PDF:', error);
-    throw new Error('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
-  }
+  const response = await apiClient.post<Blob>('/api/contracts/template', contractData, {
+    responseType: 'blob',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return response.data;
 };
 
 export const displayContractPdf = (blob: Blob, containerId: string) => {
@@ -39,12 +34,13 @@ export const displayContractPdf = (blob: Blob, containerId: string) => {
   const container = document.getElementById(containerId);
   if (container) {
     container.innerHTML = `
-      <iframe 
-        src="${url}#toolbar=1&navpanes=1&scrollbar=1" 
-        width="100%" 
-        height="600px" 
+      <iframe
+        src="${url}"
+        title="Contract PDF"
+        width="100%"
+        height="600px"
         style="border: 1px solid #e5e7eb; border-radius: 8px;"
-      ></iframe>
+      />
     `;
   }
 };
