@@ -3,6 +3,7 @@ import styles from '../../pages/admin/orders/OrderCreateModal.module.css';
 import { generateContractPdf, displayContractPdf, type ContractPdfData } from '../../services/contract-excel.service';
 import { toast } from 'react-toastify';
 import SignatureModal from './SignatureModal';
+import { createMinimalContract } from '../../services/contract.service'; // Added import for createMinimalContract
 
 interface AutoContractGeneratorProps {
   contractData: {
@@ -18,7 +19,7 @@ interface AutoContractGeneratorProps {
     down_payment_amount: string;
     rental_cost: string;
   };
-  onPdfGenerated?: (blob: Blob) => void;
+  onPdfGenerated?: (blob: Blob, contractId?: string) => void;
 }
 
 const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractData, onPdfGenerated }) => {
@@ -125,6 +126,26 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
   const generatePdfInternal = async () => {
     setIsGenerating(true);
     try {
+      // ขอเลขคำสั่งซื้อจาก API ก่อน
+      let contractNumber = '';
+      try {
+        const minimalContractResponse = await createMinimalContract(
+          contractData.user_id,
+          contractData.product_id
+        );
+        
+        if (minimalContractResponse.data && typeof minimalContractResponse.data === 'object' && 'id' in minimalContractResponse.data) {
+          contractNumber = (minimalContractResponse.data as { id: string }).id;
+        } else {
+          throw new Error('ไม่ได้รับเลขคำสั่งซื้อจากระบบ');
+        }
+      } catch (error) {
+        console.error('Error creating minimal contract:', error);
+        toast.error('ไม่สามารถขอเลขคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง');
+        setIsGenerating(false);
+        return;
+      }
+
       // เตรียมข้อมูลสำหรับสร้าง PDF
       const pdfData: ContractPdfData = {
         user_id: contractData.user_id,
@@ -137,7 +158,7 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
         end_date: contractData.end_date,
         down_payment_amount: Number(contractData.down_payment_amount) || 0,
         rental_cost: Number(contractData.rental_cost) || 0,
-        contract_number: `CON-${Date.now()}`,
+        contract_number: contractNumber, // ใช้เลขคำสั่งซื้อจาก API
         created_date: new Date().toISOString().slice(0, 10),
         user_signature: userSignature || '',
         renter_signature: renterSignature || '',
@@ -158,10 +179,10 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
       
       // ส่ง PDF blob กลับไปให้ parent component (สำคัญ!)
       if (onPdfGenerated) {
-        onPdfGenerated(blob);
+        onPdfGenerated(blob, contractNumber);
       }
       
-      toast.success('สร้างไฟล์ PDF สำเร็จ! ไฟล์จะถูกแนบเมื่อยืนยันคำสั่งซื้อ');
+      toast.success(`สร้างไฟล์ PDF สำเร็จ! เลขคำสั่งซื้อ: ${contractNumber}`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       let errorMessage = 'เกิดข้อผิดพลาดในการสร้างไฟล์ PDF';

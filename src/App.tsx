@@ -33,6 +33,7 @@ import OrderTrackingPage from './pages/admin/orders/OrderTrackingPage';
 import { MaintenanceProvider } from './contexts/MaintenanceContext';
 import { useMaintenance } from './hooks/useMaintenance';
 import MaintenancePage from './pages/MaintenancePage';
+import { deleteMinimalContract } from './services/contract.service';
 
 // Loading Component
 function LoadingScreen() {
@@ -155,6 +156,34 @@ function AppContent() {
     const handler = () => setSessionExpired(true);
     window.addEventListener('session-expired', handler);
     return () => window.removeEventListener('session-expired', handler);
+  }, []);
+
+  // เพิ่ม useEffect สำหรับลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป
+  useEffect(() => {
+    const cleanupPendingContracts = async () => {
+      const pendingContractId = localStorage.getItem('pendingMinimalContractId');
+      if (pendingContractId) {
+        try {
+          await deleteMinimalContract(pendingContractId);
+          console.log('ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป:', pendingContractId);
+          localStorage.removeItem('pendingMinimalContractId');
+        } catch (error) {
+          console.error('ไม่สามารถลบ minimal contract ที่ค้างอยู่ได้:', error);
+          
+          // ถ้า contract status เป็น 'active' ให้ลบ localStorage เพราะ contract ถูกใช้งานแล้ว
+          if (error && typeof error === 'object' && 'details' in error) {
+            const errorDetails = (error as Record<string, unknown>).details;
+            if (typeof errorDetails === 'string' && errorDetails.includes("Only 'hold_by_system' contracts can be deleted")) {
+              console.log('ลบ localStorage เพราะ contract ถูกใช้งานแล้ว:', pendingContractId);
+              localStorage.removeItem('pendingMinimalContractId');
+            }
+          }
+        }
+      }
+    };
+
+    // ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป
+    cleanupPendingContracts();
   }, []);
 
   if (isLoading) {

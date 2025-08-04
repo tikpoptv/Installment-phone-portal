@@ -120,30 +120,67 @@ export async function getContracts(params?: { page?: number; limit?: number; sea
 
 export async function createContract(payload: Record<string, unknown>) {
   const formData = new FormData();
-  formData.append('total_with_interest', payload.total_with_interest?.toString() ?? '0');
-  formData.append('installment_months', payload.installment_months?.toString() ?? '0');
-  formData.append('monthly_payment', payload.monthly_payment?.toString() ?? '0');
-  formData.append('start_date', String(payload.start_date ?? '1970-01-01'));
-  formData.append('end_date', String(payload.end_date ?? '1970-01-01'));
-  Object.entries(payload).forEach(([key, value]) => {
-    if (
-      key === 'total_with_interest' ||
-      key === 'installment_months' ||
-      key === 'monthly_payment' ||
-      key === 'start_date' ||
-      key === 'end_date'
-    ) {
-      return;
-    }
-    if (key === 'pdpa_consent_file' && value && value !== '' && value !== 'null') {
-      formData.append(key, value as File);
-    } else {
-      formData.append(key, value as string);
-    }
-  });
-  return apiClient.post('/api/contracts', formData, {
+  
+  // เพิ่มข้อมูลตาม API Specification ใหม่
+  if (payload.user_id) formData.append('user_id', payload.user_id as string);
+  if (payload.product_id) formData.append('product_id', payload.product_id as string);
+  if (payload.category) formData.append('category', payload.category as string);
+  if (payload.total_price) formData.append('total_price', payload.total_price as string);
+  if (payload.down_payment_amount) formData.append('down_payment_amount', payload.down_payment_amount as string);
+  if (payload.rental_cost) formData.append('rental_cost', payload.rental_cost as string);
+  if (payload.total_with_interest) formData.append('total_with_interest', payload.total_with_interest as string);
+  if (payload.installment_months) formData.append('installment_months', payload.installment_months as string);
+  if (payload.monthly_payment) formData.append('monthly_payment', payload.monthly_payment as string);
+  if (payload.status) formData.append('status', payload.status as string);
+  if (payload.start_date) formData.append('start_date', payload.start_date as string);
+  if (payload.end_date) formData.append('end_date', payload.end_date as string);
+  
+  // จัดการไฟล์ PDPA
+  if (payload.pdpa_consent_file && payload.pdpa_consent_file !== '' && payload.pdpa_consent_file !== 'null') {
+    formData.append('pdpa_consent_file', payload.pdpa_consent_file as File);
+  }
+  
+  return apiClient.post('/api/contracts/transaction', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
+}
+
+export async function createMinimalContract(userId: string, productId: string) {
+  return apiClient.post('/api/contracts/minimal', {
+    user_id: userId,
+    product_id: productId
+  });
+}
+
+export async function updateContractTransaction(contractId: string, payload: Record<string, unknown>) {
+  const formData = new FormData();
+  
+  // เพิ่มข้อมูลตาม API Specification ใหม่
+  if (payload.user_id) formData.append('user_id', payload.user_id as string);
+  if (payload.product_id) formData.append('product_id', payload.product_id as string);
+  if (payload.category) formData.append('category', payload.category as string);
+  if (payload.total_price) formData.append('total_price', payload.total_price as string);
+  if (payload.down_payment_amount) formData.append('down_payment_amount', payload.down_payment_amount as string);
+  if (payload.rental_cost) formData.append('rental_cost', payload.rental_cost as string);
+  if (payload.total_with_interest) formData.append('total_with_interest', payload.total_with_interest as string);
+  if (payload.installment_months) formData.append('installment_months', payload.installment_months as string);
+  if (payload.monthly_payment) formData.append('monthly_payment', payload.monthly_payment as string);
+  if (payload.status) formData.append('status', payload.status as string);
+  if (payload.start_date) formData.append('start_date', payload.start_date as string);
+  if (payload.end_date) formData.append('end_date', payload.end_date as string);
+  
+  // จัดการไฟล์ PDPA
+  if (payload.pdpa_consent_file && payload.pdpa_consent_file !== '' && payload.pdpa_consent_file !== 'null') {
+    formData.append('pdpa_consent_file', payload.pdpa_consent_file as File);
+  }
+  
+  return apiClient.put(`/api/contracts/${contractId}/transaction`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}
+
+export async function deleteMinimalContract(contractId: string) {
+  return apiClient.delete(`/api/contracts/${contractId}/minimal`);
 }
 
 export async function getContractDetail(id: string): Promise<ContractDetail> {
