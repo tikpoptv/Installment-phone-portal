@@ -1,20 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../../pages/admin/orders/OrderCreateModal.module.css';
 import { toast } from 'react-toastify';
 
 interface ContractFileUploadProps {
   file: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onPreviewClick: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const ContractFileUpload: React.FC<ContractFileUploadProps> = ({ 
   file, 
   onFileChange, 
-  onPreviewClick, 
   fileInputRef 
 }) => {
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   // ฟังก์ชันตรวจสอบไฟล์
   const validateFile = (file: File): boolean => {
     // ตรวจสอบขนาดไฟล์ (สูงสุด 10MB)
@@ -61,9 +62,42 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
         return;
       }
 
+      // ลบ URL เก่าถ้ามี
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+
+      // สร้าง URL ใหม่สำหรับ preview
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+
       // เรียกใช้ฟังก์ชันเดิม
       onFileChange(e);
-      // ลบ toast.success ออกเพื่อป้องกันการแจ้งเตือนซ้ำ
+    }
+  };
+
+  // ฟังก์ชันแสดงตัวอย่างไฟล์
+  const handlePreviewClick = () => {
+    if (file) {
+      // ลบ URL เก่าถ้ามี
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      // สร้าง URL ใหม่ทุกครั้ง
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setShowPreview(true);
+    } else {
+      toast.error('ไม่มีไฟล์ให้แสดงตัวอย่าง');
+    }
+  };
+
+  // ฟังก์ชันปิด modal
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
   };
 
@@ -102,7 +136,7 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
           </div>
           <button
             type="button"
-            onClick={onPreviewClick}
+            onClick={handlePreviewClick}
             style={{
               marginTop: '4px',
               background: '#0ea5e9',
@@ -121,6 +155,38 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
           >
             {file.type.startsWith('image/') ? '🖼️ ดูตัวอย่างรูปภาพ' : '📄 ดูตัวอย่างไฟล์'}
           </button>
+        </div>
+      )}
+
+      {/* Modal แสดงตัวอย่างไฟล์ */}
+      {showPreview && previewUrl && file && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(30,41,59,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ background: '#fff', borderRadius: 12, maxWidth: 600, width: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid #e5e7eb', fontWeight: 'bold', background: '#f1f5f9' }}>
+              <span>แสดงตัวอย่างไฟล์สัญญาคำสั่งซื้อ</span>
+              <button onClick={handleClosePreview} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#64748b', cursor: 'pointer', padding: '4px 8px' }}>&times;</button>
+            </div>
+            <div style={{ padding: 0, flex: 1, overflow: 'auto', background: '#f9fafb', minHeight: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {file.type.startsWith('image/') ? (
+                <img
+                  src={previewUrl}
+                  alt="Order Contract File Preview"
+                  style={{ maxWidth: '100%', maxHeight: 500, borderRadius: 8, boxShadow: '0 2px 8px #bae6fd55' }}
+                />
+              ) : (
+                <iframe
+                  src={previewUrl}
+                  title="Order Contract File Preview"
+                  width="100%"
+                  height="500px"
+                  style={{ border: 'none', display: 'block' }}
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
