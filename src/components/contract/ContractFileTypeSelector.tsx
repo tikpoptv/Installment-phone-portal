@@ -15,6 +15,19 @@ const ContractFileTypeSelector: React.FC<ContractFileTypeSelectorProps> = ({
       <label className={styles.formLabel}>
         ประเภทไฟล์สัญญา <span className={styles.required}>*</span>
       </label>
+      <div style={{ 
+        padding: '8px 12px', 
+        background: '#fef3c7', 
+        border: '1px solid #f59e0b', 
+        borderRadius: '6px',
+        fontSize: '12px',
+        color: '#92400e',
+        marginBottom: '12px'
+      }}>
+        <div style={{ fontWeight: '600', marginBottom: '4px' }}>⚠️ หมายเหตุ:</div>
+        <div>• การเปลี่ยนหมวดหมู่จะรีเซ็ตไฟล์ของหมวดหมู่เดิม</div>
+        <div>• กรุณาเลือกหมวดหมู่ที่ต้องการใช้ก่อนดำเนินการ</div>
+      </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
         <label style={{ 
           display: 'flex', 

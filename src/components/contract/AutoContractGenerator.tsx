@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styles from '../../pages/admin/orders/OrderCreateModal.module.css';
 import { generateContractPdf, displayContractPdf, type ContractPdfData } from '../../services/contract-excel.service';
 import { toast } from 'react-toastify';
-import ExcelTemplatePreview from './ExcelTemplatePreview';
 import SignatureModal from './SignatureModal';
 
 interface AutoContractGeneratorProps {
@@ -19,9 +18,10 @@ interface AutoContractGeneratorProps {
     down_payment_amount: string;
     rental_cost: string;
   };
+  onPdfGenerated?: (blob: Blob) => void;
 }
 
-const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractData }) => {
+const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractData, onPdfGenerated }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [signatureModal, setSignatureModal] = useState<null | 'user' | 'renter' | 'witness'>(null);
   const [userSignature, setUserSignature] = useState<string | null>(null);
@@ -29,8 +29,6 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
   const [witnessSignature, setWitnessSignature] = useState<string | null>(null);
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-
-  const isAllSigned = Boolean(userSignature && renterSignature && witnessSignature);
 
   // แสดง PDF เมื่อมี blob และ DOM พร้อม
   useEffect(() => {
@@ -42,8 +40,80 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
     }
   }, [pdfBlob, pdfGenerated]);
 
+  const handleClearSignature = (type: 'user' | 'renter' | 'witness') => {
+    switch (type) {
+      case 'user':
+        setUserSignature(null);
+        break;
+      case 'renter':
+        setRenterSignature(null);
+        break;
+      case 'witness':
+        setWitnessSignature(null);
+        break;
+    }
+  };
+
   const handleGeneratePdf = async () => {
-    if (isGenerating || !isAllSigned) return;
+    if (isGenerating) return;
+    
+    // ตรวจสอบข้อมูลที่จำเป็นก่อนสร้าง PDF
+    const requiredFields = [
+      { field: contractData.user_id, name: 'รหัสลูกค้า' },
+      { field: contractData.product_id, name: 'รหัสสินค้า' },
+      { field: contractData.total_price, name: 'ราคาสินค้า' },
+      { field: contractData.total_with_interest, name: 'ราคารวมดอกเบี้ย' },
+      { field: contractData.installment_months, name: 'จำนวนงวด' },
+      { field: contractData.monthly_payment, name: 'ยอดผ่อนต่อเดือน' },
+      { field: contractData.start_date, name: 'วันที่เริ่ม' },
+      { field: contractData.end_date, name: 'วันที่สิ้นสุด' }
+    ];
+
+    const missingFields = requiredFields.filter(item => !item.field);
+    if (missingFields.length > 0) {
+      toast.error(`กรุณากรอกข้อมูลให้ครบถ้วน: ${missingFields.map(f => f.name).join(', ')}`);
+      return;
+    }
+
+    // ตรวจสอบค่าตัวเลข
+    const numericFields = [
+      { field: contractData.total_price, name: 'ราคาสินค้า' },
+      { field: contractData.total_with_interest, name: 'ราคารวมดอกเบี้ย' },
+      { field: contractData.installment_months, name: 'จำนวนงวด' },
+      { field: contractData.monthly_payment, name: 'ยอดผ่อนต่อเดือน' }
+    ];
+
+    for (const item of numericFields) {
+      if (isNaN(Number(item.field)) || Number(item.field) <= 0) {
+        toast.error(`${item.name} ต้องเป็นตัวเลขที่มากกว่า 0`);
+        return;
+      }
+    }
+
+    // ตรวจสอบวันที่
+    const startDate = new Date(contractData.start_date);
+    const endDate = new Date(contractData.end_date);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      toast.error('รูปแบบวันที่ไม่ถูกต้อง');
+      return;
+    }
+    if (startDate >= endDate) {
+      toast.error('วันที่เริ่มต้องน้อยกว่าวันที่สิ้นสุด');
+      return;
+    }
+
+    // ตรวจสอบลายเซ็น (ไม่บังคับ แต่แนะนำ)
+    const missingSignatures = [];
+    if (!userSignature) missingSignatures.push('ลายเซ็นผู้ให้เช่า');
+    if (!renterSignature) missingSignatures.push('ลายเซ็นผู้เช่า');
+    if (!witnessSignature) missingSignatures.push('ลายเซ็นพยาน');
+
+    if (missingSignatures.length > 0) {
+      const shouldContinue = window.confirm(
+        `ยังไม่มีลายเซ็น: ${missingSignatures.join(', ')}\n\nต้องการสร้างไฟล์ PDF โดยไม่มีลายเซ็นหรือไม่?`
+      );
+      if (!shouldContinue) return;
+    }
     
     setIsGenerating(true);
     try {
@@ -57,26 +127,49 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
         monthly_payment: Number(contractData.monthly_payment),
         start_date: contractData.start_date,
         end_date: contractData.end_date,
-        down_payment_amount: Number(contractData.down_payment_amount),
-        rental_cost: Number(contractData.rental_cost),
+        down_payment_amount: Number(contractData.down_payment_amount) || 0,
+        rental_cost: Number(contractData.rental_cost) || 0,
         contract_number: `CON-${Date.now()}`,
         created_date: new Date().toISOString().slice(0, 10),
-        user_signature: userSignature!,
-        renter_signature: renterSignature!,
-        witness_signature: witnessSignature!,
+        user_signature: userSignature || '',
+        renter_signature: renterSignature || '',
+        witness_signature: witnessSignature || '',
       };
 
       // สร้างไฟล์ PDF
       const blob = await generateContractPdf(pdfData);
       
+      // ตรวจสอบว่า blob ถูกต้องหรือไม่
+      if (!blob || blob.size === 0) {
+        throw new Error('ไม่สามารถสร้างไฟล์ PDF ได้');
+      }
+      
       // เก็บ blob และตั้งค่า state
       setPdfBlob(blob);
       setPdfGenerated(true);
       
-      toast.success('สร้างไฟล์ PDF สำเร็จ!');
+      // ส่ง PDF blob กลับไปให้ parent component (สำคัญ!)
+      if (onPdfGenerated) {
+        onPdfGenerated(blob);
+      }
+      
+      toast.success('สร้างไฟล์ PDF สำเร็จ! ไฟล์จะถูกแนบเมื่อยืนยันคำสั่งซื้อ');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
+      let errorMessage = 'เกิดข้อผิดพลาดในการสร้างไฟล์ PDF';
+      
+      // จัดการ error ที่เฉพาะเจาะจง
+      if (error instanceof Error) {
+        if (error.message.includes('network')) {
+          errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย';
+        } else if (error.message.includes('template')) {
+          errorMessage = 'ไม่พบเทมเพลตไฟล์ PDF';
+        } else if (error.message.includes('data')) {
+          errorMessage = 'ข้อมูลไม่ถูกต้องสำหรับสร้าง PDF';
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -150,31 +243,95 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
         </div>
         
         {/* แสดงตัวอย่างเทมเพลต Excel */}
-        <ExcelTemplatePreview contractData={contractData} />
         
         {/* ปุ่มเซ็นลายเซ็น */}
         <div style={{ display: 'flex', gap: 16, margin: '24px 0 0 0', flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setSignatureModal('user')} style={{
-            background: userSignature ? '#16a34a' : '#f1f5f9',
-            color: userSignature ? '#fff' : '#334155',
-            border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
-          }}>
-            {userSignature ? '✔️' : '❌'} ลายเซ็นผู้ให้เช่า
-          </button>
-          <button type="button" onClick={() => setSignatureModal('renter')} style={{
-            background: renterSignature ? '#16a34a' : '#f1f5f9',
-            color: renterSignature ? '#fff' : '#334155',
-            border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
-          }}>
-            {renterSignature ? '✔️' : '❌'} ลายเซ็นผู้เช่า
-          </button>
-          <button type="button" onClick={() => setSignatureModal('witness')} style={{
-            background: witnessSignature ? '#16a34a' : '#f1f5f9',
-            color: witnessSignature ? '#fff' : '#334155',
-            border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
-          }}>
-            {witnessSignature ? '✔️' : '❌'} ลายเซ็นพยาน
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={() => setSignatureModal('user')} style={{
+              background: userSignature ? '#16a34a' : '#f1f5f9',
+              color: userSignature ? '#fff' : '#334155',
+              border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              {userSignature ? '✔️' : '❌'} ลายเซ็นผู้ให้เช่า
+            </button>
+            {userSignature && (
+              <button 
+                type="button" 
+                onClick={() => handleClearSignature('user')}
+                style={{
+                  background: '#ffffff',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+                title="ลบลายเซ็น"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={() => setSignatureModal('renter')} style={{
+              background: renterSignature ? '#16a34a' : '#f1f5f9',
+              color: renterSignature ? '#fff' : '#334155',
+              border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              {renterSignature ? '✔️' : '❌'} ลายเซ็นผู้เช่า
+            </button>
+            {renterSignature && (
+              <button 
+                type="button" 
+                onClick={() => handleClearSignature('renter')}
+                style={{
+                  background: '#ffffff',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+                title="ลบลายเซ็น"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button type="button" onClick={() => setSignatureModal('witness')} style={{
+              background: witnessSignature ? '#16a34a' : '#f1f5f9',
+              color: witnessSignature ? '#fff' : '#334155',
+              border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
+            }}>
+              {witnessSignature ? '✔️' : '❌'} ลายเซ็นพยาน
+            </button>
+            {witnessSignature && (
+              <button 
+                type="button" 
+                onClick={() => handleClearSignature('witness')}
+                style={{
+                  background: '#ffffff',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+                title="ลบลายเซ็น"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Modal สำหรับเซ็น */}
@@ -202,18 +359,18 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
           <button
             type="button"
             onClick={handleGeneratePdf}
-            disabled={!isAllSigned || isGenerating}
+            disabled={isGenerating}
             style={{
-              background: isAllSigned && !isGenerating ? 'linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%)' : '#e5e7eb',
-              color: isAllSigned && !isGenerating ? '#fff' : '#64748b',
+              background: !isGenerating ? 'linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%)' : '#e5e7eb',
+              color: !isGenerating ? '#fff' : '#64748b',
               border: 'none',
               borderRadius: '8px',
               padding: '14px 32px',
               fontSize: '16px',
               fontWeight: '700',
-              cursor: isAllSigned && !isGenerating ? 'pointer' : 'not-allowed',
+              cursor: !isGenerating ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
-              boxShadow: isAllSigned && !isGenerating ? '0 2px 8px #bae6fd' : 'none',
+              boxShadow: !isGenerating ? '0 2px 8px #bae6fd' : 'none',
               opacity: isGenerating ? 0.7 : 1,
               marginTop: 12
             }}
