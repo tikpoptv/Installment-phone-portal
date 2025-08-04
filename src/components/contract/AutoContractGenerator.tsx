@@ -29,6 +29,8 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
   const [witnessSignature, setWitnessSignature] = useState<string | null>(null);
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [showSignatureWarningModal, setShowSignatureWarningModal] = useState(false);
+  const [pendingGenerateAction, setPendingGenerateAction] = useState<(() => void) | null>(null);
 
   // แสดง PDF เมื่อมี blob และ DOM พร้อม
   useEffect(() => {
@@ -109,12 +111,18 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
     if (!witnessSignature) missingSignatures.push('ลายเซ็นพยาน');
 
     if (missingSignatures.length > 0) {
-      const shouldContinue = window.confirm(
-        `ยังไม่มีลายเซ็น: ${missingSignatures.join(', ')}\n\nต้องการสร้างไฟล์ PDF โดยไม่มีลายเซ็นหรือไม่?`
-      );
-      if (!shouldContinue) return;
+      // แสดง modal แทน window.confirm
+      setPendingGenerateAction(() => () => generatePdfInternal());
+      setShowSignatureWarningModal(true);
+      return;
     }
     
+    // ถ้ามีลายเซ็นครบแล้ว ให้สร้าง PDF เลย
+    generatePdfInternal();
+  };
+
+  // ฟังก์ชันสร้าง PDF จริง
+  const generatePdfInternal = async () => {
     setIsGenerating(true);
     try {
       // เตรียมข้อมูลสำหรับสร้าง PDF
@@ -353,6 +361,99 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
           onSave={sig => { setWitnessSignature(sig); setSignatureModal(null); }}
           title="เซ็นลายเซ็นพยาน"
         />
+
+        {/* Modal แจ้งเตือนลายเซ็น */}
+        {showSignatureWarningModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(30,41,59,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 12, 
+              maxWidth: 500, 
+              width: '90vw', 
+              padding: '24px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{ fontSize: 48, marginBottom: '16px' }}>⚠️</div>
+                <h3 style={{ 
+                  fontSize: '20px', 
+                  fontWeight: '600', 
+                  color: '#1f2937', 
+                  marginBottom: '12px' 
+                }}>
+                  ยังไม่มีลายเซ็น
+                </h3>
+                <p style={{ 
+                  fontSize: '16px', 
+                  color: '#6b7280', 
+                  lineHeight: '1.5',
+                  marginBottom: '16px'
+                }}>
+                  ยังไม่มีลายเซ็น: <strong>ลายเซ็นผู้ให้เช่า, ลายเซ็นผู้เช่า, ลายเซ็นพยาน</strong>
+                </p>
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#9ca3af', 
+                  fontStyle: 'italic'
+                }}>
+                  ต้องการสร้างไฟล์ PDF โดยไม่มีลายเซ็นหรือไม่?
+                </p>
+              </div>
+              
+              <div style={{ 
+                display: 'flex', 
+                gap: '12px', 
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowSignatureWarningModal(false);
+                    setPendingGenerateAction(null);
+                  }}
+                  style={{
+                    background: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSignatureWarningModal(false);
+                    if (pendingGenerateAction) {
+                      pendingGenerateAction();
+                      setPendingGenerateAction(null);
+                    }
+                  }}
+                  style={{
+                    background: 'linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 8px #bae6fd'
+                  }}
+                >
+                  สร้างไฟล์ PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* ปุ่มสร้างไฟล์ PDF (ล่างสุด) */}
         <div style={{ marginTop: 32, textAlign: 'center' }}>
