@@ -56,6 +56,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
   const [showPdpaPreview, setShowPdpaPreview] = useState(false);
   const [pdpaPreviewUrl, setPdpaPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contractFileType, setContractFileType] = useState<'upload' | 'auto'>('upload');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,6 +94,7 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
     setProductQuery('');
     setShowUserList(false);
     setShowProductList(false);
+    setContractFileType('upload');
   }, [open]);
 
   useEffect(() => {
@@ -249,9 +251,12 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         form.monthly_payment,
         form.status,
         form.start_date,
-        form.end_date,
-        form.pdpa_consent_file
+        form.end_date
       ];
+      // เพิ่มการตรวจสอบไฟล์สัญญาตามประเภทที่เลือก
+      if (contractFileType === 'upload') {
+        requiredFields.push(form.pdpa_consent_file);
+      }
     } else if (isCashPurchase) {
       requiredFields = [
         form.product_id,
@@ -295,12 +300,26 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
         'monthly_payment',
         'status',
         'start_date',
-        'end_date',
-        'pdpa_consent_file'
+        'end_date'
       ];
       optionalFields.forEach(field => {
         if (!form[field]) delete payload[field];
       });
+      
+      // จัดการไฟล์สัญญาตามประเภทที่เลือก
+      if (contractFileType === 'upload') {
+        // ถ้าเป็นอัปโหลดเอง ต้องมีไฟล์
+        if (!form.pdpa_consent_file) {
+          toast.error('กรุณาเลือกไฟล์สัญญาคำสั่งซื้อ');
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (contractFileType === 'auto') {
+        // ถ้าเป็นระบบสร้างอัตโนมัติ ลบไฟล์ออกจาก payload
+        delete payload.pdpa_consent_file;
+        // เพิ่ม flag สำหรับบอก backend ว่าให้สร้างไฟล์อัตโนมัติ
+        payload.auto_generate_contract = true;
+      }
     }
     // แปลงค่าเป็น number ถ้ามี
     if (form.down_payment_amount !== '') payload.down_payment_amount = Number(form.down_payment_amount);
@@ -593,6 +612,58 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
             />
           </div>
           <div>
+            <label>ประเภทไฟล์สัญญา <span className={styles.required}>*</span></label>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                cursor: 'pointer',
+                padding: '8px 12px',
+                border: `2px solid ${contractFileType === 'upload' ? '#0ea5e9' : '#e5e7eb'}`,
+                borderRadius: '8px',
+                background: contractFileType === 'upload' ? '#f0f9ff' : '#fff',
+                color: contractFileType === 'upload' ? '#0ea5e9' : '#64748b',
+                fontWeight: contractFileType === 'upload' ? '600' : '400',
+                transition: 'all 0.2s ease'
+              }}>
+                <input
+                  type="radio"
+                  name="contractFileType"
+                  value="upload"
+                  checked={contractFileType === 'upload'}
+                  onChange={(e) => setContractFileType(e.target.value as 'upload' | 'auto')}
+                  style={{ margin: 0 }}
+                />
+                อัปโหลดไฟล์เอง
+              </label>
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                cursor: 'pointer',
+                padding: '8px 12px',
+                border: `2px solid ${contractFileType === 'auto' ? '#0ea5e9' : '#e5e7eb'}`,
+                borderRadius: '8px',
+                background: contractFileType === 'auto' ? '#f0f9ff' : '#fff',
+                color: contractFileType === 'auto' ? '#0ea5e9' : '#64748b',
+                fontWeight: contractFileType === 'auto' ? '600' : '400',
+                transition: 'all 0.2s ease'
+              }}>
+                <input
+                  type="radio"
+                  name="contractFileType"
+                  value="auto"
+                  checked={contractFileType === 'auto'}
+                  onChange={(e) => setContractFileType(e.target.value as 'upload' | 'auto')}
+                  style={{ margin: 0 }}
+                />
+                สร้างไฟล์อัตโนมัติ
+              </label>
+            </div>
+          </div>
+          {contractFileType === 'upload' && (
+          <div>
             <label>ไฟล์สัญญาคำสั่งซื้อ (PDF หรือ รูปภาพ) <span className={styles.required}>*</span></label>
             <input
               type="file"
@@ -626,6 +697,29 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
               </div>
             )}
           </div>
+          )}
+          {contractFileType === 'auto' && (
+          <div>
+            <label>สร้างไฟล์สัญญาอัตโนมัติ</label>
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#f0f9ff', 
+              border: '1px solid #bae6fd', 
+              borderRadius: '8px',
+              color: '#0ea5e9',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px' }}>📄</span>
+                <span>ระบบจะสร้างไฟล์สัญญาคำสั่งซื้อให้อัตโนมัติ</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
+                ไฟล์จะถูกสร้างจากข้อมูลที่กรอกข้างต้น และสามารถดาวน์โหลดได้หลังจากบันทึกสำเร็จ
+              </div>
+            </div>
+          </div>
+          )}
           </>}
           <div className={styles.buttonRow}>
             <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
