@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../../pages/admin/orders/OrderCreateModal.module.css';
 import { generateContractPdf, displayContractPdf, type ContractPdfData } from '../../services/contract-excel.service';
 import { toast } from 'react-toastify';
@@ -28,8 +28,19 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
   const [renterSignature, setRenterSignature] = useState<string | null>(null);
   const [witnessSignature, setWitnessSignature] = useState<string | null>(null);
   const [pdfGenerated, setPdfGenerated] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
 
   const isAllSigned = Boolean(userSignature && renterSignature && witnessSignature);
+
+  // แสดง PDF เมื่อมี blob และ DOM พร้อม
+  useEffect(() => {
+    if (pdfBlob && pdfGenerated) {
+      // รอให้ DOM render ก่อน
+      setTimeout(() => {
+        displayContractPdf(pdfBlob, 'pdf-container');
+      }, 100);
+    }
+  }, [pdfBlob, pdfGenerated]);
 
   const handleGeneratePdf = async () => {
     if (isGenerating || !isAllSigned) return;
@@ -58,8 +69,8 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({ contractD
       // สร้างไฟล์ PDF
       const blob = await generateContractPdf(pdfData);
       
-      // แสดง PDF ในหน้าเว็บ
-      displayContractPdf(blob, 'pdf-container');
+      // เก็บ blob และตั้งค่า state
+      setPdfBlob(blob);
       setPdfGenerated(true);
       
       toast.success('สร้างไฟล์ PDF สำเร็จ!');

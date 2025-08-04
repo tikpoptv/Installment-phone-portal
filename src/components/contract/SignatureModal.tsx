@@ -76,8 +76,8 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
       const ctx = resizedCanvas.getContext('2d');
       
       // ตั้งค่าขนาดที่ต้องการ (ขนาดที่เหมาะสมสำหรับ PDF)
-      resizedCanvas.width = 400;
-      resizedCanvas.height = 150;
+      resizedCanvas.width = 300;
+      resizedCanvas.height = 100;
       
       if (ctx) {
         // วาด canvas เดิมลงบน canvas ใหม่ที่ resize แล้ว
