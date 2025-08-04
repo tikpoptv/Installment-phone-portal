@@ -6,6 +6,9 @@ import type { Product } from '../../../services/products.service';
 import { createContract } from '../../../services/contract.service';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import ContractFileTypeSelector from '../../../components/contract/ContractFileTypeSelector';
+import ContractFileUpload from '../../../components/contract/ContractFileUpload';
+import AutoContractGenerator from '../../../components/contract/AutoContractGenerator';
 
 interface OrderCreateModalProps {
   open: boolean;
@@ -611,114 +614,20 @@ const OrderCreateModal: React.FC<OrderCreateModalProps> = ({ open, onClose, onSu
               required className={styles.inputBox} 
             />
           </div>
-          <div>
-            <label>ประเภทไฟล์สัญญา <span className={styles.required}>*</span></label>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                cursor: 'pointer',
-                padding: '8px 12px',
-                border: `2px solid ${contractFileType === 'upload' ? '#0ea5e9' : '#e5e7eb'}`,
-                borderRadius: '8px',
-                background: contractFileType === 'upload' ? '#f0f9ff' : '#fff',
-                color: contractFileType === 'upload' ? '#0ea5e9' : '#64748b',
-                fontWeight: contractFileType === 'upload' ? '600' : '400',
-                transition: 'all 0.2s ease'
-              }}>
-                <input
-                  type="radio"
-                  name="contractFileType"
-                  value="upload"
-                  checked={contractFileType === 'upload'}
-                  onChange={(e) => setContractFileType(e.target.value as 'upload' | 'auto')}
-                  style={{ margin: 0 }}
-                />
-                อัปโหลดไฟล์เอง
-              </label>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                cursor: 'pointer',
-                padding: '8px 12px',
-                border: `2px solid ${contractFileType === 'auto' ? '#0ea5e9' : '#e5e7eb'}`,
-                borderRadius: '8px',
-                background: contractFileType === 'auto' ? '#f0f9ff' : '#fff',
-                color: contractFileType === 'auto' ? '#0ea5e9' : '#64748b',
-                fontWeight: contractFileType === 'auto' ? '600' : '400',
-                transition: 'all 0.2s ease'
-              }}>
-                <input
-                  type="radio"
-                  name="contractFileType"
-                  value="auto"
-                  checked={contractFileType === 'auto'}
-                  onChange={(e) => setContractFileType(e.target.value as 'upload' | 'auto')}
-                  style={{ margin: 0 }}
-                />
-                สร้างไฟล์อัตโนมัติ
-              </label>
-            </div>
-          </div>
+          <ContractFileTypeSelector 
+            selectedType={contractFileType}
+            onTypeChange={setContractFileType}
+          />
           {contractFileType === 'upload' && (
-          <div>
-            <label>ไฟล์สัญญาคำสั่งซื้อ (PDF หรือ รูปภาพ) <span className={styles.required}>*</span></label>
-            <input
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp"
-              onChange={handleFileChange}
-              className={styles.inputBox}
-              ref={fileInputRef}
-              required
+            <ContractFileUpload
+              file={form.pdpa_consent_file}
+              onFileChange={handleFileChange}
+              onPreviewClick={() => setShowPdpaPreview(true)}
+              fileInputRef={fileInputRef}
             />
-            {form.pdpa_consent_file && (
-              <div style={{ marginTop: 6, color: '#0ea5e9', fontSize: 14 }}>
-                ไฟล์: {form.pdpa_consent_file.name}
-                <button
-                  type="button"
-                  onClick={() => setShowPdpaPreview(true)}
-                  style={{
-                    marginLeft: 10,
-                    background: '#0ea5e9',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '2px 10px',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 4px #bae6fd',
-                    verticalAlign: 'middle',
-                    lineHeight: 1.5
-                  }}
-                >ดูตัวอย่างไฟล์</button>
-              </div>
-            )}
-          </div>
           )}
           {contractFileType === 'auto' && (
-          <div>
-            <label>สร้างไฟล์สัญญาอัตโนมัติ</label>
-            <div style={{ 
-              padding: '12px 16px', 
-              background: '#f0f9ff', 
-              border: '1px solid #bae6fd', 
-              borderRadius: '8px',
-              color: '#0ea5e9',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px' }}>📄</span>
-                <span>ระบบจะสร้างไฟล์สัญญาคำสั่งซื้อให้อัตโนมัติ</span>
-              </div>
-              <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.4' }}>
-                ไฟล์จะถูกสร้างจากข้อมูลที่กรอกข้างต้น และสามารถดาวน์โหลดได้หลังจากบันทึกสำเร็จ
-              </div>
-            </div>
-          </div>
+            <AutoContractGenerator contractData={form} />
           )}
           </>}
           <div className={styles.buttonRow}>
