@@ -135,6 +135,10 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
           alignItems: 'center',
           position: 'relative',
           zIndex: 10000,
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
         }}
         onClick={(e) => {
           // ป้องกันการคลุมโดนปุ่มอื่น
@@ -143,6 +147,11 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
         onMouseDown={(e) => {
           // ป้องกันการคลุมโดนปุ่มอื่น
           e.stopPropagation();
+        }}
+        onContextMenu={(e: React.MouseEvent) => {
+          e.preventDefault();
+          console.log('❌ คลิกขวาถูกป้องกันที่ modal');
+          return false;
         }}
       >
         <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>{title || 'เซ็นลายเซ็น'}</div>
@@ -159,6 +168,10 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
             width: 480,
             height: 200,
             cursor: 'crosshair',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
           }}
           onMouseDown={startDraw}
           onMouseMove={draw}
@@ -168,6 +181,11 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
           onTouchMove={draw}
           onTouchEnd={endDraw}
           onTouchCancel={endDraw}
+          onContextMenu={(e: React.MouseEvent) => {
+            e.preventDefault();
+            console.log('❌ คลิกขวาถูกป้องกันที่ canvas');
+            return false;
+          }}
         />
         <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
           <button onClick={onClose} style={{ padding: '6px 16px', background: '#e2e8f0', border: 'none', borderRadius: 6, color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>ยกเลิก</button>
