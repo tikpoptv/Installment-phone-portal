@@ -40,11 +40,14 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
   };
 
   const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     drawing.current = true;
     lastPoint.current = getPos(e);
+    console.log('Start drawing at:', lastPoint.current);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     if (!drawing.current || !canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     if (!ctx) return;
@@ -58,6 +61,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
       ctx.moveTo(lastPoint.current.x, lastPoint.current.y);
       ctx.lineTo(newPoint.x, newPoint.y);
       ctx.stroke();
+      console.log('Drawing from', lastPoint.current, 'to', newPoint);
     }
     lastPoint.current = newPoint;
   };
@@ -65,6 +69,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
   const endDraw = () => {
     drawing.current = false;
     lastPoint.current = null;
+    console.log('End drawing');
   };
 
   const handleSave = () => {
@@ -94,29 +99,52 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
   if (!open) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      background: 'rgba(0,0,0,0.3)',
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '24px',
-        minWidth: 520,
-        maxWidth: '90vw',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(0,0,0,0.5)',
+        zIndex: 9999,
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-      }}>
+        justifyContent: 'center',
+        pointerEvents: 'auto',
+      }}
+      onClick={(e) => {
+        // ป้องกันการคลุมโดนปุ่มอื่น
+        e.stopPropagation();
+      }}
+      onMouseDown={(e) => {
+        // ป้องกันการคลุมโดนปุ่มอื่น
+        e.stopPropagation();
+      }}
+    >
+      <div 
+        style={{
+          background: '#fff',
+          borderRadius: '12px',
+          padding: '24px',
+          minWidth: 520,
+          maxWidth: '90vw',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          position: 'relative',
+          zIndex: 10000,
+        }}
+        onClick={(e) => {
+          // ป้องกันการคลุมโดนปุ่มอื่น
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          // ป้องกันการคลุมโดนปุ่มอื่น
+          e.stopPropagation();
+        }}
+      >
         <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 12 }}>{title || 'เซ็นลายเซ็น'}</div>
         <canvas
           ref={canvasRef}
@@ -130,6 +158,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
             marginBottom: 16,
             width: 480,
             height: 200,
+            cursor: 'crosshair',
           }}
           onMouseDown={startDraw}
           onMouseMove={draw}
@@ -138,6 +167,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ open, onClose, onSave, 
           onTouchStart={startDraw}
           onTouchMove={draw}
           onTouchEnd={endDraw}
+          onTouchCancel={endDraw}
         />
         <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
           <button onClick={onClose} style={{ padding: '6px 16px', background: '#e2e8f0', border: 'none', borderRadius: 6, color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>ยกเลิก</button>
