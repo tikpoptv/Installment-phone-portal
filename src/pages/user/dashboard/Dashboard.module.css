@@ -227,6 +227,16 @@
   box-shadow: 0 2px 8px #fecaca88;
   letter-spacing: 0.5px;
 }
+.badgeHoldBySystem {
+  background: #f3e8ff;
+  color: #8b5cf6;
+  font-weight: 900;
+  border-radius: 10px;
+  padding: 4px 16px;
+  font-size: 1.08em;
+  box-shadow: 0 2px 8px #e9d5ff88;
+  letter-spacing: 0.5px;
+}
 .detailBtn {
   background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
   color: #fff;

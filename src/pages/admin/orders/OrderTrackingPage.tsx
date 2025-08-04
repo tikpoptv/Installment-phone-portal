@@ -12,6 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const statusMap: Record<string, { label: string; color: string }> = {
   active: { label: 'ผ่อนชำระอยู่', color: '#0ea5e9' },
   processing: { label: 'รอดำเนินการ', color: '#f59e42' },
+  hold_by_system: { label: 'ระบบถือครอง', color: '#8b5cf6' },
   default: { label: 'ค้างชำระ', color: '#ef4444' },
 };
 

@@ -123,16 +123,18 @@ export default function Dashboard() {
                    'รอชำระ'}
                 </span>
               </div>
-              {(contract.status === 'processing' || contract.status === 'closed') && (
+              {(contract.status === 'processing' || contract.status === 'closed' || contract.status === 'hold_by_system') && (
                 <div className={styles.installmentInfoRow}>
                   <span>สถานะสัญญา:</span>
                   <span className={
                     contract.status === 'processing' ? styles.badgeDue :
                     contract.status === 'closed' ? styles.badgeOverdue :
+                    contract.status === 'hold_by_system' ? styles.badgeHoldBySystem :
                     styles.badgeDue
                   }>
                     {contract.status === 'processing' ? 'กำลังดำเนินการ' :
                      contract.status === 'closed' ? 'ปิดสัญญา' :
+                     contract.status === 'hold_by_system' ? 'ระบบถือครอง' :
                      contract.status}
                   </span>
                 </div>

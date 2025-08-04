@@ -6,7 +6,7 @@ import { updateContractStatus } from '../../../services/contract.service';
 import type { ContractDetail, ContractPayment, Installment, Discount } from '../../../services/contract.service';
 import PaymentDetailModal from '../payments/PaymentDetailModal';
 import DiscountModal from './DiscountModal';
-import { MdCheckCircle, MdRadioButtonUnchecked, MdPending, MdAutorenew, MdCancel } from 'react-icons/md';
+import { MdCheckCircle, MdRadioButtonUnchecked, MdPending, MdAutorenew, MdCancel, MdLock } from 'react-icons/md';
 import PaymentCreateModal from '../payments/PaymentCreateModal';
 
 function formatDate(dateStr: string) {
@@ -43,11 +43,16 @@ function getInstallmentStatusClass(status: string): string {
   }
 }
 
-const statusMap: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  active: { label: 'กำลังใช้งาน', className: styles.badgeActive, icon: <MdCheckCircle color="#22c55e" size={18} style={{verticalAlign:'middle'}} /> },
-  closed: { label: 'เสร็จสิ้น', className: styles.badgeClosed, icon: <MdRadioButtonUnchecked color="#64748b" size={18} style={{verticalAlign:'middle'}} /> },
-  pending: { label: 'รอดำเนินการ', className: styles.badgePending, icon: <MdPending color="#eab308" size={18} style={{verticalAlign:'middle'}} /> },
-  processing: { label: 'กำลังดำเนินการ', className: styles.badgeProcessing, icon: <MdAutorenew color="#d97706" size={18} style={{verticalAlign:'middle'}} /> },
+// นำ statusMap และ statusOptions จาก OrderListPage มาใช้
+const statusMap: Record<string, { label: string; color: string; icon?: React.ReactNode }> = {
+  active: { label: 'ผ่อนชำระอยู่', color: '#0ea5e9', icon: <MdCheckCircle color="#22c55e" size={18} style={{verticalAlign:'middle'}} /> },
+  closed: { label: 'ปิดสัญญา', color: '#22c55e', icon: <MdRadioButtonUnchecked color="#64748b" size={18} style={{verticalAlign:'middle'}} /> },
+  overdue: { label: 'ค้างชำระ', color: '#ef4444', icon: <MdCancel color="#ef4444" size={18} style={{verticalAlign:'middle'}} /> },
+  repossessed: { label: 'ยึดสินค้า', color: '#a21caf', icon: <MdLock color="#a21caf" size={18} style={{verticalAlign:'middle'}} /> },
+  processing: { label: 'รอดำเนินการ', color: '#f59e42', icon: <MdAutorenew color="#d97706" size={18} style={{verticalAlign:'middle'}} /> },
+  returned: { label: 'คืนสินค้า', color: '#6366f1', icon: <MdRadioButtonUnchecked color="#6366f1" size={18} style={{verticalAlign:'middle'}} /> },
+  hold_by_system: { label: 'ระบบถือครอง', color: '#8b5cf6', icon: <MdLock color="#8b5cf6" size={18} style={{verticalAlign:'middle'}} /> },
+  default: { label: 'ค้างชำระ', color: '#ef4444', icon: <MdCancel color="#ef4444" size={18} style={{verticalAlign:'middle'}} /> },
 };
 
 const categoryMap: Record<string, { label: string; emoji: string }> = {
@@ -58,10 +63,13 @@ const categoryMap: Record<string, { label: string; emoji: string }> = {
 
 // Modal สำหรับแก้ไขสถานะคำสั่งซื้อ
 const statusOptions = [
+  { value: 'active', label: 'กำลังใช้งาน' },
   { value: 'closed', label: 'เสร็จสิ้น' },
+  { value: 'overdue', label: 'ค้างชำระ' },
   { value: 'repossessed', label: 'ยึดคืน' },
+  { value: 'processing', label: 'รอดำเนินการ' },
   { value: 'returned', label: 'คืนสินค้า' },
-  { value: 'processing', label: 'กำลังดำเนินการ' },
+  { value: 'hold_by_system', label: 'ระบบถือครอง' },
 ];
 
 interface OrderStatusEditModalProps {
@@ -200,7 +208,7 @@ const OrderDetailPage: React.FC = () => {
   if (error || !contract) return <div className={styles.container}><div className={styles.contentBox}>{error || 'ไม่พบข้อมูลคำสั่งซื้อ'}</div></div>;
 
   const o = contract;
-  const status = statusMap[o.status] || { label: o.status, className: '', icon: null };
+  const status = statusMap[o.status] || { label: o.status, color: '', icon: null };
   const category = categoryMap[o.category] || { label: o.category, emoji: '' };
 
   return (
@@ -219,7 +227,12 @@ const OrderDetailPage: React.FC = () => {
         </div>
         <div className={styles.sectionCard}>
           <div className={styles.sectionTitle}>📝 ข้อมูลคำสั่งซื้อ
-            <span className={`${styles.badge} ${status.className}`}>{status.icon} {status.label}</span>
+            <span
+              className={styles.badge}
+              style={{ background: (status.color || '#64748b') + '22', color: status.color || '#64748b' }}
+            >
+              {status.icon} {status.label}
+            </span>
             <div className={styles.editOrderBtnWrapper}>
               <button
                 className={styles.editOrderBtn}

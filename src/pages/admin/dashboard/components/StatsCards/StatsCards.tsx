@@ -16,6 +16,7 @@ function orderStatusLabel(status: string) {
   if (status === 'repossessed') return 'ยึดคืน';
   if (status === 'returned') return 'คืนสินค้า';
   if (status === 'processing') return 'กำลังดำเนินการ';
+  if (status === 'hold_by_system') return 'ระบบถือครอง';
   return status;
 }
 

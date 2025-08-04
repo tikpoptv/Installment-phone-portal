@@ -15,6 +15,7 @@ const statusMap: Record<string, { label: string; color: string }> = {
   repossessed: { label: 'ยึดสินค้า', color: '#a21caf' },
   processing: { label: 'รอดำเนินการ', color: '#f59e42' },
   returned: { label: 'คืนสินค้า', color: '#6366f1' },
+  hold_by_system: { label: 'ระบบถือครอง', color: '#8b5cf6' },
   default: { label: 'ค้างชำระ', color: '#ef4444' },
 };
 
@@ -47,6 +48,7 @@ const statusOptions = [
   { value: 'pending', label: 'รอดำเนินการ' },
   { value: 'repossessed', label: 'ยึดคืน' },
   { value: 'returned', label: 'คืนสินค้า' },
+  { value: 'hold_by_system', label: 'ระบบถือครอง' },
 ];
 const categoryOptions = [
   { value: 'all', label: 'ทุกประเภท' },

@@ -163,22 +163,10 @@ function AppContent() {
     const cleanupPendingContracts = async () => {
       const pendingContractId = localStorage.getItem('pendingMinimalContractId');
       if (pendingContractId) {
-        try {
-          await deleteMinimalContract(pendingContractId);
-          console.log('ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป:', pendingContractId);
-          localStorage.removeItem('pendingMinimalContractId');
-        } catch (error) {
-          console.error('ไม่สามารถลบ minimal contract ที่ค้างอยู่ได้:', error);
-          
-          // ถ้า contract status เป็น 'active' ให้ลบ localStorage เพราะ contract ถูกใช้งานแล้ว
-          if (error && typeof error === 'object' && 'details' in error) {
-            const errorDetails = (error as Record<string, unknown>).details;
-            if (typeof errorDetails === 'string' && errorDetails.includes("Only 'hold_by_system' contracts can be deleted")) {
-              console.log('ลบ localStorage เพราะ contract ถูกใช้งานแล้ว:', pendingContractId);
-              localStorage.removeItem('pendingMinimalContractId');
-            }
-          }
-        }
+        await deleteMinimalContract(pendingContractId);
+        console.log('ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป:', pendingContractId);
+        // ลบ localStorage ทุกครั้งไม่ว่าจะสำเร็จหรือไม่
+        localStorage.removeItem('pendingMinimalContractId');
       }
     };
 

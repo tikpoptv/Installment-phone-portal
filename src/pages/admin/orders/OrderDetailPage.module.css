@@ -192,6 +192,11 @@
   color: #d97706;
 }
 
+.badgeHoldBySystem {
+  background: #f3e8ff;
+  color: #8b5cf6;
+}
+
 .meta {
   font-size: 0.98rem;
   color: #94a3b8;
