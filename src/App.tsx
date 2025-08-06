@@ -6,7 +6,7 @@ import UserLogin from './pages/user/auth/Login';
 import UserRegister from './pages/user/auth/Register';
 import UserDashboard from './pages/user/dashboard/Dashboard';
 import styles from './App.module.css';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
