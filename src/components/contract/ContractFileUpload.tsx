@@ -6,12 +6,14 @@ interface ContractFileUploadProps {
   file: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  hasExistingContractId?: boolean;
 }
 
 const ContractFileUpload: React.FC<ContractFileUploadProps> = ({ 
   file, 
   onFileChange, 
-  fileInputRef 
+  fileInputRef,
+  hasExistingContractId = false
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -117,6 +119,11 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
       }}>
         <div>📋 รองรับไฟล์: PDF, JPEG, PNG, WebP</div>
         <div>📏 ขนาดสูงสุด: 10MB</div>
+        {hasExistingContractId && (
+          <div style={{ color: '#0ea5e9', fontWeight: '600', marginTop: '4px' }}>
+            ⚠️ ระบบจะใช้เลขคำสั่งซื้อเดิมในการบันทึก
+          </div>
+        )}
       </div>
       <input
         type="file"

@@ -6,7 +6,7 @@ import UserLogin from './pages/user/auth/Login';
 import UserRegister from './pages/user/auth/Register';
 import UserDashboard from './pages/user/dashboard/Dashboard';
 import styles from './App.module.css';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -34,6 +34,7 @@ import { MaintenanceProvider } from './contexts/MaintenanceContext';
 import { useMaintenance } from './hooks/useMaintenance';
 import MaintenancePage from './pages/MaintenancePage';
 import { deleteMinimalContract } from './services/contract.service';
+import { toast } from 'react-toastify';
 
 // Loading Component
 function LoadingScreen() {
@@ -163,10 +164,47 @@ function AppContent() {
     const cleanupPendingContracts = async () => {
       const pendingContractId = localStorage.getItem('pendingMinimalContractId');
       if (pendingContractId) {
-        await deleteMinimalContract(pendingContractId);
-        console.log('ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอป:', pendingContractId);
-        // ลบ localStorage ทุกครั้งไม่ว่าจะสำเร็จหรือไม่
-        localStorage.removeItem('pendingMinimalContractId');
+        // ตรวจสอบว่า OrderCreateModal เปิดอยู่หรือไม่
+        const orderCreateModalBackdrop = document.querySelector('[class*="OrderCreateModal_module_modalBackdrop"]');
+        const isOrderCreateModalOpen = orderCreateModalBackdrop !== null;
+        
+        // ถ้า modal เปิดอยู่ ให้ข้ามการลบ minimal contract
+        if (isOrderCreateModalOpen) {
+          console.log('ข้ามการลบ minimal contract เนื่องจาก OrderCreateModal เปิดอยู่');
+          return;
+        }
+        
+        // ตรวจสอบว่าเคยพยายามลบแล้วหรือไม่
+        const isDeleting = localStorage.getItem('isDeletingMinimalContract');
+        if (isDeleting === 'true') {
+          console.log('ข้ามการลบ minimal contract เนื่องจากกำลังลบอยู่แล้ว');
+          return;
+        }
+        
+        // ตั้ง flag ว่าเริ่มลบแล้ว
+        localStorage.setItem('isDeletingMinimalContract', 'true');
+        
+        try {
+          const response = await deleteMinimalContract(pendingContractId);
+          // ตรวจสอบสถานะการตอบกลับ
+          if (response && response.status === 200) {
+            console.log('ลบ minimal contract ที่ค้างอยู่เมื่อโหลดแอปสำเร็จ:', pendingContractId);
+            toast.success(`ลบคำสั่งซื้อที่ค้างในระบบแล้ว (${pendingContractId})`);
+            // ลบ localStorage เฉพาะเมื่อ API สำเร็จ
+            localStorage.removeItem('pendingMinimalContractId');
+          } else {
+            console.warn('API ตอบกลับแต่ไม่ใช่สถานะ 200:', response?.status);
+            toast.warning(`ไม่สามารถลบคำสั่งซื้อได้ (${pendingContractId}) - สถานะ: ${response?.status || 'ไม่ทราบ'}`);
+            // ไม่ลบ localStorage ถ้า API ไม่สำเร็จ
+          }
+        } catch (error) {
+          console.error('ไม่สามารถลบ minimal contract ที่ค้างอยู่ได้:', error);
+          toast.error(`ไม่สามารถลบคำสั่งซื้อที่ค้างในระบบได้ (${pendingContractId}) - ตรวจสอบการเชื่อมต่อ`);
+          // ไม่ลบ localStorage ถ้า API error
+        } finally {
+          // ลบ flag เมื่อเสร็จสิ้น
+          localStorage.removeItem('isDeletingMinimalContract');
+        }
       }
     };
 
