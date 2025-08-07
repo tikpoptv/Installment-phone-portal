@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './CustomerDetailPage.module.css';
-import { FaPhone, FaEnvelope, FaLine, FaCopy, FaIdCard, FaFacebook } from 'react-icons/fa';
+import { FaPhone, FaEnvelope, FaLine, FaCopy, FaIdCard, FaFacebook, FaTrash } from 'react-icons/fa';
 import { ReadOnlyMap } from '../../../components/ReadOnlyMap';
 import { getUserDetail, getCitizenIdImage } from '../../../services/dashboard/user/user-detail.service';
 import type { UserDetail, ReferenceContact } from '../../../services/dashboard/user/user-detail.service';
+import { deleteUser } from '../../../services/user-management.service';
 import UserDetailModal from '../dashboard/components/VerifyCustomerModal/UserDetailModal';
 import { formatDateThai, formatDateShort } from '../../../utils/date';
+import { toast } from 'react-toastify';
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
@@ -32,6 +34,10 @@ export default function CustomerDetailPage() {
   const [citizenIdImageLoading, setCitizenIdImageLoading] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [openUserModal, setOpenUserModal] = useState(false);
+
+  // State สำหรับ modal ยืนยันการลบ
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -82,6 +88,31 @@ export default function CustomerDetailPage() {
       if (url) URL.revokeObjectURL(url);
     };
   }, [user]);
+
+  // ฟังก์ชันจัดการการลบผู้ใช้
+  const handleDeleteUser = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!user) return;
+    
+    setDeleting(true);
+    try {
+      await deleteUser(user.id);
+      toast.success('ลบผู้ใช้สำเร็จ');
+      navigate('/admin/customers');
+    } catch (error: unknown) {
+      console.error('Error deleting user:', error);
+      const errorMessage = error && typeof error === 'object' && 'error' in error 
+        ? String(error.error) 
+        : 'เกิดข้อผิดพลาดในการลบผู้ใช้';
+      toast.error(errorMessage);
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#64748b', fontSize: 18 }}>กำลังโหลดข้อมูล...</div>;
   if (error || !user) return <div style={{ padding: 40, textAlign: 'center', color: '#f87171', fontSize: 18 }}>{error || 'ไม่พบข้อมูล'}</div>;
@@ -138,6 +169,36 @@ export default function CustomerDetailPage() {
           onClick={() => setOpenUserModal(true)}
         >
           ยืนยันตัวตนลูกค้า
+        </button>
+      )}
+      {user.is_verified && (
+        <button
+          onClick={handleDeleteUser}
+          style={{
+            position: 'absolute',
+            top: 24,
+            right: 135,
+            zIndex: 2,
+            marginBottom: 0,
+            background: '#fee2e2',
+            color: '#dc2626',
+            border: 'none',
+            borderRadius: '7px',
+            padding: '7px 18px',
+            fontWeight: '600',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            transition: 'background 0.18s, color 0.18s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 1px 4px #bae6fd33'
+          }}
+          onMouseOver={e => (e.currentTarget.style.background = '#fecaca')}
+          onMouseOut={e => (e.currentTarget.style.background = '#fee2e2')}
+        >
+          <FaTrash size={16} />
+          ลบผู้ใช้
         </button>
       )}
       <h2 className={styles.header}>
@@ -353,6 +414,93 @@ export default function CustomerDetailPage() {
         </div>
       )}
       <UserDetailModal open={openUserModal} onClose={() => setOpenUserModal(false)} userId={user.id} />
+      
+      {/* Modal ยืนยันการลบผู้ใช้ */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.3)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 32,
+            minWidth: 400,
+            boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              fontSize: 18,
+              fontWeight: 600,
+              marginBottom: 16,
+              color: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8
+            }}>
+              <FaTrash size={24} />
+              ยืนยันการลบผู้ใช้
+            </div>
+            <div style={{ marginBottom: 24, color: '#374151', lineHeight: 1.5 }}>
+              คุณต้องการลบผู้ใช้ <strong>{user.first_name} {user.last_name}</strong> ออกจากระบบหรือไม่?
+              <br />
+              <span style={{ color: '#dc2626', fontSize: 14 }}>
+                การดำเนินการนี้ไม่สามารถยกเลิกได้
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                style={{
+                  background: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'background 0.18s',
+                  fontSize: 14
+                }}
+                onMouseOver={e => !deleting && (e.currentTarget.style.background = '#e5e7eb')}
+                onMouseOut={e => !deleting && (e.currentTarget.style.background = '#f3f4f6')}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={confirmDeleteUser}
+                disabled={deleting}
+                style={{
+                  background: '#dc2626',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  fontWeight: 600,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.18s',
+                  fontSize: 14,
+                  opacity: deleting ? 0.6 : 1
+                }}
+                onMouseOver={e => !deleting && (e.currentTarget.style.background = '#b91c1c')}
+                onMouseOut={e => !deleting && (e.currentTarget.style.background = '#dc2626')}
+              >
+                {deleting ? 'กำลังลบ...' : 'ลบผู้ใช้'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

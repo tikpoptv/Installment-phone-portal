@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import styles from './CustomerListPage.module.css';
-import { MdVerified, MdHourglassEmpty, MdClose } from 'react-icons/md';
+import { MdVerified, MdHourglassEmpty, MdClose, MdRestore } from 'react-icons/md';
 import { getCustomers } from '../../../services/customer/customer.service';
 import type { Customer } from '../../../services/customer/customer.service';
 import { useNavigate } from 'react-router-dom';
 import { formatDateThai } from '../../../utils/date';
 import MobileAccessModal from '../../../components/MobileAccessModal';
 import LoadingSpinner from '../../../components/LoadingSpinner';
+import DeletedUsersModal from '../../../components/DeletedUsersModal';
 
 type FilterType = 'all' | 'verified' | 'unverified';
 
@@ -113,6 +114,7 @@ export default function CustomerListPage() {
   const [mobileWarningOpen, setMobileWarningOpen] = useState(false);
   const [pendingDetailId, setPendingDetailId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useState<{search: string; filter: FilterType;}>({search: '', filter: 'all'});
+  const [deletedUsersModalOpen, setDeletedUsersModalOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -153,6 +155,27 @@ export default function CustomerListPage() {
       <div className={styles.header}>
         <h2 className={styles.title}>รายชื่อลูกค้า</h2>
         <div className={styles.actionGroup}>
+          <button 
+            onClick={() => setDeletedUsersModalOpen(true)}
+            style={{
+              background: '#fef3c7',
+              color: '#d97706',
+              border: '1.5px solid #f59e0b',
+              borderRadius: '8px',
+              padding: '8px 18px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'background 0.18s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseOver={e => (e.currentTarget.style.background = '#fde68a')}
+            onMouseOut={e => (e.currentTarget.style.background = '#fef3c7')}
+          >
+            <MdRestore size={18} />
+            ผู้ใช้ที่ถูกลบ
+          </button>
           <button className={styles.addButton} onClick={() => setShowQrModal(true)}>เพิ่มลูกค้าใหม่</button>
           <button className={styles.exportButton} onClick={() => setExportModalOpen(true)}>Export</button>
         </div>
@@ -315,13 +338,13 @@ export default function CustomerListPage() {
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#0ea5e9' }}>เพิ่มลูกค้าใหม่</div>
             <div style={{ marginBottom: 18 }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent('https://installment.mobile.phitik.com/')}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`https://${import.meta.env.VITE_USER_DOMAIN}/`)}`}
                 alt="QR Code สมัครลูกค้าใหม่"
                 style={{ width: 220, height: 220, borderRadius: 12, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
               />
             </div>
             <a
-              href="https://installment.mobile.phitik.com/"
+              href={`https://${import.meta.env.VITE_USER_DOMAIN}/`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#0ea5e9', fontWeight: 600, fontSize: 16, textDecoration: 'underline' }}
@@ -330,6 +353,12 @@ export default function CustomerListPage() {
             </a>
           </div>
         </div>
+      )}
+      {deletedUsersModalOpen && (
+        <DeletedUsersModal
+          open={deletedUsersModalOpen}
+          onClose={() => setDeletedUsersModalOpen(false)}
+        />
       )}
     </div>
   );
