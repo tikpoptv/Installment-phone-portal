@@ -113,6 +113,132 @@ function ExportModal({ open, onClose, onExportFiltered, onExportAll }: {
   );
 }
 
+// Modal แจ้งเตือนสำหรับสถานะจองโดยระบบ
+function SystemHoldModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(30,41,59,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 12, backdropFilter: 'blur(3px)'
+    }}>
+      <div style={{
+        background: 'linear-gradient(135deg, #fff 80%, #f8fafc 100%)',
+        borderRadius: 24,
+        padding: '40px 32px 32px 32px',
+        maxWidth: 480,
+        width: '100%',
+        textAlign: 'center',
+        position: 'relative',
+        boxShadow: '0 12px 40px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(139, 92, 246, 0.1)',
+        border: '2px solid #e9d5ff'
+      }}>
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 16, right: 16, background: 'none', border: 'none',
+            fontSize: 28, color: '#8b5cf6', cursor: 'pointer', borderRadius: '50%', width: 40, height: 40,
+            transition: 'background 0.15s', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+          aria-label="ปิด"
+          onMouseOver={e => (e.currentTarget.style.background = '#f3f4f6')}
+          onMouseOut={e => (e.currentTarget.style.background = 'none')}
+        >×</button>
+        
+        <div style={{ 
+          fontSize: 64, 
+          marginBottom: 20, 
+          filter: 'drop-shadow(0 4px 16px rgba(139, 92, 246, 0.3))',
+          animation: 'pulse 2s ease-in-out infinite'
+        }}>
+          🔒
+        </div>
+        
+        <div style={{ 
+          fontWeight: 900, 
+          fontSize: '1.5rem', 
+          color: '#8b5cf6', 
+          marginBottom: 16, 
+          letterSpacing: 0.5 
+        }}>
+          เข้าถึงไม่ได้
+        </div>
+        
+        <div style={{ 
+          color: '#475569', 
+          fontSize: '1.1rem', 
+          marginBottom: 24, 
+          lineHeight: 1.7, 
+          fontWeight: 500 
+        }}>
+          คำสั่งซื้อนี้อยู่ในสถานะ <strong style={{ color: '#8b5cf6' }}>"ระบบถือครอง"</strong><br/>
+          <span style={{ color: '#64748b', fontSize: '1rem' }}>
+            เป็นส่วนสิทธิ์ของระบบ ไม่สามารถเข้าถึงรายละเอียดได้
+          </span>
+        </div>
+        
+        <div style={{
+          background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+          borderRadius: 12,
+          padding: '16px 20px',
+          marginBottom: 28,
+          border: '1px solid #d1d5db'
+        }}>
+          <div style={{ 
+            color: '#374151', 
+            fontSize: '0.95rem', 
+            fontWeight: 600,
+            marginBottom: 8 
+          }}>
+            สาเหตุที่เป็นไปได้:
+          </div>
+          <ul style={{ 
+            color: '#6b7280', 
+            fontSize: '0.9rem', 
+            textAlign: 'left',
+            margin: 0,
+            paddingLeft: 20,
+            lineHeight: 1.6
+          }}>
+            <li>สินค้าถูกจองโดยระบบอัตโนมัติ</li>
+            <li>อยู่ระหว่างการประมวลผลข้อมูล</li>
+            <li>มีการบำรุงรักษาระบบ</li>
+          </ul>
+        </div>
+        
+        <button
+          style={{
+            background: 'linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%)', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: 16,
+            padding: '16px 40px', 
+            fontWeight: 800, 
+            fontSize: '1.1rem', 
+            cursor: 'pointer', 
+            boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)',
+            letterSpacing: 0.5, 
+            transition: 'all 0.2s',
+            minWidth: 160
+          }}
+          onClick={onClose}
+          onMouseOver={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(139, 92, 246, 0.3)';
+          }}
+        >
+          เข้าใจแล้ว
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function OrderListPage() {
   const [orders, setOrders] = useState<Contract[]>([]);
   const [total, setTotal] = useState(0);
@@ -130,6 +256,7 @@ export default function OrderListPage() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showMobileWarn, setShowMobileWarn] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [showSystemHoldModal, setShowSystemHoldModal] = useState(false);
   const [searchParams, setSearchParams] = useState({
     search: '',
     status: 'all',
@@ -192,6 +319,15 @@ export default function OrderListPage() {
 
   // ไม่ return ทั้งหน้า ให้ render โครงสร้างตลอด
 
+  // ฟังก์ชันจัดการคลิกปุ่มดูรายละเอียด
+  const handleViewDetail = (order: Contract) => {
+    if (order.status === 'hold_by_system') {
+      setShowSystemHoldModal(true);
+    } else {
+      navigate(`/admin/orders/${order.id}`);
+    }
+  };
+
   return (
     <>
       <MobileAccessModal
@@ -201,6 +337,7 @@ export default function OrderListPage() {
         onCancel={handleMobileCancel}
       />
       <OrderCreateModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+      <SystemHoldModal open={showSystemHoldModal} onClose={() => setShowSystemHoldModal(false)} />
       <div className={styles.container}>
         <div className={styles.header}>
           <h2 className={styles.title}>รายการคำสั่งซื้อ</h2>
@@ -337,7 +474,20 @@ export default function OrderListPage() {
                   <td>{formatDateShort(o.end_date)}</td>
                   <td>{formatDateThai(o.created_at)}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <button className={styles.detailButton} onClick={() => navigate(`/admin/orders/${o.id}`)}>ดูรายละเอียด</button>
+                    <button 
+                      className={styles.detailButton} 
+                      onClick={() => handleViewDetail(o)}
+                      style={{
+                        ...(o.status === 'hold_by_system' && {
+                          background: '#f3f4f6',
+                          color: '#6b7280',
+                          cursor: 'not-allowed',
+                          opacity: 0.7
+                        })
+                      }}
+                    >
+                      {o.status === 'hold_by_system' ? '🔒 เข้าถึงไม่ได้' : 'ดูรายละเอียด'}
+                    </button>
                   </td>
                 </tr>
               ))}

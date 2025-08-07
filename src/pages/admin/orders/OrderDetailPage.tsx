@@ -63,13 +63,9 @@ const categoryMap: Record<string, { label: string; emoji: string }> = {
 
 // Modal สำหรับแก้ไขสถานะคำสั่งซื้อ
 const statusOptions = [
-  { value: 'active', label: 'กำลังใช้งาน' },
   { value: 'closed', label: 'เสร็จสิ้น' },
-  { value: 'overdue', label: 'ค้างชำระ' },
   { value: 'repossessed', label: 'ยึดคืน' },
-  { value: 'processing', label: 'รอดำเนินการ' },
   { value: 'returned', label: 'คืนสินค้า' },
-  { value: 'hold_by_system', label: 'ระบบถือครอง' },
 ];
 
 interface OrderStatusEditModalProps {
@@ -119,6 +115,134 @@ const OrderStatusEditModal: React.FC<OrderStatusEditModalProps> = ({ open, onClo
   );
 };
 
+// Modal แจ้งเตือนสำหรับสถานะจองโดยระบบ
+function SystemHoldWarningModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 12, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+    }}>
+      <div style={{
+        background: 'linear-gradient(135deg, #fff 80%, #f8fafc 100%)',
+        borderRadius: 24,
+        padding: '40px 32px 32px 32px',
+        maxWidth: 520,
+        width: '100%',
+        textAlign: 'center',
+        position: 'relative',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.3), 0 8px 32px rgba(139, 92, 246, 0.2)',
+        border: '2px solid #e9d5ff',
+        animation: 'modalSlideIn 0.3s ease-out'
+      }}>
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute', top: 16, right: 16, background: 'none', border: 'none',
+            fontSize: 28, color: '#8b5cf6', cursor: 'pointer', borderRadius: '50%', width: 40, height: 40,
+            transition: 'background 0.15s', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+          aria-label="ปิด"
+          onMouseOver={e => (e.currentTarget.style.background = '#f3f4f6')}
+          onMouseOut={e => (e.currentTarget.style.background = 'none')}
+        >×</button>
+        
+        <div style={{ 
+          fontSize: 64, 
+          marginBottom: 20, 
+          filter: 'drop-shadow(0 4px 16px rgba(139, 92, 246, 0.3))',
+          animation: 'pulse 2s ease-in-out infinite'
+        }}>
+          🔒
+        </div>
+        
+        <div style={{ 
+          fontWeight: 900, 
+          fontSize: '1.5rem', 
+          color: '#8b5cf6', 
+          marginBottom: 16, 
+          letterSpacing: 0.5 
+        }}>
+          คำสั่งซื้อถูกระบบถือครอง
+        </div>
+        
+        <div style={{ 
+          color: '#475569', 
+          fontSize: '1.1rem', 
+          marginBottom: 24, 
+          lineHeight: 1.7, 
+          fontWeight: 500 
+        }}>
+          คำสั่งซื้อนี้อยู่ในสถานะ <strong style={{ color: '#8b5cf6' }}>"ระบบถือครอง"</strong><br/>
+          <span style={{ color: '#64748b', fontSize: '1rem' }}>
+            การดำเนินการบางอย่างอาจถูกจำกัดหรือไม่สามารถทำได้
+          </span>
+        </div>
+        
+        <div style={{
+          background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+          borderRadius: 12,
+          padding: '16px 20px',
+          marginBottom: 28,
+          border: '1px solid #d1d5db'
+        }}>
+          <div style={{ 
+            color: '#374151', 
+            fontSize: '0.95rem', 
+            fontWeight: 600,
+            marginBottom: 8 
+          }}>
+            สาเหตุที่เป็นไปได้:
+          </div>
+          <ul style={{ 
+            color: '#6b7280', 
+            fontSize: '0.9rem', 
+            textAlign: 'left',
+            margin: 0,
+            paddingLeft: 20,
+            lineHeight: 1.6
+          }}>
+            <li>สินค้าถูกจองโดยระบบอัตโนมัติ</li>
+            <li>อยู่ระหว่างการประมวลผลข้อมูล</li>
+            <li>มีการบำรุงรักษาระบบ</li>
+            <li>การตรวจสอบความถูกต้องของข้อมูล</li>
+          </ul>
+        </div>
+        
+        <button
+          style={{
+            background: 'linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%)', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: 16,
+            padding: '16px 40px', 
+            fontWeight: 800, 
+            fontSize: '1.1rem', 
+            cursor: 'pointer', 
+            boxShadow: '0 4px 16px rgba(139, 92, 246, 0.3)',
+            letterSpacing: 0.5, 
+            transition: 'all 0.2s',
+            minWidth: 160
+          }}
+          onClick={onClose}
+          onMouseOver={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(139, 92, 246, 0.3)';
+          }}
+        >
+          เข้าใจแล้ว
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -147,6 +271,7 @@ const OrderDetailPage: React.FC = () => {
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
   const [showCreatePaymentModal, setShowCreatePaymentModal] = useState(false);
   const [showCreatePaymentTooltip, setShowCreatePaymentTooltip] = useState(false);
+  const [showSystemHoldWarning, setShowSystemHoldWarning] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -174,6 +299,13 @@ const OrderDetailPage: React.FC = () => {
       .catch(() => setPaymentError('ไม่พบข้อมูลการชำระเงิน'))
       .finally(() => setPaymentLoading(false));
   }, [id]);
+
+  // แสดง Modal ทันทีเมื่อสถานะเป็นจองโดยระบบ
+  useEffect(() => {
+    if (contract && contract.status === 'hold_by_system') {
+      setShowSystemHoldWarning(true);
+    }
+  }, [contract]);
 
   const handleShowPdpaModal = async () => {
     setPdpaLoading(true);
@@ -211,16 +343,50 @@ const OrderDetailPage: React.FC = () => {
   const status = statusMap[o.status] || { label: o.status, color: '', icon: null };
   const category = categoryMap[o.category] || { label: o.category, emoji: '' };
 
+  // ตรวจสอบสถานะจองโดยระบบ
+  const isSystemHold = o.status === 'hold_by_system';
+  
+  // ตรวจสอบว่าสามารถสร้างรายการชำระได้หรือไม่
+  const canCreatePayment = (o.status === 'active' || o.status === 'default') && !isSystemHold;
+
   return (
     <div className={styles.container}>
+      <SystemHoldWarningModal 
+        open={showSystemHoldWarning} 
+        onClose={() => {
+          setShowSystemHoldWarning(false);
+          // พาไปหน้า list เมื่อปิด Modal
+          navigate('/admin/orders');
+        }} 
+      />
       <div className={styles.contentBox}>
         <div className={styles.topBar}>
           <button className={styles.backBtn} onClick={() => navigate(-1)} title="ย้อนกลับ">←</button>
           <div className={styles.title}>รายละเอียดคำสั่งซื้อ</div>
           <button
             className={styles.addDiscountBtn}
-            style={{ marginLeft: 'auto', background: 'linear-gradient(90deg,#22c55e,#0ea5e9)', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '8px 18px', fontSize: 16, cursor: 'pointer', boxShadow: '0 2px 8px #bae6fd55', transition: 'background 0.18s' }}
-            onClick={() => setShowAddDiscountModal(true)}
+            style={{ 
+              marginLeft: 'auto', 
+              background: isSystemHold ? '#f3f4f6' : 'linear-gradient(90deg,#22c55e,#0ea5e9)', 
+              color: isSystemHold ? '#6b7280' : '#fff', 
+              fontWeight: 700, 
+              border: 'none', 
+              borderRadius: 8, 
+              padding: '8px 18px', 
+              fontSize: 16, 
+              cursor: isSystemHold ? 'not-allowed' : 'pointer', 
+              boxShadow: isSystemHold ? 'none' : '0 2px 8px #bae6fd55', 
+              transition: 'background 0.18s',
+              opacity: isSystemHold ? 0.6 : 1
+            }}
+            onClick={() => {
+              if (isSystemHold) {
+                setShowSystemHoldWarning(true);
+              } else {
+                setShowAddDiscountModal(true);
+              }
+            }}
+            disabled={isSystemHold}
           >
             + เพิ่มส่วนลด
           </button>
@@ -237,14 +403,31 @@ const OrderDetailPage: React.FC = () => {
               <button
                 className={styles.editOrderBtn}
                 type="button"
-                disabled={o.status === 'closed'}
-                onClick={() => setShowEditStatusModal(true)}
+                disabled={o.status === 'closed' || isSystemHold}
+                onClick={() => {
+                  if (isSystemHold) {
+                    setShowSystemHoldWarning(true);
+                  } else {
+                    setShowEditStatusModal(true);
+                  }
+                }}
+                style={{
+                  ...(isSystemHold && {
+                    background: '#f3f4f6',
+                    color: '#6b7280',
+                    cursor: 'not-allowed',
+                    opacity: 0.6
+                  })
+                }}
               >
                 แก้ไข
               </button>
-              {o.status === 'closed' && (
+              {(o.status === 'closed' || isSystemHold) && (
                 <div className={styles.editOrderBtnTooltip}>
-                  ไม่สามารถแก้ไขได้เมื่อสถานะเป็น "เสร็จสิ้น"
+                  {o.status === 'closed' 
+                    ? 'ไม่สามารถแก้ไขได้เมื่อสถานะเป็น "เสร็จสิ้น"'
+                    : 'ไม่สามารถแก้ไขได้เมื่อสถานะเป็น "ระบบถือครอง"'
+                  }
                 </div>
               )}
             </div>
@@ -353,17 +536,40 @@ const OrderDetailPage: React.FC = () => {
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <button
                 className={styles.addDiscountBtn}
-                style={{ background: 'linear-gradient(90deg,#0ea5e9,#22c55e)', color: '#fff', fontWeight: 700, border: 'none', borderRadius: 8, padding: '7px 18px', fontSize: 15, cursor: o.status !== 'active' ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px #bae6fd55', transition: 'background 0.18s', opacity: o.status !== 'active' ? 0.6 : 1 }}
-                onClick={() => o.status === 'active' && setShowCreatePaymentModal(true)}
-                disabled={o.status !== 'active'}
-                onMouseEnter={() => { if (o.status !== 'active') setShowCreatePaymentTooltip(true); }}
+                style={{ 
+                  background: canCreatePayment ? 'linear-gradient(90deg,#0ea5e9,#22c55e)' : '#f3f4f6', 
+                  color: canCreatePayment ? '#fff' : '#6b7280', 
+                  fontWeight: 700, 
+                  border: 'none', 
+                  borderRadius: 8, 
+                  padding: '7px 18px', 
+                  fontSize: 15, 
+                  cursor: canCreatePayment ? 'pointer' : 'not-allowed', 
+                  boxShadow: canCreatePayment ? '0 2px 8px #bae6fd55' : 'none', 
+                  transition: 'background 0.18s', 
+                  opacity: canCreatePayment ? 1 : 0.6 
+                }}
+                onClick={() => {
+                  if (isSystemHold) {
+                    setShowSystemHoldWarning(true);
+                  } else if (canCreatePayment) {
+                    setShowCreatePaymentModal(true);
+                  }
+                }}
+                disabled={!canCreatePayment}
+                onMouseEnter={() => { 
+                  if (!canCreatePayment) setShowCreatePaymentTooltip(true); 
+                }}
                 onMouseLeave={() => setShowCreatePaymentTooltip(false)}
               >
                 + สร้างรายการชำระ
               </button>
-              {o.status !== 'active' && showCreatePaymentTooltip && (
+              {!canCreatePayment && showCreatePaymentTooltip && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#334155', color: '#fff', fontSize: 13, borderRadius: 6, padding: '6px 14px', marginTop: 6, whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 2px 8px #33415555' }}>
-                  สร้างรายการชำระได้เฉพาะเมื่อสถานะคำสั่งซื้อเป็น "กำลังใช้งาน"
+                  {isSystemHold 
+                    ? 'ไม่สามารถสร้างรายการชำระได้เมื่อสถานะเป็น "ระบบถือครอง"'
+                    : 'สร้างรายการชำระได้เฉพาะเมื่อสถานะคำสั่งซื้อเป็น "กำลังใช้งาน" หรือ "ค้างชำระ"'
+                  }
                 </div>
               )}
             </div>

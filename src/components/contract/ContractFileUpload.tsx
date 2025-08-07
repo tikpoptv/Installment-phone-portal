@@ -32,12 +32,11 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
       'application/pdf',
       'image/jpeg',
       'image/jpg', 
-      'image/png',
-      'image/webp'
+      'image/png'
     ];
     
     if (!allowedTypes.includes(file.type)) {
-      toast.error('รองรับเฉพาะไฟล์ PDF, JPEG, PNG และ WebP เท่านั้น');
+      toast.error('รองรับเฉพาะไฟล์ PDF, JPEG และ PNG เท่านั้น');
       return false;
     }
 
@@ -117,7 +116,7 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
         color: '#64748b',
         marginBottom: '8px'
       }}>
-        <div>📋 รองรับไฟล์: PDF, JPEG, PNG, WebP</div>
+        <div>📋 รองรับไฟล์: PDF, JPEG, PNG</div>
         <div>📏 ขนาดสูงสุด: 10MB</div>
         {hasExistingContractId && (
           <div style={{ color: '#0ea5e9', fontWeight: '600', marginTop: '4px' }}>
@@ -127,7 +126,7 @@ const ContractFileUpload: React.FC<ContractFileUploadProps> = ({
       </div>
       <input
         type="file"
-        accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp"
+        accept="application/pdf,image/jpeg,image/jpg,image/png"
         onChange={handleFileChange}
         className={styles.inputBox}
         ref={fileInputRef}
