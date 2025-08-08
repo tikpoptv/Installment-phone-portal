@@ -5,6 +5,7 @@ import { getCustomers } from '../../../services/customer/customer.service';
 import type { Customer } from '../../../services/customer/customer.service';
 import { useNavigate } from 'react-router-dom';
 import { formatDateThai } from '../../../utils/date';
+import { URLS, getQRCodeUrl } from '../../../utils/domains';
 import MobileAccessModal from '../../../components/MobileAccessModal';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 import DeletedUsersModal from '../../../components/DeletedUsersModal';
@@ -338,13 +339,13 @@ export default function CustomerListPage() {
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#0ea5e9' }}>เพิ่มลูกค้าใหม่</div>
             <div style={{ marginBottom: 18 }}>
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`https://${import.meta.env.VITE_USER_DOMAIN}/`)}`}
+                src={getQRCodeUrl(URLS.USER_REGISTRATION)}
                 alt="QR Code สมัครลูกค้าใหม่"
                 style={{ width: 220, height: 220, borderRadius: 12, border: '1.5px solid #e0e7ef', background: '#f8fafc' }}
               />
             </div>
             <a
-              href={`https://${import.meta.env.VITE_USER_DOMAIN}/`}
+              href={URLS.USER_REGISTRATION}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#0ea5e9', fontWeight: 600, fontSize: 16, textDecoration: 'underline' }}
