@@ -41,7 +41,7 @@ const statusLabel = (status: string) => {
 
 const icloudLabel = (icloud: string) => {
   if (icloud === 'unlocked') return 'Unlocked';
-  if (icloud === 'locked') return 'Locked';
+  if (icloud === 'locked') return 'locked LOGO';
   return icloud;
 };
 
@@ -273,17 +273,17 @@ const ProductDetailPage: React.FC = () => {
         <div className={styles.sectionTitle}>สถานะ</div>
         <div className={styles.detailRow}><span className={styles.label}>สถานะ:</span> <span className={styles.value}>{statusLabel(product.status)}</span></div>
         <div className={styles.detailRow}>
-          <span className={styles.label}>iCloud:</span> <span className={styles.value}>{icloudLabel(product.icloud_status)}</span>
+          <span className={styles.label}>LOGO:</span> <span className={styles.value}>{icloudLabel(product.icloud_status)}</span>
           {product.icloud_status === 'unlocked' && (
             <button className={styles.orderBoxBtn} style={{marginLeft:16,marginTop:0}} onClick={() => setShowLockModal(true)}>
-              แจ้งสถานะล็อก iCloud
+              แจ้งสถานะล็อก LOGO
             </button>
           )}
         </div>
         <div className={styles.detailRow}>
           <span className={styles.label}>สถานะล็อก:</span>
           <span className={styles.value} style={{color: product.store_locked ? '#f59e42' : '#22c55e', fontWeight: 600}}>
-            {product.store_locked ? 'ล็อกโดยร้าน' : 'ไม่ล็อกโดยร้าน'}
+            {product.store_locked ? 'locked MDM' : 'unlocked MDM'}
           </span>
         </div>
         {product && (
@@ -319,8 +319,8 @@ const ProductDetailPage: React.FC = () => {
         )}
         {product.icloud_status === 'locked' && (
           <div className={styles.orderBox}>
-            <div className={styles.orderBoxTitle}>แจ้งเตือน: เครื่องนี้ถูกล็อก iCloud</div>
-            <div className={styles.detailRow}><span className={styles.label}>สถานะ iCloud:</span> <span className={styles.value}>Locked</span></div>
+            <div className={styles.orderBoxTitle}>แจ้งเตือน: เครื่องนี้ถูกล็อก LOGO</div>
+            <div className={styles.detailRow}><span className={styles.label}>สถานะ LOGO:</span> <span className={styles.value}>Locked</span></div>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <button className={styles.orderBoxBtn} style={{ minWidth: 140, padding: '8px 18px', fontSize: '1.01rem', marginTop: 0 }} onClick={() => setShowIcloudDetailModal('store')}>
                 ดูรายละเอียด (ร้านค้า)
@@ -346,7 +346,7 @@ const ProductDetailPage: React.FC = () => {
                 }}
                 onClick={() => setShowUnlockModal(true)}
               >
-                ปลดล็อก iCloud
+                ปลดล็อก LOGO
               </button>
               {/* ปุ่มล็อก/ปลดล็อกโดยร้าน */}
               {!product.store_locked ? (
@@ -354,14 +354,14 @@ const ProductDetailPage: React.FC = () => {
                   className={`${styles.orderBoxBtn} ${styles.softLockBtn}`}
                   onClick={() => setConfirmSoftLock('lock')}
                 >
-                  ล็อกโดยร้าน
+                  locked MDM
                 </button>
               ) : (
                 <button
                   className={`${styles.orderBoxBtn} ${styles.softUnlockBtn}`}
                   onClick={() => setConfirmSoftLock('unlock')}
                 >
-                  ปลดล็อกโดยร้าน
+                  unlock MDM
                 </button>
               )}
             </div>
@@ -377,14 +377,14 @@ const ProductDetailPage: React.FC = () => {
                     icloud_credential_id: product.store_icloud_credential_id,
                     icloud_status: 'unlock',
                   });
-                  toast.success('ปลดล็อก iCloud สำเร็จ!');
+                  toast.success('ปลดล็อก LOGO สำเร็จ!');
                   setLoading(true);
                   getProductDetail(product.id)
                     .then((data) => setProduct(data as ProductDetail))
                     .catch(() => setError('ไม่พบข้อมูลสินค้า'))
                     .finally(() => setLoading(false));
                 } catch (err) {
-                  let msg = 'เกิดข้อผิดพลาดในการปลดล็อก iCloud';
+                  let msg = 'เกิดข้อผิดพลาดในการปลดล็อก LOGO';
                   if (typeof err === 'object' && err !== null) {
                     if ('message' in err && typeof (err as Record<string, unknown>).message === 'string') {
                       msg = (err as Record<string, unknown>).message as string;
@@ -417,7 +417,7 @@ const ProductDetailPage: React.FC = () => {
         onClose={() => setShowLockModal(false)}
         onConfirm={() => {
           setShowLockModal(false);
-          toast.success('เชื่อมโยงบัญชี iCloud สำเร็จ!');
+          toast.success('เชื่อมโยงบัญชี LOGO สำเร็จ!');
           // refresh ข้อมูล product ถ้าต้องการ
         }}
         onReloadIcloudList={async () => {
@@ -466,12 +466,12 @@ const ProductDetailPage: React.FC = () => {
               ×
             </button>
             <div className={styles.confirmModalTitle}>
-              {confirmSoftLock === 'lock' ? 'ยืนยันการล็อกโดยร้าน?' : 'ยืนยันการปลดล็อกโดยร้าน?'}
+              {confirmSoftLock === 'lock' ? 'ยืนยันการ locked MDM?' : 'ยืนยันการ unlock MDM?'}
             </div>
             <div className={styles.confirmModalMessage}>
               {confirmSoftLock === 'lock'
-                ? 'คุณแน่ใจหรือไม่ว่าต้องการล็อกเครื่องนี้โดยร้านค้า?'
-                : 'คุณแน่ใจหรือไม่ว่าต้องการปลดล็อกเครื่องนี้โดยร้านค้า?'}
+                ? 'คุณแน่ใจหรือไม่ว่าต้องการ locked MDM เครื่องนี้?'
+                : 'คุณแน่ใจหรือไม่ว่าต้องการ unlock MDM เครื่องนี้?'}
             </div>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
               <button
@@ -489,8 +489,8 @@ const ProductDetailPage: React.FC = () => {
                     await setProductStoreLocked(product.id, toSend);
                     toast.success(
                       toSend
-                        ? 'ล็อกโดยร้าน (soft lock) สำเร็จ!'
-                        : 'ปลดล็อกโดยร้าน (soft unlock) สำเร็จ!'
+                        ? 'locked MDM (soft lock) สำเร็จ!'
+                        : 'unlock MDM (soft unlock) สำเร็จ!'
                     );
                     setLoading(true);
                     getProductDetail(product.id)
@@ -498,7 +498,7 @@ const ProductDetailPage: React.FC = () => {
                       .catch(() => setError('ไม่พบข้อมูลสินค้า'))
                       .finally(() => setLoading(false));
                   } catch {
-                    toast.error('เกิดข้อผิดพลาดในการเปลี่ยนสถานะล็อกโดยร้าน');
+                    toast.error('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ locked MDM');
                   }
                 }}
               >

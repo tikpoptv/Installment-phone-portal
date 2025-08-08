@@ -157,7 +157,6 @@
   flex-wrap: wrap;
 }
 .searchInput {
-  flex: 1;
   min-width: 180px;
   padding: 8px 12px;
   border-radius: 8px;
@@ -309,17 +308,15 @@
   width: 100%;
   gap: 12px;
   margin-bottom: 6px;
+  align-items: center;
 }
-.filterTopRow .searchInput {
-  flex: 2;
-  min-width: 240px;
-  max-width: 100%;
-}
-.filterTopRow .select {
-  flex: 0 0 140px;
+.filterTopRow .productIdInput {
+  width: 10%;
   min-width: 120px;
-  max-width: 180px;
-  margin-left: 12px;
+}
+.filterTopRow .searchInputMain {
+  width: 90%;
+  min-width: 200px;
 }
 .filterRightRow {
   display: flex;
@@ -344,7 +341,8 @@
     gap: 8px;
     margin-bottom: 4px;
   }
-  .filterTopRow .searchInput {
+  .filterTopRow .productIdInput,
+  .filterTopRow .searchInputMain {
     min-width: 0;
     width: 100%;
   }

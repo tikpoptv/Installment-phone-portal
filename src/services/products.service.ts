@@ -89,13 +89,15 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
   return res.data;
 }
 
-export async function getProducts(params?: { page?: number; limit?: number; search?: string; status?: string; icloud_status?: string; min_price?: number; max_price?: number; }): Promise<{ items: Product[]; total: number; page: number; limit: number; total_pages: number; }> {
+export async function getProducts(params?: { page?: number; limit?: number; search?: string; product_id?: string; status?: string; icloud_status?: string; store_locked?: boolean; min_price?: number; max_price?: number; }): Promise<{ items: Product[]; total: number; page: number; limit: number; total_pages: number; }> {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.search) query.append('search', params.search);
+  if (params?.product_id) query.append('product_id', params.product_id);
   if (params?.status) query.append('status', params.status);
   if (params?.icloud_status) query.append('icloud_status', params.icloud_status);
+  if (params?.store_locked !== undefined && params?.store_locked !== null) query.append('store_locked', params.store_locked.toString());
   if (params?.min_price !== undefined && params?.min_price !== null) query.append('min_price', params.min_price.toString());
   if (params?.max_price !== undefined && params?.max_price !== null) query.append('max_price', params.max_price.toString());
   const res = await apiClient.get<{ items: Product[]; total: number; page: number; limit: number; total_pages: number; }>(`/api/products?${query.toString()}`);
