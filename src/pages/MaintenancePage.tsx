@@ -113,7 +113,7 @@ const MaintenancePage: React.FC = () => {
     }
   }, [maintenanceInfo.isDeploy, maintenanceInfo.time, timeRemaining]);
   
-  // Auto refresh ทุก 1 นาที ตลอด 10 นาที (เฉพาะกรณีที่ไม่ใช่ "เร็วๆนี้" และไม่ใช่ deploy)
+  // Fetch API ทุก 1 นาที (เฉพาะกรณีที่ไม่ใช่ "เร็วๆนี้" และไม่ใช่ deploy)
   useEffect(() => {
     // ถ้าเป็น "เร็วๆนี้" หรือ deploy ไม่ต้องใช้
     if (maintenanceInfo.time === 'เร็วๆนี้' || maintenanceInfo.isDeploy) return;
@@ -131,25 +131,6 @@ const MaintenancePage: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [maintenanceInfo.time, maintenanceInfo.isDeploy]);
-  
-  // Fetch API ทุก 1 นาทีสำหรับกรณีที่มีเวลาคาดการณ์
-  useEffect(() => {
-    // ถ้าเป็น "เร็วๆนี้" ไม่ต้องใช้ เพราะมี loop progress bar แล้ว
-    if (maintenanceInfo.time === 'เร็วๆนี้') return;
-    
-    const interval = setInterval(() => {
-      getPortalMaintenance().then(response => {
-        if (response && response.value === 'false') {
-          // ถ้า maintenance mode หยุดแล้ว ให้รีเฟรชหน้า
-          window.location.reload();
-        }
-      }).catch(error => {
-        console.error("Error fetching portal maintenance status:", error);
-      });
-    }, 60000); // 1 นาที
-
-    return () => clearInterval(interval);
-  }, [maintenanceInfo.time]);
   
   // รายการ GIF ที่จะสลับ (เพิ่มไฟล์ใหม่ทั้งหมด)
   const gifList = [
