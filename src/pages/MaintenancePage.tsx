@@ -8,8 +8,6 @@ const MaintenancePage: React.FC = () => {
   const { estimatedCompletionTime } = useMaintenance();
   const [currentGifIndex, setCurrentGifIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
-  const [checkCount, setCheckCount] = useState(0);
-  const [isChecking, setIsChecking] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loopProgress, setLoopProgress] = useState(0);
   
@@ -115,18 +113,12 @@ const MaintenancePage: React.FC = () => {
     }
   }, [maintenanceInfo.isDeploy, maintenanceInfo.time, timeRemaining]);
   
-  // Auto refresh ทุก 1 นาที ตลอด 10 นาที (เฉพาะกรณีที่ไม่ใช่ "เร็วๆนี้")
+  // Auto refresh ทุก 1 นาที ตลอด 10 นาที (เฉพาะกรณีที่ไม่ใช่ "เร็วๆนี้" และไม่ใช่ deploy)
   useEffect(() => {
-    // ถ้าเป็น "เร็วๆนี้" ไม่ต้องใช้ เพราะมี loop progress bar ทุก 10 วินาทีแล้ว
-    if (maintenanceInfo.time === 'เร็วๆนี้') return;
-    
-    if (checkCount >= 10) return; // หยุดหลังจาก 10 ครั้ง
+    // ถ้าเป็น "เร็วๆนี้" หรือ deploy ไม่ต้องใช้
+    if (maintenanceInfo.time === 'เร็วๆนี้' || maintenanceInfo.isDeploy) return;
     
     const interval = setInterval(() => {
-      setIsChecking(true);
-      setCheckCount(prev => prev + 1);
-      
-      // เช็ค API แทนการรีเฟรชหน้า
       getPortalMaintenance().then(response => {
         if (response && response.value === 'false') {
           // ถ้า maintenance mode หยุดแล้ว ให้รีเฟรชหน้า
@@ -134,13 +126,11 @@ const MaintenancePage: React.FC = () => {
         }
       }).catch(error => {
         console.error("Error fetching portal maintenance status:", error);
-      }).finally(() => {
-        setIsChecking(false);
       });
     }, 60000); // 1 นาที
 
     return () => clearInterval(interval);
-  }, [checkCount, maintenanceInfo.time]);
+  }, [maintenanceInfo.time, maintenanceInfo.isDeploy]);
   
   // Fetch API ทุก 1 นาทีสำหรับกรณีที่มีเวลาคาดการณ์
   useEffect(() => {
@@ -244,7 +234,7 @@ const MaintenancePage: React.FC = () => {
           {/* Progress Text */}
           <div style={{
             fontSize: 14,
-            color: '#f59e0b',
+            color: '#0ea5e9',
             fontWeight: 600,
             marginBottom: 20
           }}>
@@ -257,53 +247,6 @@ const MaintenancePage: React.FC = () => {
               <p>📝 หมายเหตุ: {maintenanceInfo.remark}</p>
             )}
             <p>📧 ติดต่อสอบถาม: {DOMAINS.SUPPORT_EMAIL}</p>
-            
-            {/* Auto Check Status */}
-            <div style={{
-              marginTop: 16,
-              padding: 12,
-              background: '#f0f9ff',
-              borderRadius: 8,
-              border: '1px solid #bae6fd'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                marginBottom: 8
-              }}>
-                {isChecking ? (
-                  <div style={{
-                    width: 16,
-                    height: 16,
-                    border: '2px solid #0ea5e9',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }} />
-                ) : (
-                  <div style={{
-                    width: 8,
-                    height: 8,
-                    background: '#10b981',
-                    borderRadius: '50%'
-                  }} />
-                )}
-                <span style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: '#0ea5e9'
-                }}>
-                  {isChecking ? 'กำลังตรวจสอบระบบ...' : 'ระบบตรวจสอบอัตโนมัติ'}
-                </span>
-              </div>
-              <div style={{
-                fontSize: 12,
-                color: '#64748b'
-              }}>
-                ตรวจสอบครั้งที่ {checkCount}/10 (ทุก 1 นาที)
-              </div>
-            </div>
           </div>
           <button 
             className={styles.retryButton}
