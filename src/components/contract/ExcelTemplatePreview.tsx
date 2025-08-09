@@ -23,7 +23,7 @@ const ExcelTemplatePreview: React.FC<ExcelTemplatePreviewProps> = ({ contractDat
     { section: 'header', field: 'A1', label: 'สัญญาเช่าซื้อสินค้า', value: 'สัญญาเช่าซื้อสินค้า', type: 'title' },
     
     // ข้อมูลสัญญา
-    { section: 'contract', field: 'A3', label: 'เลขที่สัญญา', value: `CON-${Date.now()}`, type: 'data' },
+    { section: 'contract', field: 'A3', label: 'เลขที่สัญญา', value: `CT${String(Math.floor(Math.random() * 99999) + 1).padStart(5, '0')}`, type: 'data' },
     { section: 'contract', field: 'A4', label: 'วันที่ทำสัญญา', value: new Date().toLocaleDateString('th-TH'), type: 'data' },
     
     // ข้อมูลผู้ให้เช่า

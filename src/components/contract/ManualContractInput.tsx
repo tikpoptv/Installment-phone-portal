@@ -160,7 +160,7 @@ const ManualContractInput: React.FC<ManualContractInputProps> = ({
           marginTop: '4px',
           fontStyle: 'italic'
         }}>
-          💡 ตัวอย่าง: CON-2024-001 หรือ 2024001
+          💡 ตัวอย่าง: CT00001, CT00002
         </div>
       </div>
 
