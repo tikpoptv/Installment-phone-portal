@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Login.module.css';
 import PrivacyPolicyModal from '../../../components/PrivacyPolicyModal';
 import PendingApprovalModal from '../../../components/PendingApprovalModal';
+import ForgotPasswordModal from './ForgotPasswordModal';
 import { authService } from '../../../services/auth/auth.service';
 
 function UserLogin() {
@@ -14,6 +15,7 @@ function UserLogin() {
   const [error, setError] = useState('');
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -63,6 +65,11 @@ function UserLogin() {
     navigate('/user/register');
   };
 
+  const handleForgotPasswordClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setShowForgotPasswordModal(true);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.loginBox}>
@@ -96,6 +103,9 @@ function UserLogin() {
           <button type="submit" className={styles.submitButton}>
             เข้าสู่ระบบ
           </button>
+          <div className={styles.forgotPasswordLink}>
+            <a href="/forgot-password" onClick={handleForgotPasswordClick}>ลืมรหัสผ่าน?</a>
+          </div>
           <div className={styles.registerLink}>
             ยังไม่มีบัญชี? <a href="/user/register" onClick={handleRegisterClick}>สมัครสมาชิก</a>
           </div>
@@ -104,6 +114,12 @@ function UserLogin() {
 
       {/* Modal แจ้งเตือนรอแอดมินยืนยันตัวตน */}
       <PendingApprovalModal isOpen={showPendingModal} onClose={() => setShowPendingModal(false)} />
+
+      {/* Modal ลืมรหัสผ่าน */}
+      <ForgotPasswordModal 
+        isOpen={showForgotPasswordModal} 
+        onClose={() => setShowForgotPasswordModal(false)} 
+      />
 
       <PrivacyPolicyModal
         isOpen={showPrivacyPolicy}

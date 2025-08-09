@@ -96,4 +96,22 @@
 
 .registerLink a:hover {
   text-decoration: underline;
+}
+
+.forgotPasswordLink {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.forgotPasswordLink a {
+  color: #0ea5e9;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.forgotPasswordLink a:hover {
+  color: #0284c7;
+  text-decoration: underline;
 } 
