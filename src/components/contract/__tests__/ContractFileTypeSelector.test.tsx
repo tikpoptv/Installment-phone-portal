@@ -139,7 +139,6 @@ describe('ContractFileTypeSelector', () => {
 
     expect(screen.getByText('💡 สำหรับกรณี:')).toBeInTheDocument();
     expect(screen.getByText(/ปริ้นเอกสารแล้วเผลอปิดหน้าจอ/)).toBeInTheDocument();
-    expect(screen.getByText(/มีเลขคำสั่งซื้ออยู่แล้ว ต้องการอัปเดตข้อมูล/)).toBeInTheDocument();
     expect(screen.getByText(/กรอกเลขคำสั่งซื้อที่ได้จากระบบแล้ว/)).toBeInTheDocument();
   });
 

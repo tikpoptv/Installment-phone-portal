@@ -6,7 +6,8 @@ import {
   updateProduct,
   setProductStoreLocked,
   getAvailableProducts,
-  getStockSummary 
+  getStockSummary,
+  markProductWarrantyReplaced
 } from '../products.service';
 
 // Mock apiClient
@@ -301,6 +302,22 @@ describe('Products Service', () => {
 
       expect(apiClient.get).toHaveBeenCalledWith('/api/products/stock-summary');
       expect(result).toEqual(mockStockSummary);
+    });
+  });
+
+  describe('markProductWarrantyReplaced', () => {
+    it('ควรเรียก PUT เพื่ออัปเดตสถานะเป็น warranty_replaced', async () => {
+      const productId = 'PD00001';
+      const mockResponse = { id: productId, status: 'warranty_replaced' as const };
+      const mockApiResponse = { data: mockResponse, status: 200, message: 'OK' };
+
+      const { apiClient } = await import('../api');
+      vi.mocked(apiClient.put).mockResolvedValue(mockApiResponse);
+
+      const result = await markProductWarrantyReplaced(productId);
+
+      expect(apiClient.put).toHaveBeenCalledWith(`/api/products/${productId}/status/warranty-replaced`);
+      expect(result).toEqual(mockResponse);
     });
   });
 }); 

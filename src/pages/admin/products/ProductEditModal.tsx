@@ -29,6 +29,7 @@ const statusOptions = [
   { value: 'available', label: 'ว่าง' },
   { value: 'leased', label: 'ติดสัญญา' },
   { value: 'sold', label: 'ขายแล้ว' },
+  { value: 'warranty_replaced', label: 'เคลมเปลี่ยนเครื่อง' },
 ];
 
 export default function ProductEditModal({ open, onClose, product, onSuccess }: ProductEditModalProps) {

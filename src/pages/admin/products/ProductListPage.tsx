@@ -13,6 +13,7 @@ const statusLabel = (status: string) => {
   if (status === 'available') return <span style={{ color: '#22c55e', fontWeight: 600 }}>ว่าง</span>;
   if (status === 'leased') return <span style={{ color: '#f59e42', fontWeight: 600 }}>ติดสัญญา</span>;
   if (status === 'sold') return <span style={{ color: '#ef4444', fontWeight: 600 }}>ขายแล้ว</span>;
+  if (status === 'warranty_replaced') return <span style={{ color: '#3b82f6', fontWeight: 600 }}>เคลมเปลี่ยนเครื่อง</span>;
   return <span style={{ color: '#64748b', fontWeight: 600 }}>{status}</span>;
 };
 
@@ -27,7 +28,11 @@ function exportProductsToCSV(products: Product[]) {
     p.icloud_status === 'unlocked' ? 'unlocked' : p.icloud_status || '',
     p.store_locked ? 'locked' : 'unlocked',
     p.remark || '',
-    p.status === 'available' ? 'ว่าง' : p.status === 'sold' ? 'ขายแล้ว' : p.status || 'ไม่ระบุ',
+    p.status === 'available' ? 'ว่าง'
+      : p.status === 'sold' ? 'ขายแล้ว'
+      : p.status === 'leased' ? 'ติดสัญญา'
+      : p.status === 'warranty_replaced' ? 'เคลมเปลี่ยนเครื่อง'
+      : p.status || 'ไม่ระบุ',
     p.created_at ? formatDateThai(p.created_at) : '',
   ]);
   const csvContent = [header, ...rows]
@@ -80,7 +85,7 @@ export default function ProductListPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [productIdInput, setProductIdInput] = useState('');
-  const [filter, setFilter] = useState<'all' | 'available' | 'leased' | 'sold'>('all');
+  const [filter, setFilter] = useState<'all' | 'available' | 'leased' | 'sold' | 'warranty_replaced'>('all');
   const [icloudFilter, setIcloudFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [storeLockedFilter, setStoreLockedFilter] = useState<'all' | 'locked' | 'unlocked'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -257,13 +262,14 @@ export default function ProductListPage() {
             <div className={styles.filterLeftGroup}>
               <select
                 value={filter}
-                onChange={e => setFilter(e.target.value as 'all' | 'available' | 'leased' | 'sold')}
+                onChange={e => setFilter(e.target.value as 'all' | 'available' | 'leased' | 'sold' | 'warranty_replaced')}
                 className={styles.select}
               >
                 <option value="all">ทั้งหมด</option>
                 <option value="available">ว่าง</option>
                 <option value="leased">ติดสัญญา</option>
                 <option value="sold">ขายแล้ว</option>
+                <option value="warranty_replaced">เคลมเปลี่ยนเครื่อง</option>
               </select>
               <select
                 value={icloudFilter}

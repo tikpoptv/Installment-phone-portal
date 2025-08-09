@@ -161,4 +161,12 @@ export async function getStockSummary(): Promise<ProductStockSummaryItem[]> {
     // Return empty array เมื่อเกิด error
     return [];
   }
+}
+
+// เพิ่ม: อัปเดตสถานะสินค้าเป็น warranty_replaced
+export async function markProductWarrantyReplaced(productId: string): Promise<{ id: string; status: 'warranty_replaced' }> {
+  const res = await apiClient.put<{ id: string; status: 'warranty_replaced' }>(
+    `/api/products/${productId}/status/warranty-replaced`
+  );
+  return res.data;
 } 

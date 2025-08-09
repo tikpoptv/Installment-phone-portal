@@ -36,6 +36,7 @@ const statusLabel = (status: string) => {
   if (status === 'available') return <span style={{ color: '#22c55e', fontWeight: 600 }}>ว่าง</span>;
   if (status === 'leased') return <span style={{ color: '#f59e42', fontWeight: 600 }}>ติดสัญญา</span>;
   if (status === 'sold') return <span style={{ color: '#ef4444', fontWeight: 600 }}>ขายแล้ว</span>;
+  if (status === 'warranty_replaced') return <span style={{ color: '#3b82f6', fontWeight: 600 }}>เคลมเปลี่ยนเครื่อง</span>;
   return <span style={{ color: '#64748b', fontWeight: 600 }}>{status}</span>;
 };
 
