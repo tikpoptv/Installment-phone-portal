@@ -167,6 +167,7 @@ const ManageAdmin: React.FC = () => {
                   {admin.create_token ? (
                     <button
                       className={styles.copyTokenBtn}
+                      disabled={admin.is_deleted}
                       onClick={() => setSuccessModal({
                         createToken: admin.create_token,
                         username: admin.username,
@@ -179,7 +180,7 @@ const ManageAdmin: React.FC = () => {
                 <td>{formatDate(admin.created_at)}</td>
                 <td>{formatDate(admin.updated_at)}</td>
                 <td>
-                  {currentUser.role === 'superadmin' && admin.id !== currentUser.id && (
+                  {currentUser.role === 'superadmin' && admin.id !== currentUser.id && admin.username !== 'administrator' && (
                     <>
                       <button
                         className={styles.editBtn}
@@ -211,6 +212,9 @@ const ManageAdmin: React.FC = () => {
                         })}
                       >ลบ</button>
                     </>
+                  )}
+                  {admin.username === 'administrator' && (
+                    <span style={{color: '#64748b', fontStyle: 'italic'}}>Protected</span>
                   )}
                 </td>
               </tr>

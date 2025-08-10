@@ -96,6 +96,15 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation(); // เพิ่ม useLocation เพื่อดึง path ปัจจุบัน
 
+  // เช็ค protocol และบังคับใช้ HTTPS
+  useEffect(() => {
+    if (window.location.protocol === 'http:' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+      const httpsUrl = window.location.href.replace('http:', 'https:');
+      window.location.href = httpsUrl;
+      return;
+    }
+  }, []);
+
   // อ่านค่าจาก env
   const ADMIN_DOMAIN = import.meta.env.VITE_ADMIN_DOMAIN;
   const USER_DOMAIN = import.meta.env.VITE_USER_DOMAIN;
