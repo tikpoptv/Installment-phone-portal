@@ -297,7 +297,7 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({
               color: userSignature ? '#fff' : '#334155',
               border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
             }}>
-              {userSignature ? '✔️' : '❌'} ลายเซ็นผู้ให้เช่า
+              {userSignature ? '✔️' : '❌'} ลายเซ็นผู้เช่า
             </button>
             {userSignature && (
               <button 
@@ -326,7 +326,7 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({
               color: renterSignature ? '#fff' : '#334155',
               border: 'none', borderRadius: 8, padding: '10px 18px', fontWeight: 600, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8
             }}>
-              {renterSignature ? '✔️' : '❌'} ลายเซ็นผู้เช่า
+              {renterSignature ? '✔️' : '❌'} ลายเซ็นผู้ให้เช่า
             </button>
             {renterSignature && (
               <button 
@@ -384,13 +384,13 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({
           open={signatureModal === 'user'}
           onClose={() => setSignatureModal(null)}
           onSave={sig => { setUserSignature(sig); setSignatureModal(null); }}
-          title="เซ็นลายเซ็นผู้ให้เช่า"
+          title="เซ็นลายเซ็นผู้เช่า"
         />
         <SignatureModal
           open={signatureModal === 'renter'}
           onClose={() => setSignatureModal(null)}
           onSave={sig => { setRenterSignature(sig); setSignatureModal(null); }}
-          title="เซ็นลายเซ็นผู้เช่า"
+          title="เซ็นลายเซ็นผู้ให้เช่า"
         />
         <SignatureModal
           open={signatureModal === 'witness'}
@@ -429,7 +429,7 @@ const AutoContractGenerator: React.FC<AutoContractGeneratorProps> = ({
                   lineHeight: '1.5',
                   marginBottom: '16px'
                 }}>
-                  ยังไม่มีลายเซ็น: <strong>ลายเซ็นผู้ให้เช่า, ลายเซ็นผู้เช่า, ลายเซ็นพยาน</strong>
+                  ยังไม่มีลายเซ็น: <strong>ลายเซ็นผู้เช่า, ลายเซ็นผู้ให้เช่า, ลายเซ็นพยาน</strong>
                 </p>
                 <p style={{ 
                   fontSize: '14px', 
