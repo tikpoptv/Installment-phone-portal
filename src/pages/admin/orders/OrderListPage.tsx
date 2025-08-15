@@ -43,10 +43,11 @@ const categoryLabel = (cat: string) => {
 
 const statusOptions = [
   { value: 'all', label: 'ทุกสถานะ' },
-  { value: 'active', label: 'กำลังใช้งาน' },
-  { value: 'closed', label: 'เสร็จสิ้น' },
-  { value: 'pending', label: 'รอดำเนินการ' },
-  { value: 'repossessed', label: 'ยึดคืน' },
+  { value: 'active', label: 'ผ่อนชำระอยู่' },
+  { value: 'closed', label: 'ปิดสัญญา' },
+  { value: 'overdue', label: 'ค้างชำระ' },
+  { value: 'processing', label: 'รอดำเนินการ' },
+  { value: 'repossessed', label: 'ยึดสินค้า' },
   { value: 'returned', label: 'คืนสินค้า' },
   { value: 'hold_by_system', label: 'ระบบถือครอง' },
 ];
