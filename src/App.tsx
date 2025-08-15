@@ -4,6 +4,7 @@ import Dashboard from './pages/admin/dashboard/Dashboard';
 import AdminLogin from './pages/admin/auth/Login';
 import UserLogin from './pages/user/auth/Login';
 import UserRegister from './pages/user/auth/Register';
+import ResetPasswordPage from './pages/user/auth/ResetPasswordPage';
 import UserDashboard from './pages/user/dashboard/Dashboard';
 import styles from './App.module.css';
 import { useState, useEffect } from 'react';
@@ -362,6 +363,7 @@ function AppContent() {
               <Navigate to="/user/login" replace />
             )
           } />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/user/contract/:id" element={<ContractDetailPage />} />
           <Route path="/user/*" element={
             isLoggedIn ? (
